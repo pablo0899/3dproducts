@@ -1,4 +1,4 @@
-# Catálogo de impresiones 3D
+# Tangible Estudio
 
 Sitio estático hecho con [Astro](https://astro.build) y [`<model-viewer>`](https://modelviewer.dev).
 Cada producto es **un archivo Markdown + una carpeta con fotos y su modelo 3D**. No hay base de datos ni panel de administración que mantener.
@@ -69,17 +69,14 @@ Consejos para que cargue rápido en celular:
 - El modelo solo se descarga cuando el visitante toca “Ver en 3D”.
 - En celulares compatibles aparece el botón de **Realidad Aumentada** para ver la pieza sobre la mesa.
 
-## Publicar (gratis) en Cloudflare Pages
+## Publicar
 
-Cada `git push` a `main` publica el sitio automáticamente.
+El sitio está en **Cloudflare Workers** (plan gratuito, con assets estáticos): https://3dproducts.idipl0899.workers.dev
 
-Configuración en Cloudflare (*Workers & Pages → Create → Pages → Connect to Git*):
+Cada `git push` a `main` lo compila y lo publica automáticamente en uno o dos minutos. La configuración está en:
 
-| Campo | Valor |
-|---|---|
-| Framework preset | Astro |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node | 22 (lo toma de `.node-version`) |
+- `wrangler.jsonc`: nombre del Worker, carpeta `dist` y URLs públicas activadas
+- `.node-version`: Node 22
+- `public/_headers`: caché de los archivos
 
-`public/_headers` define la caché de los archivos. Al conectar un dominio propio, cambia `site` en `astro.config.mjs`.
+Al conectar un dominio propio (Worker → Settings → Domains & Routes → Custom domain), cambia `site` en `astro.config.mjs`.
