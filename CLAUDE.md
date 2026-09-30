@@ -1,10 +1,10 @@
-# Contexto del proyecto: Ni Sabías (catálogo de productos)
+# Contexto del proyecto: Tangible Estudio (catálogo de productos)
 
 Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, opcionalmente, un modelo que el visitante puede girar en 360°, acercar y ver en realidad aumentada. Tiene que ser **fácil de mantener** (sin base de datos ni panel de administración) y verse bien **primero en celular**.
 
 ## Marca
 
-- **Nombre provisional:** "Ni Sabías". **Eslogan:** "Cosas que no sabías que necesitabas." Ambos se definen en `src/config.ts`.
+- **Nombre:** "Tangible Estudio". **Eslogan:** "Cosas que no sabías que necesitabas." Ambos se definen en `src/config.ts`.
 - **Posicionamiento:** objetos ingeniosos que resuelven pequeños problemas del día a día. No es un servicio de fabricación.
 - **Regla principal:** los textos públicos **nunca** dicen que los productos son impresos en 3D. Evitar "impresión", "impreso", "capa por capa", "filamento", "PLA", "PETG" y "3D" visible (usar "360°"). Esto aplica a los títulos, las descripciones, los materiales y los alt de las imágenes.
 - **Materiales:** se describen por el beneficio o el acabado ("Bioplástico mate", "Plástico de alta resistencia", "Acabado sedoso").
@@ -76,7 +76,7 @@ npm run preview         # sirve el build
 
 ## Pendientes
 
-- Elegir el nombre definitivo de la marca, revisar que el dominio y el @ de Instagram estén libres, y diseñar el logo.
+- Revisar que el dominio y el @ de Instagram estén libres, y diseñar el logo.
 - Poner los datos reales en `src/config.ts` (WhatsApp, redes, nombre).
 - Cambiar `site` en `astro.config.mjs` por el dominio definitivo.
 - Reemplazar los productos de ejemplo por los reales.
