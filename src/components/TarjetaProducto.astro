@@ -1,0 +1,54 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatearPrecio } from '../utils';
+
+interface Props {
+  producto: CollectionEntry<'productos'>;
+}
+
+const { producto } = Astro.props;
+const { nombre, resumen, fotos, precio, categoria, modelo, disponible } = producto.data;
+---
+
+<a href={`/productos/${producto.id}/`} class="tarjeta" data-categoria={categoria}>
+  <div class="tarjeta__imagen">
+    <img src={fotos[0]} alt={nombre} loading="lazy" width="600" height="600" />
+    {modelo && <span class="tarjeta__badge">360°</span>}
+    {!disponible && <span class="tarjeta__agotado">Agotado</span>}
+  </div>
+  <div class="tarjeta__cuerpo">
+    <span class="etiqueta">{categoria}</span>
+    <h3>{nombre}</h3>
+    <p>{resumen}</p>
+    <strong>{formatearPrecio(precio)}</strong>
+  </div>
+</a>
+
+<style>
+  .tarjeta {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tarjeta:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgb(0 0 0 / 0.08); }
+  .tarjeta__imagen { position: relative; aspect-ratio: 1; background: var(--color-borde); }
+  .tarjeta__imagen img { width: 100%; height: 100%; object-fit: cover; }
+  .tarjeta__badge, .tarjeta__agotado {
+    position: absolute;
+    top: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .tarjeta__badge { right: 10px; background: var(--color-acento); color: var(--color-acento-texto); }
+  .tarjeta__agotado { left: 10px; background: #000c; color: #fff; }
+  .tarjeta__cuerpo { display: grid; gap: 6px; padding: 14px 16px 18px; justify-items: start; }
+  h3 { margin: 4px 0 0; font-size: 1.05rem; }
+  p { margin: 0; color: var(--color-suave); font-size: 0.92rem; }
+</style>

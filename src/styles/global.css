@@ -1,0 +1,76 @@
+/* ── Colores y medidas: cambia aquí la identidad visual ── */
+:root {
+  --color-fondo: #f7f6f3;
+  --color-superficie: #ffffff;
+  --color-texto: #1d1d1f;
+  --color-suave: #6b6b70;
+  --color-borde: #e4e2dd;
+  --color-acento: #ff5a1f;
+  --color-acento-texto: #ffffff;
+  --radio: 14px;
+  --ancho-max: 1120px;
+  --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-fondo: #141416;
+    --color-superficie: #1e1e21;
+    --color-texto: #f2f2f3;
+    --color-suave: #a0a0a8;
+    --color-borde: #2e2e33;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--fuente);
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+
+.contenedor {
+  width: 100%;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px; /* área táctil cómoda en móvil */
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-acento);
+  color: var(--color-acento-texto);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.boton:hover { filter: brightness(1.08); }
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-borde);
+  font-size: 0.8rem;
+  color: var(--color-suave);
+}
+
+@media (min-width: 768px) {
+  .contenedor { padding-inline: 24px; }
+}

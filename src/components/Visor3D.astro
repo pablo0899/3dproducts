@@ -1,0 +1,69 @@
+---
+// Visor 360° (modelo 3D) basado en <model-viewer> de Google (https://modelviewer.dev).
+// El modelo solo se descarga cuando el usuario lo pide, para ahorrar datos en móvil.
+interface Props {
+  modelo: string;
+  nombre: string;
+  poster?: string;
+}
+
+const { modelo, nombre, poster } = Astro.props;
+---
+
+<div class="visor">
+  <model-viewer
+    data-src={modelo}
+    alt={`Vista 360° de ${nombre}`}
+    poster={poster}
+    camera-controls
+    touch-action="pan-y"
+    auto-rotate
+    shadow-intensity="1"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+  >
+    <div slot="progress-bar" class="visor__carga"></div>
+    <p class="visor__ayuda">Arrastra para girar · pellizca para acercar</p>
+  </model-viewer>
+</div>
+
+<script>
+  import '@google/model-viewer';
+
+  // Carga el modelo cuando el contenedor se hace visible
+  document.querySelectorAll<HTMLElement>('model-viewer[data-src]').forEach((visor) => {
+    const observador = new IntersectionObserver((entradas) => {
+      if (entradas.some((e) => e.isIntersecting)) {
+        visor.setAttribute('src', visor.dataset.src!);
+        observador.disconnect();
+      }
+    });
+    observador.observe(visor);
+  });
+</script>
+
+<style>
+  /* Mismo marco cuadrado que la galería de fotos */
+  .visor {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, var(--color-superficie), var(--color-borde));
+  }
+  model-viewer {
+    /* model-viewer trae width: 300px; height: 150px por defecto */
+    width: 100%;
+    height: 100%;
+    --poster-color: transparent;
+  }
+  .visor__ayuda {
+    position: absolute;
+    inset: auto 0 12px;
+    margin: 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-suave);
+    pointer-events: none;
+  }
+</style>

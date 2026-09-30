@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import { SITIO } from '../config';
+
+const productos = (await getCollection('productos')).sort(
+  (a, b) => Number(b.data.destacado) - Number(a.data.destacado) || a.data.orden - b.data.orden,
+);
+const categorias = [...new Set(productos.map((p) => p.data.categoria))].sort();
+---
+
+<Base>
+  <section class="portada contenedor">
+    <h1>{SITIO.eslogan}</h1>
+    <p>{SITIO.subtitulo}</p>
+    <a href="#catalogo" class="boton">Descubrir</a>
+  </section>
+
+  <section id="catalogo" class="contenedor">
+    {categorias.length > 1 && (
+      <div class="filtros" role="group" aria-label="Filtrar por categoría">
+        <button type="button" data-filtro="" aria-pressed="true">Todos</button>
+        {categorias.map((c) => (
+          <button type="button" data-filtro={c} aria-pressed="false">{c}</button>
+        ))}
+      </div>
+    )}
+
+    <div class="rejilla">
+      {productos.map((producto) => <TarjetaProducto producto={producto} />)}
+    </div>
+  </section>
+</Base>
+
+<script>
+  const botones = document.querySelectorAll<HTMLButtonElement>('.filtros button');
+  const tarjetas = document.querySelectorAll<HTMLElement>('.rejilla [data-categoria]');
+
+  botones.forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const filtro = boton.dataset.filtro;
+      botones.forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
+      tarjetas.forEach((t) => (t.hidden = !!filtro && t.dataset.categoria !== filtro));
+    });
+  });
+</script>
+
+<style>
+  .portada { padding-block: 48px 32px; display: grid; gap: 12px; justify-items: start; }
+  .portada h1 { margin: 0; font-size: clamp(2.1rem, 9vw, 4rem); line-height: 1.1; }
+  .portada p { margin: 0 0 8px; font-size: 1.1rem; color: var(--color-suave); max-width: 48ch; }
+
+  .filtros {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    scrollbar-width: none;
+  }
+  .filtros button {
+    flex: none;
+    min-height: 40px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-borde);
+    border-radius: 999px;
+    background: var(--color-superficie);
+    color: var(--color-texto);
+    font: inherit;
+    cursor: pointer;
+  }
+  .filtros button[aria-pressed='true'] {
+    background: var(--color-texto);
+    color: var(--color-fondo);
+    border-color: var(--color-texto);
+  }
+
+  /* 1 columna en móvil pequeño, 2 en móvil grande, 3-4 en escritorio */
+  .rejilla { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 420px) { .rejilla { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+  @media (min-width: 900px) { .rejilla { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+  @media (min-width: 1100px) { .rejilla { grid-template-columns: repeat(4, 1fr); } }
+</style>

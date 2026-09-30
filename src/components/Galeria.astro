@@ -1,0 +1,70 @@
+---
+interface Props {
+  fotos: string[];
+  nombre: string;
+}
+
+const { fotos, nombre } = Astro.props;
+---
+
+<div class="galeria">
+  <div class="galeria__carrusel">
+    {fotos.map((foto, i) => (
+      <img id={`foto-${i}`} src={foto} alt={`${nombre} — foto ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
+    ))}
+  </div>
+  {fotos.length > 1 && (
+    <div class="galeria__miniaturas">
+      {fotos.map((foto, i) => (
+        <button type="button" data-indice={i} aria-label={`Ver foto ${i + 1}`}>
+          <img src={foto} alt="" loading="lazy" />
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.galeria').forEach((galeria) => {
+    const carrusel = galeria.querySelector<HTMLElement>('.galeria__carrusel')!;
+    galeria.querySelectorAll<HTMLButtonElement>('.galeria__miniaturas button').forEach((boton) => {
+      boton.addEventListener('click', () => {
+        const indice = Number(boton.dataset.indice);
+        carrusel.scrollTo({ left: carrusel.clientWidth * indice, behavior: 'smooth' });
+      });
+    });
+  });
+</script>
+
+<style>
+  .galeria { display: grid; gap: 10px; }
+  .galeria__carrusel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    border-radius: var(--radio);
+    background: var(--color-borde);
+    aspect-ratio: 1;
+  }
+  .galeria__carrusel::-webkit-scrollbar { display: none; }
+  .galeria__carrusel img {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    scroll-snap-align: start;
+  }
+  .galeria__miniaturas { display: flex; gap: 8px; overflow-x: auto; }
+  .galeria__miniaturas button {
+    flex: 0 0 64px;
+    height: 64px;
+    padding: 0;
+    border: 2px solid var(--color-borde);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    background: none;
+  }
+  .galeria__miniaturas img { width: 100%; height: 100%; object-fit: cover; }
+</style>

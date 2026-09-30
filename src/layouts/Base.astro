@@ -1,0 +1,86 @@
+---
+import '../styles/global.css';
+import { SITIO } from '../config';
+
+interface Props {
+  titulo?: string;
+  descripcion?: string;
+  imagen?: string;
+}
+
+const { titulo, descripcion = SITIO.descripcion, imagen } = Astro.props;
+const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : SITIO.nombre;
+const anio = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{tituloCompleto}</title>
+    <meta name="description" content={descripcion} />
+    <meta property="og:title" content={tituloCompleto} />
+    <meta property="og:description" content={descripcion} />
+    {imagen && <meta property="og:image" content={new URL(imagen, Astro.site)} />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <header class="cabecera">
+      <div class="contenedor cabecera__fila">
+        <a href="/" class="marca">{SITIO.nombre}</a>
+        <nav>
+          <a href="/#catalogo">Productos</a>
+          <a href="#contacto">Contacto</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer id="contacto" class="pie">
+      <div class="contenedor pie__fila">
+        <p>¿Tienes un problema que ningún producto resuelve? Cuéntanos y lo inventamos.</p>
+        <div class="pie__enlaces">
+          <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a>
+          <a href={SITIO.instagram} target="_blank" rel="noopener">Instagram</a>
+          <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
+        </div>
+        <small>© {anio} {SITIO.nombre}</small>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--color-fondo) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-borde);
+  }
+  .cabecera__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+  }
+  .marca { font-weight: 800; font-size: 1.15rem; text-decoration: none; }
+  nav { display: flex; gap: 18px; }
+  nav a { text-decoration: none; color: var(--color-suave); }
+  nav a:hover { color: var(--color-texto); }
+
+  .pie {
+    margin-top: 64px;
+    padding-block: 40px;
+    border-top: 1px solid var(--color-borde);
+    color: var(--color-suave);
+  }
+  .pie__fila { display: grid; gap: 12px; }
+  .pie p { margin: 0; color: var(--color-texto); font-weight: 600; }
+  .pie__enlaces { display: flex; flex-wrap: wrap; gap: 16px; }
+</style>
