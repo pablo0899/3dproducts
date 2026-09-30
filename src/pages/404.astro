@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base titulo="No encontrado">
+  <section class="contenedor vacio">
+    <h1>Esto no existe… todavía.</h1>
+    <p>La página que buscas se movió o nunca estuvo aquí.</p>
+    <a href="/" class="boton">Ver productos</a>
+  </section>
+</Base>
+
+<style>
+  .vacio { padding-block: 80px; display: grid; gap: 12px; justify-items: start; }
+  h1 { margin: 0; font-size: clamp(1.8rem, 7vw, 3rem); }
+  p { margin: 0 0 8px; color: var(--color-suave); }
+</style>

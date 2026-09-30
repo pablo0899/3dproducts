@@ -78,6 +78,6 @@ npm run preview         # sirve el build
 
 - Revisar que el dominio y el @ de Instagram estén libres, y diseñar el logo.
 - Poner los datos reales en `src/config.ts` (WhatsApp, redes, nombre).
-- Cambiar `site` en `astro.config.mjs` por el dominio definitivo.
+- Cambiar `site` en `astro.config.mjs` cuando haya dominio propio (hoy: 3dproducts.idipl0899.workers.dev).
 - Reemplazar los productos de ejemplo por los reales.
-- Publicar en Cloudflare Pages desde github.com/pablo0899/3dproducts (build: `npm run build`, salida: `dist`).
+- Publicado como Cloudflare **Worker** con assets estáticos (`wrangler.jsonc`), conectado a github.com/pablo0899/3dproducts; cada push a `main` despliega.

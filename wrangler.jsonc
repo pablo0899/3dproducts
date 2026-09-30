@@ -1,0 +1,13 @@
+// Configuración de Cloudflare Workers (sitio estático)
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "3dproducts",
+  "compatibility_date": "2026-09-30",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  // Mantiene activas la dirección pública y las de vista previa
+  "workers_dev": true,
+  "preview_urls": true
+}
