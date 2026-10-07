@@ -75,7 +75,8 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
 
 <style>
   .producto { display: grid; gap: 24px; padding-top: 16px; }
-  .volver { grid-column: 1 / -1; color: var(--soft-rose); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+  .volver { grid-column: 1 / -1; color: var(--color-suave); text-decoration: none; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+  .volver:hover { color: var(--berry-magenta); }
 
   .pestanas {
     display: grid;
@@ -94,14 +95,17 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
     background: none;
     color: var(--color-suave);
     font: inherit;
+    font-size: 0.75rem;
     font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     cursor: pointer;
   }
-  .pestanas button[aria-selected='true'] { background: var(--magenta-glow); color: var(--ivory); box-shadow: var(--brillo-magenta); }
+  .pestanas button[aria-selected='true'] { background: var(--plum-night); color: var(--ivory-dust); }
 
   .producto__info { display: grid; gap: 8px; align-content: start; justify-items: start; }
-  h1 { margin: 4px 0 0; font-size: clamp(1.7rem, 6vw, 2.6rem); line-height: 1.1; }
-  .precio { margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--burnt-orange); }
+  h1 { margin: 4px 0 0; font-size: clamp(2rem, 8vw, 3rem); line-height: 1.1; }
+  .precio { margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--terracotta); }
   .resumen { margin: 0; color: var(--color-suave); }
 
   .ficha {
@@ -115,11 +119,13 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
     border-radius: var(--radio);
     background: var(--color-superficie);
   }
-  dt { color: var(--color-suave); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; align-self: center; }
+  dt { color: var(--color-suave); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; align-self: center; }
   dd { margin: 0; }
 
   .pedir { width: 100%; }
   .descripcion { width: 100%; }
+  .descripcion :global(ul) { padding-left: 1.2em; }
+  .descripcion :global(li::marker) { color: var(--berry-magenta); }
 
   @media (min-width: 900px) {
     .producto { grid-template-columns: 1.1fr 1fr; gap: 40px; }

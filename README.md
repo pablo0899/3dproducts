@@ -1,4 +1,4 @@
-# Prismatika · Design Studio Xalapa
+# Prismatix · Estudio creativo · Xalapa
 
 Sitio estático hecho con [Astro](https://astro.build) y [`<model-viewer>`](https://modelviewer.dev).
 Cada producto es **un archivo Markdown + una carpeta con fotos y su modelo 3D**. No hay base de datos ni panel de administración que mantener.

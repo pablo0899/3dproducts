@@ -1,24 +1,26 @@
 ---
-// Iconografía neón de la marca (trazo de línea).
+// Iconografía de la marca: trazo fino, simple, orgánico y con personalidad.
+export type NombreIcono =
+  | 'mascota' | 'figura' | 'estadio' | 'souvenir' | 'dado'
+  | 'destello' | 'sol' | 'diamante' | 'montana' | 'corazon' | 'destellos';
+
 interface Props {
-  nombre: 'mascota' | 'figura' | 'estadio' | 'souvenir' | 'dado';
+  nombre: NombreIcono;
   tamano?: number;
 }
 
-const { nombre, tamano = 48 } = Astro.props;
+const { nombre, tamano = 40 } = Astro.props;
 ---
 
-<svg width={tamano} height={tamano} viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<svg width={tamano} height={tamano} viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
   {nombre === 'mascota' && (
     <>
       <path d="M14 14c-4-2-8 2-7 8 1 4 4 5 6 3" />
       <path d="M34 14c4-2 8 2 7 8-1 4-4 5-6 3" />
       <path d="M13 22c0-7 5-11 11-11s11 4 11 11v5c0 7-5 11-11 11s-11-4-11-11z" />
-      <circle cx="19" cy="23" r="1.2" fill="currentColor" />
-      <circle cx="29" cy="23" r="1.2" fill="currentColor" />
+      <circle cx="19" cy="23" r="1" fill="currentColor" />
+      <circle cx="29" cy="23" r="1" fill="currentColor" />
       <path d="M22 29h4l-2 2z" />
-      <path d="M17 38c2 2 5 3 7 3s5-1 7-3" />
-      <circle cx="24" cy="43" r="1.6" />
     </>
   )}
   {nombre === 'figura' && (
@@ -34,19 +36,17 @@ const { nombre, tamano = 48 } = Astro.props;
       <ellipse cx="24" cy="28" rx="19" ry="9" />
       <ellipse cx="24" cy="28" rx="11" ry="4.5" />
       <path d="M5 28v6c0 5 9 9 19 9s19-4 19-9v-6" />
-      <path d="M10 21V9l5 2-5 2" />
-      <path d="M38 21V9l5 2-5 2" />
       <path d="M24 19V7l5 2-5 2" />
     </>
   )}
   {nombre === 'souvenir' && (
     <>
-      <path d="M16 6l-8 5 3 6 4-2v14h14V15l4 2 3-6-8-5c-1 3-3 4-6 4s-5-1-6-4z" />
-      <path d="M6 40l3-7h22l3 7" />
-      <path d="M4 40h36v3H4z" />
-      <circle cx="12" cy="43" r="2.5" />
-      <circle cx="32" cy="43" r="2.5" />
-      <path d="M40 18v6c2 1 2 3 2 5v14h-6V29c0-2 0-4 2-5v-6z" />
+      <path d="M8 44V20l6-6 6 6v24" />
+      <path d="M14 14V6" />
+      <path d="M28 44V24h12v20" />
+      <path d="M34 24v-6M31 18h6" />
+      <path d="M4 44h40" />
+      <path d="M12 26h4M12 32h4M32 30h4M32 36h4" />
     </>
   )}
   {nombre === 'dado' && (
@@ -54,7 +54,34 @@ const { nombre, tamano = 48 } = Astro.props;
       <path d="M24 3l19 11v20L24 45 5 34V14z" />
       <path d="M24 3l-10 20h20z" />
       <path d="M14 23L5 14M34 23l9-9M14 23l10 22 10-22M14 23L5 34M34 23l9 11" />
-      <text x="24" y="19.5" fill="currentColor" stroke="none" font-size="7" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">20</text>
+    </>
+  )}
+  {nombre === 'destello' && <path d="M24 4c1 10 9 18 20 20-11 2-19 10-20 20-1-10-9-18-20-20 11-2 19-10 20-20z" />}
+  {nombre === 'sol' && (
+    <>
+      <circle cx="24" cy="24" r="8" />
+      <path d="M24 6v6M24 36v6M6 24h6M36 24h6M11 11l4 4M33 33l4 4M11 37l4-4M33 15l4-4" />
+    </>
+  )}
+  {nombre === 'diamante' && (
+    <>
+      <path d="M14 8h20l8 11-18 23L6 19z" />
+      <path d="M6 19h36M18 8l-4 11 10 23 10-23-4-11M14 19l10-11 10 11" />
+    </>
+  )}
+  {nombre === 'montana' && (
+    <>
+      <path d="M4 40l14-24 8 13 5-7 13 18z" />
+      <path d="M14 23l4 3 4-3" />
+      <circle cx="36" cy="10" r="3" />
+    </>
+  )}
+  {nombre === 'corazon' && <path d="M24 41S6 30 6 18c0-6 4-10 9-10 4 0 7 2 9 6 2-4 5-6 9-6 5 0 9 4 9 10 0 12-18 23-18 23z" />}
+  {nombre === 'destellos' && (
+    <>
+      <path d="M20 8c.8 8 6 13 14 14-8 1-13.2 6-14 14-.8-8-6-13-14-14 8-1 13.2-6 14-14z" />
+      <path d="M38 4c.4 3 2 5 5 5.5-3 .5-4.6 2.5-5 5.5-.4-3-2-5-5-5.5 3-.5 4.6-2.5 5-5.5z" />
+      <path d="M38 32c.3 2.4 1.6 4 4 4.4-2.4.4-3.7 2-4 4.4-.3-2.4-1.6-4-4-4.4 2.4-.4 3.7-2 4-4.4z" />
     </>
   )}
 </svg>

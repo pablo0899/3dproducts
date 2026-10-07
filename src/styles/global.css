@@ -1,34 +1,38 @@
-/* ── Identidad Prismatika: colores, tipografía y efectos ── */
+/* ── Identidad Prismatix: Electric Velvet × Sunset Artifact ── */
 :root {
   /* Paleta de marca */
-  --plum-night: #2a242b;
-  --magenta-glow: #ff2e93;
-  --terracotta: #c25e38;
-  --burnt-orange: #e07a5f;
-  --soft-rose: #f4b6c2;
-  --ivory: #fdfbf7;
+  --plum-night: #3a243b;      /* color insignia, fondo principal oscuro */
+  --deep-plum: #552b61;       /* profundidad, variaciones */
+  --berry-magenta: #d83a6b;   /* acento eléctrico */
+  --terracotta: #c25e3b;      /* segundo color insignia, anclaje cálido */
+  --burnt-orange: #e07a5f;    /* calidez y energía */
+  --soft-rose: #f4b6c2;       /* contraste suave */
+  --ivory-dust: #fdfbf7;      /* textos y fondos limpios */
+  --electric-pink: #ff2e93;   /* wild card: solo colecciones especiales y lanzamientos */
 
-  /* Roles (el sitio es oscuro por identidad) */
-  --color-fondo: #1d181e;
-  --color-superficie: var(--plum-night);
-  --color-superficie-2: #362e37;
-  --color-texto: var(--ivory);
-  --color-suave: #c9b9c4;
-  --color-borde: rgb(244 182 194 / 0.14);
-  --color-acento: var(--magenta-glow);
-  --color-acento-texto: var(--ivory);
-  --color-calido: var(--burnt-orange);
+  /* Roles */
+  --color-fondo: var(--ivory-dust);
+  --color-superficie: #ffffff;
+  --color-texto: var(--plum-night);
+  --color-suave: #6e5a6f;
+  --color-borde: rgb(58 36 59 / 0.12);
+  --color-acento: var(--berry-magenta);
+  --color-acento-texto: var(--ivory-dust);
 
-  --brillo-magenta: 0 0 18px rgb(255 46 147 / 0.55);
-  --brillo-naranja: 0 0 18px rgb(224 122 95 / 0.5);
-  --degradado-marca: linear-gradient(90deg, var(--magenta-glow) 0%, var(--soft-rose) 70%, var(--ivory) 100%);
+  /* Elementos gráficos: luz prismática y atardecer */
+  --degradado-prisma: linear-gradient(120deg, var(--deep-plum) 0%, var(--berry-magenta) 45%, var(--burnt-orange) 78%, var(--soft-rose) 100%);
+  --degradado-atardecer: linear-gradient(90deg, var(--berry-magenta), var(--burnt-orange));
+  --fondo-terciopelo:
+    radial-gradient(700px 420px at 80% 10%, rgb(216 58 107 / 0.35), transparent 65%),
+    radial-gradient(520px 380px at 10% 90%, rgb(224 122 95 / 0.22), transparent 70%),
+    linear-gradient(160deg, var(--plum-night) 0%, #2b1a2c 60%, var(--deep-plum) 100%);
 
-  --radio: 16px;
+  --radio: 12px;
   --ancho-max: 1120px;
   --fuente: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --fuente-marca: 'Krona One', 'Montserrat', sans-serif;
+  --fuente-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -38,40 +42,46 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   font-family: var(--fuente);
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--color-texto);
-  background-color: var(--color-fondo);
-  /* Rejilla tenue + destellos, como en la identidad */
-  background-image:
-    radial-gradient(600px 400px at 85% -5%, rgb(255 46 147 / 0.22), transparent 70%),
-    radial-gradient(500px 380px at -10% 30%, rgb(224 122 95 / 0.12), transparent 70%),
-    linear-gradient(rgb(244 182 194 / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(244 182 194 / 0.04) 1px, transparent 1px);
-  background-size: auto, auto, 48px 48px, 48px 48px;
-  background-attachment: fixed;
+  background: var(--color-fondo);
 }
 
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 
-h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
+/* Titulares en serif (Playfair Display), textos en Montserrat */
+h1, h2, h3 {
+  font-family: var(--fuente-display);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
 
-/* Títulos de sección: mayúsculas con alto contraste */
+/* Rótulos de sección: mayúsculas pequeñas con espaciado, como la lámina */
 .titulo-seccion {
   margin: 0 0 16px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-family: var(--fuente);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-suave);
 }
 
 .texto-degradado {
-  background: var(--degradado-marca);
+  background: var(--degradado-atardecer);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+
+/* Bloques oscuros "terciopelo" (portada, pie) */
+.seccion-oscura {
+  background: var(--fondo-terciopelo);
+  color: var(--ivory-dust);
+}
+.seccion-oscura .titulo-seccion { color: var(--soft-rose); }
 
 .contenedor {
   width: 100%;
@@ -86,36 +96,37 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
   justify-content: center;
   gap: 8px;
   min-height: 48px; /* área táctil cómoda en móvil */
-  padding: 12px 24px;
+  padding: 12px 26px;
   border: 0;
   border-radius: 999px;
   background: var(--color-acento);
   color: var(--color-acento-texto);
   font: inherit;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: var(--brillo-magenta);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
-.boton:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgb(255 46 147 / 0.75); }
+.boton:hover { background: #c22f5d; transform: translateY(-1px); }
 
 .etiqueta {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  border: 1px solid rgb(255 46 147 / 0.45);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  color: var(--soft-rose);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--berry-magenta);
 }
 
-:focus-visible { outline: 2px solid var(--magenta-glow); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--berry-magenta); outline-offset: 3px; }
 
 @media (min-width: 768px) {
   .contenedor { padding-inline: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  * { transition: none !important; animation: none !important; }
 }

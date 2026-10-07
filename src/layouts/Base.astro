@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import Destello from '../components/Destello.astro';
 import { SITIO } from '../config';
 
 interface Props {
@@ -19,7 +20,7 @@ const anio = new Date().getFullYear();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#1d181e" />
+    <meta name="theme-color" content="#3a243b" />
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
     <meta property="og:title" content={tituloCompleto} />
@@ -30,7 +31,7 @@ const anio = new Date().getFullYear();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Krona+One&family=Montserrat:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap"
     />
   </head>
   <body>
@@ -48,16 +49,22 @@ const anio = new Date().getFullYear();
       <slot />
     </main>
 
-    <footer id="contacto" class="pie">
+    <footer id="contacto" class="pie seccion-oscura">
       <div class="contenedor pie__fila">
-        <p class="pie__llamado">¿Tienes una idea? <span class="texto-degradado">La diseñamos contigo.</span></p>
-        <p class="pie__texto">Tu mascota, tu equipo, tu personaje favorito o ese regalo que no encuentras en ninguna tienda: cuéntanos y lo hacemos realidad.</p>
+        <Destello tamano={28} />
+        <p class="pie__cierre">{SITIO.cierre}</p>
+        <p class="pie__texto">
+          ¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real.
+        </p>
         <div class="pie__enlaces">
           <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a>
           <a href={SITIO.instagram} target="_blank" rel="noopener">Instagram</a>
           <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
         </div>
-        <small>© {anio} {SITIO.nombre} · {SITIO.descriptor}</small>
+        <div class="pie__firma">
+          <Logo claro />
+          <small>{SITIO.descriptor} · © {anio}</small>
+        </div>
       </div>
     </footer>
   </body>
@@ -68,7 +75,7 @@ const anio = new Date().getFullYear();
     position: sticky;
     top: 0;
     z-index: 10;
-    background: rgb(29 24 30 / 0.8);
+    background: rgb(253 251 247 / 0.88);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-borde);
   }
@@ -79,26 +86,47 @@ const anio = new Date().getFullYear();
     gap: 12px;
     min-height: 64px;
   }
-  nav { display: flex; gap: 18px; font-size: 0.9rem; font-weight: 600; }
-  nav a { text-decoration: none; color: var(--color-suave); }
-  nav a:hover { color: var(--magenta-glow); }
-
-  .pie {
-    margin-top: 80px;
-    padding-block: 48px;
-    border-top: 1px solid var(--color-borde);
-    background: linear-gradient(180deg, transparent, rgb(255 46 147 / 0.06));
+  nav { display: flex; gap: 22px; }
+  nav a {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
     color: var(--color-suave);
   }
-  .pie__fila { display: grid; gap: 14px; }
-  .pie__llamado { margin: 0; font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: var(--color-texto); line-height: 1.2; }
-  .pie__texto { margin: 0; max-width: 52ch; }
-  .pie__enlaces { display: flex; flex-wrap: wrap; gap: 10px 20px; font-weight: 600; }
+  nav a:hover { color: var(--berry-magenta); }
+
+  .pie { margin-top: 96px; padding-block: 64px 40px; }
+  .pie__fila { display: grid; gap: 18px; justify-items: start; }
+  .pie__cierre {
+    margin: 0;
+    max-width: 18ch;
+    font-family: var(--fuente-display);
+    font-style: italic;
+    font-size: clamp(1.8rem, 7vw, 2.8rem);
+    line-height: 1.15;
+  }
+  .pie__texto { margin: 0; max-width: 46ch; color: rgb(253 251 247 / 0.75); }
+  .pie__enlaces { display: flex; flex-wrap: wrap; gap: 10px 24px; font-weight: 500; }
   .pie__enlaces a { color: var(--soft-rose); text-decoration: none; }
-  .pie__enlaces a:hover { color: var(--magenta-glow); }
+  .pie__enlaces a:hover { color: var(--burnt-orange); }
+  .pie__firma {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+    width: 100%;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgb(244 182 194 / 0.2);
+    color: rgb(253 251 247 / 0.6);
+    font-size: 0.8rem;
+  }
 
   @media (max-width: 400px) {
-    nav { gap: 12px; font-size: 0.82rem; }
+    nav { gap: 14px; }
+    nav a { letter-spacing: 0.12em; }
   }
   @media (max-width: 340px) {
     nav a:first-child { display: none; }

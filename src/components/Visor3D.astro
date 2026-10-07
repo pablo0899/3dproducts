@@ -51,8 +51,9 @@ const { modelo, nombre, poster } = Astro.props;
     overflow: hidden;
     border: 1px solid var(--color-borde);
     background:
-      radial-gradient(circle at 50% 45%, rgb(255 46 147 / 0.18), transparent 60%),
-      radial-gradient(circle at 50% 40%, var(--color-superficie-2), var(--color-superficie));
+      radial-gradient(circle at 50% 45%, rgb(216 58 107 / 0.28), transparent 60%),
+      radial-gradient(circle at 50% 100%, rgb(224 122 95 / 0.25), transparent 60%),
+      var(--plum-night);
   }
   model-viewer {
     /* model-viewer trae width: 300px; height: 150px por defecto */
@@ -66,7 +67,7 @@ const { modelo, nombre, poster } = Astro.props;
     margin: 0;
     text-align: center;
     font-size: 0.8rem;
-    color: var(--color-suave);
+    color: rgb(253 251 247 / 0.7);
     pointer-events: none;
   }
 </style>
