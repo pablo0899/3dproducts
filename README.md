@@ -1,4 +1,4 @@
-# Tangible Estudio
+# Prismatika · Design Studio Xalapa
 
 Sitio estático hecho con [Astro](https://astro.build) y [`<model-viewer>`](https://modelviewer.dev).
 Cada producto es **un archivo Markdown + una carpeta con fotos y su modelo 3D**. No hay base de datos ni panel de administración que mantener.
@@ -33,14 +33,14 @@ src/pages/                     ← portada (catálogo) y página de detalle de p
    ```markdown
    ---
    nombre: Llavero gato
-   resumen: Llavero de gato en PLA, ligero y resistente.
-   categoria: Accesorios
+   resumen: Tu gato, colgando de tus llaves.
+   categoria: Mascotas       # debe ser una de las líneas de CATEGORIAS en src/config.ts
    precio: 60                 # opcional; sin precio muestra "Precio a consultar"
    fotos:
      - /productos/llavero-gato/foto-1.jpg
      - /productos/llavero-gato/foto-2.jpg
    modelo: /productos/llavero-gato/modelo.glb   # opcional
-   material: PLA
+   material: Acabado mate
    dimensiones: 5 × 4 × 0.5 cm
    colores: [Negro, Blanco]
    disponible: true           # false = aparece como "Agotado"
@@ -53,7 +53,7 @@ src/pages/                     ← portada (catálogo) y página de detalle de p
 3. Revisa con `npm run dev` y publica.
 
 El nombre del archivo `.md` es la URL: `llavero-gato.md` → `/productos/llavero-gato/`.
-Las categorías de los filtros se crean solas a partir del campo `categoria`.
+Las líneas (Mascotas, Figuras personalizadas, Fandom deportivo, Souvenirs xalapeños, Juegos de mesa) y sus íconos se definen en `CATEGORIAS` dentro de `src/config.ts`; el campo `categoria` debe coincidir exactamente.
 Si te falta un campo obligatorio, `npm run build` te dirá exactamente cuál.
 
 ## Modelos 3D: de STL a GLB

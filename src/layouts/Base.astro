@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Logo from '../components/Logo.astro';
 import { SITIO } from '../config';
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 }
 
 const { titulo, descripcion = SITIO.descripcion, imagen } = Astro.props;
-const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : SITIO.nombre;
+const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : `${SITIO.nombre} · ${SITIO.descriptor}`;
 const anio = new Date().getFullYear();
 ---
 
@@ -18,17 +19,24 @@ const anio = new Date().getFullYear();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1d181e" />
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
     <meta property="og:title" content={tituloCompleto} />
     <meta property="og:description" content={descripcion} />
     {imagen && <meta property="og:image" content={new URL(imagen, Astro.site)} />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Krona+One&family=Montserrat:wght@400;500;600;700;800&display=swap"
+    />
   </head>
   <body>
     <header class="cabecera">
       <div class="contenedor cabecera__fila">
-        <a href="/" class="marca">{SITIO.nombre}</a>
+        <Logo />
         <nav>
           <a href="/#catalogo">Productos</a>
           <a href="#contacto">Contacto</a>
@@ -42,13 +50,14 @@ const anio = new Date().getFullYear();
 
     <footer id="contacto" class="pie">
       <div class="contenedor pie__fila">
-        <p>¿Tienes un problema que ningún producto resuelve? Cuéntanos y lo inventamos.</p>
+        <p class="pie__llamado">¿Tienes una idea? <span class="texto-degradado">La diseñamos contigo.</span></p>
+        <p class="pie__texto">Tu mascota, tu equipo, tu personaje favorito o ese regalo que no encuentras en ninguna tienda: cuéntanos y lo hacemos realidad.</p>
         <div class="pie__enlaces">
           <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a>
           <a href={SITIO.instagram} target="_blank" rel="noopener">Instagram</a>
           <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
         </div>
-        <small>© {anio} {SITIO.nombre}</small>
+        <small>© {anio} {SITIO.nombre} · {SITIO.descriptor}</small>
       </div>
     </footer>
   </body>
@@ -59,28 +68,39 @@ const anio = new Date().getFullYear();
     position: sticky;
     top: 0;
     z-index: 10;
-    background: color-mix(in srgb, var(--color-fondo) 85%, transparent);
-    backdrop-filter: blur(10px);
+    background: rgb(29 24 30 / 0.8);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-borde);
   }
   .cabecera__fila {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 60px;
+    gap: 12px;
+    min-height: 64px;
   }
-  .marca { font-weight: 800; font-size: 1.15rem; text-decoration: none; }
-  nav { display: flex; gap: 18px; }
+  nav { display: flex; gap: 18px; font-size: 0.9rem; font-weight: 600; }
   nav a { text-decoration: none; color: var(--color-suave); }
-  nav a:hover { color: var(--color-texto); }
+  nav a:hover { color: var(--magenta-glow); }
 
   .pie {
-    margin-top: 64px;
-    padding-block: 40px;
+    margin-top: 80px;
+    padding-block: 48px;
     border-top: 1px solid var(--color-borde);
+    background: linear-gradient(180deg, transparent, rgb(255 46 147 / 0.06));
     color: var(--color-suave);
   }
-  .pie__fila { display: grid; gap: 12px; }
-  .pie p { margin: 0; color: var(--color-texto); font-weight: 600; }
-  .pie__enlaces { display: flex; flex-wrap: wrap; gap: 16px; }
+  .pie__fila { display: grid; gap: 14px; }
+  .pie__llamado { margin: 0; font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: var(--color-texto); line-height: 1.2; }
+  .pie__texto { margin: 0; max-width: 52ch; }
+  .pie__enlaces { display: flex; flex-wrap: wrap; gap: 10px 20px; font-weight: 600; }
+  .pie__enlaces a { color: var(--soft-rose); text-decoration: none; }
+  .pie__enlaces a:hover { color: var(--magenta-glow); }
+
+  @media (max-width: 400px) {
+    nav { gap: 12px; font-size: 0.82rem; }
+  }
+  @media (max-width: 340px) {
+    nav a:first-child { display: none; }
+  }
 </style>

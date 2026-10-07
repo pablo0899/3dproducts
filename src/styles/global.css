@@ -1,25 +1,34 @@
-/* ── Colores y medidas: cambia aquí la identidad visual ── */
+/* ── Identidad Prismatika: colores, tipografía y efectos ── */
 :root {
-  --color-fondo: #f7f6f3;
-  --color-superficie: #ffffff;
-  --color-texto: #1d1d1f;
-  --color-suave: #6b6b70;
-  --color-borde: #e4e2dd;
-  --color-acento: #ff5a1f;
-  --color-acento-texto: #ffffff;
-  --radio: 14px;
-  --ancho-max: 1120px;
-  --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
+  /* Paleta de marca */
+  --plum-night: #2a242b;
+  --magenta-glow: #ff2e93;
+  --terracotta: #c25e38;
+  --burnt-orange: #e07a5f;
+  --soft-rose: #f4b6c2;
+  --ivory: #fdfbf7;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-fondo: #141416;
-    --color-superficie: #1e1e21;
-    --color-texto: #f2f2f3;
-    --color-suave: #a0a0a8;
-    --color-borde: #2e2e33;
-  }
+  /* Roles (el sitio es oscuro por identidad) */
+  --color-fondo: #1d181e;
+  --color-superficie: var(--plum-night);
+  --color-superficie-2: #362e37;
+  --color-texto: var(--ivory);
+  --color-suave: #c9b9c4;
+  --color-borde: rgb(244 182 194 / 0.14);
+  --color-acento: var(--magenta-glow);
+  --color-acento-texto: var(--ivory);
+  --color-calido: var(--burnt-orange);
+
+  --brillo-magenta: 0 0 18px rgb(255 46 147 / 0.55);
+  --brillo-naranja: 0 0 18px rgb(224 122 95 / 0.5);
+  --degradado-marca: linear-gradient(90deg, var(--magenta-glow) 0%, var(--soft-rose) 70%, var(--ivory) 100%);
+
+  --radio: 16px;
+  --ancho-max: 1120px;
+  --fuente: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fuente-marca: 'Krona One', 'Montserrat', sans-serif;
+
+  color-scheme: dark;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -29,13 +38,40 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   font-family: var(--fuente);
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--color-texto);
-  background: var(--color-fondo);
+  background-color: var(--color-fondo);
+  /* Rejilla tenue + destellos, como en la identidad */
+  background-image:
+    radial-gradient(600px 400px at 85% -5%, rgb(255 46 147 / 0.22), transparent 70%),
+    radial-gradient(500px 380px at -10% 30%, rgb(224 122 95 / 0.12), transparent 70%),
+    linear-gradient(rgb(244 182 194 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 182 194 / 0.04) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+  background-attachment: fixed;
 }
 
 img { max-width: 100%; display: block; }
 a { color: inherit; }
+
+h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
+
+/* Títulos de sección: mayúsculas con alto contraste */
+.titulo-seccion {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-suave);
+}
+
+.texto-degradado {
+  background: var(--degradado-marca);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 .contenedor {
   width: 100%;
@@ -50,27 +86,36 @@ a { color: inherit; }
   justify-content: center;
   gap: 8px;
   min-height: 48px; /* área táctil cómoda en móvil */
-  padding: 12px 22px;
+  padding: 12px 24px;
   border: 0;
   border-radius: 999px;
   background: var(--color-acento);
   color: var(--color-acento-texto);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
+  box-shadow: var(--brillo-magenta);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.boton:hover { filter: brightness(1.08); }
+.boton:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgb(255 46 147 / 0.75); }
 
 .etiqueta {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
-  border: 1px solid var(--color-borde);
-  font-size: 0.8rem;
-  color: var(--color-suave);
+  border: 1px solid rgb(255 46 147 / 0.45);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--soft-rose);
 }
+
+:focus-visible { outline: 2px solid var(--magenta-glow); outline-offset: 3px; }
 
 @media (min-width: 768px) {
   .contenedor { padding-inline: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
 }

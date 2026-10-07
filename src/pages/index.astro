@@ -2,82 +2,161 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
-import { SITIO } from '../config';
+import Isotipo from '../components/Isotipo.astro';
+import Icono from '../components/Icono.astro';
+import { SITIO, CATEGORIAS } from '../config';
 
 const productos = (await getCollection('productos')).sort(
   (a, b) => Number(b.data.destacado) - Number(a.data.destacado) || a.data.orden - b.data.orden,
 );
-const categorias = [...new Set(productos.map((p) => p.data.categoria))].sort();
 ---
 
 <Base>
   <section class="portada contenedor">
-    <h1>{SITIO.eslogan}</h1>
-    <p>{SITIO.subtitulo}</p>
-    <a href="#catalogo" class="boton">Descubrir</a>
+    <div class="portada__texto">
+      <p class="titulo-seccion">{SITIO.descriptor}</p>
+      <h1>{SITIO.eslogan}</h1>
+      <p class="portada__sub">{SITIO.subtitulo}</p>
+      <a href="#catalogo" class="boton">Descubrir</a>
+    </div>
+    <div class="portada__isotipo">
+      <Isotipo tamano={220} />
+    </div>
   </section>
 
   <section id="catalogo" class="contenedor">
-    {categorias.length > 1 && (
-      <div class="filtros" role="group" aria-label="Filtrar por categoría">
-        <button type="button" data-filtro="" aria-pressed="true">Todos</button>
-        {categorias.map((c) => (
-          <button type="button" data-filtro={c} aria-pressed="false">{c}</button>
-        ))}
-      </div>
-    )}
+    <h2 class="titulo-seccion">Explora por línea</h2>
+    <div class="lineas" role="group" aria-label="Filtrar por línea de producto">
+      {CATEGORIAS.map((c) => (
+        <button type="button" class={`linea linea--${c.color}`} data-filtro={c.nombre} aria-pressed="false">
+          <Icono nombre={c.icono} />
+          <span>{c.nombre}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="catalogo__cabecera">
+      <h2 class="titulo-seccion" id="titulo-rejilla">Todos los productos</h2>
+      <button type="button" class="ver-todo" hidden>Ver todo ✕</button>
+    </div>
 
     <div class="rejilla">
       {productos.map((producto) => <TarjetaProducto producto={producto} />)}
     </div>
+    <p class="vacio" hidden>
+      Muy pronto tendremos productos en esta línea. ¿Quieres uno a tu medida? <a href="#contacto">Escríbenos</a>.
+    </p>
   </section>
 </Base>
 
 <script>
-  const botones = document.querySelectorAll<HTMLButtonElement>('.filtros button');
+  const lineas = document.querySelectorAll<HTMLButtonElement>('.lineas button');
   const tarjetas = document.querySelectorAll<HTMLElement>('.rejilla [data-categoria]');
+  const titulo = document.querySelector<HTMLElement>('#titulo-rejilla')!;
+  const verTodo = document.querySelector<HTMLButtonElement>('.ver-todo')!;
+  const vacio = document.querySelector<HTMLElement>('.vacio')!;
 
-  botones.forEach((boton) => {
+  function filtrar(filtro: string) {
+    lineas.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === filtro)));
+    let visibles = 0;
+    tarjetas.forEach((t) => {
+      t.hidden = !!filtro && t.dataset.categoria !== filtro;
+      if (!t.hidden) visibles++;
+    });
+    titulo.textContent = filtro || 'Todos los productos';
+    verTodo.hidden = !filtro;
+    vacio.hidden = visibles > 0;
+  }
+
+  lineas.forEach((boton) => {
     boton.addEventListener('click', () => {
-      const filtro = boton.dataset.filtro;
-      botones.forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
-      tarjetas.forEach((t) => (t.hidden = !!filtro && t.dataset.categoria !== filtro));
+      const activo = boton.getAttribute('aria-pressed') === 'true';
+      filtrar(activo ? '' : boton.dataset.filtro!);
     });
   });
+  verTodo.addEventListener('click', () => filtrar(''));
 </script>
 
 <style>
-  .portada { padding-block: 48px 32px; display: grid; gap: 12px; justify-items: start; }
-  .portada h1 { margin: 0; font-size: clamp(2.1rem, 9vw, 4rem); line-height: 1.1; }
-  .portada p { margin: 0 0 8px; font-size: 1.1rem; color: var(--color-suave); max-width: 48ch; }
+  .portada {
+    display: grid;
+    gap: 24px;
+    align-items: center;
+    padding-block: 40px 48px;
+  }
+  .portada__texto { display: grid; gap: 14px; justify-items: start; }
+  .portada .titulo-seccion { margin: 0; color: var(--soft-rose); }
+  .portada h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 9vw, 4.2rem);
+    line-height: 1.05;
+    text-transform: uppercase;
+    background: var(--degradado-marca);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .portada__sub { margin: 0 0 8px; font-size: 1.05rem; color: var(--color-suave); max-width: 46ch; }
+  .portada__isotipo { display: none; justify-self: center; }
 
-  .filtros {
+  .lineas {
     display: flex;
-    gap: 8px;
+    gap: 12px;
     overflow-x: auto;
-    padding-bottom: 16px;
+    padding: 4px 2px 20px;
+    margin-bottom: 16px;
     scrollbar-width: none;
   }
-  .filtros button {
-    flex: none;
-    min-height: 40px;
-    padding: 8px 16px;
+  .lineas::-webkit-scrollbar { display: none; }
+  .linea {
+    flex: 0 0 132px;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 18px 10px 14px;
     border: 1px solid var(--color-borde);
-    border-radius: 999px;
-    background: var(--color-superficie);
+    border-radius: var(--radio);
+    background: rgb(42 36 43 / 0.7);
     color: var(--color-texto);
     font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .linea svg { filter: drop-shadow(0 0 6px currentColor); }
+  .linea--magenta svg { color: var(--magenta-glow); }
+  .linea--naranja svg { color: var(--burnt-orange); }
+  .linea:hover { transform: translateY(-2px); }
+  .linea--magenta[aria-pressed='true'] { border-color: var(--magenta-glow); box-shadow: var(--brillo-magenta); }
+  .linea--naranja[aria-pressed='true'] { border-color: var(--burnt-orange); box-shadow: var(--brillo-naranja); }
+
+  .catalogo__cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .ver-todo {
+    min-height: 40px;
+    border: 0;
+    background: none;
+    color: var(--soft-rose);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
   }
-  .filtros button[aria-pressed='true'] {
-    background: var(--color-texto);
-    color: var(--color-fondo);
-    border-color: var(--color-texto);
-  }
+  .vacio { padding: 32px 0; color: var(--color-suave); }
+  .vacio a { color: var(--magenta-glow); }
 
   /* 1 columna en móvil pequeño, 2 en móvil grande, 3-4 en escritorio */
   .rejilla { display: grid; gap: 16px; grid-template-columns: 1fr; }
   @media (min-width: 420px) { .rejilla { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-  @media (min-width: 900px) { .rejilla { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+  @media (min-width: 900px) {
+    .rejilla { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .portada { grid-template-columns: 1.4fr 1fr; padding-block: 72px 64px; }
+    .portada__isotipo { display: block; }
+    .lineas { display: grid; grid-template-columns: repeat(5, 1fr); overflow: visible; }
+  }
   @media (min-width: 1100px) { .rejilla { grid-template-columns: repeat(4, 1fr); } }
 </style>

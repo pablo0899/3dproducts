@@ -49,7 +49,10 @@ const { modelo, nombre, poster } = Astro.props;
     aspect-ratio: 1;
     border-radius: var(--radio);
     overflow: hidden;
-    background: radial-gradient(circle at 50% 40%, var(--color-superficie), var(--color-borde));
+    border: 1px solid var(--color-borde);
+    background:
+      radial-gradient(circle at 50% 45%, rgb(255 46 147 / 0.18), transparent 60%),
+      radial-gradient(circle at 50% 40%, var(--color-superficie-2), var(--color-superficie));
   }
   model-viewer {
     /* model-viewer trae width: 300px; height: 150px por defecto */

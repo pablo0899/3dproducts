@@ -75,7 +75,7 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
 
 <style>
   .producto { display: grid; gap: 24px; padding-top: 16px; }
-  .volver { grid-column: 1 / -1; color: var(--color-suave); text-decoration: none; }
+  .volver { grid-column: 1 / -1; color: var(--soft-rose); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
 
   .pestanas {
     display: grid;
@@ -84,7 +84,8 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
     padding: 4px;
     margin-bottom: 12px;
     border-radius: 999px;
-    background: var(--color-borde);
+    border: 1px solid var(--color-borde);
+    background: var(--color-superficie);
   }
   .pestanas button {
     min-height: 40px;
@@ -96,11 +97,11 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
     font-weight: 600;
     cursor: pointer;
   }
-  .pestanas button[aria-selected='true'] { background: var(--color-superficie); color: var(--color-texto); }
+  .pestanas button[aria-selected='true'] { background: var(--magenta-glow); color: var(--ivory); box-shadow: var(--brillo-magenta); }
 
   .producto__info { display: grid; gap: 8px; align-content: start; justify-items: start; }
-  h1 { margin: 4px 0 0; font-size: clamp(1.6rem, 6vw, 2.4rem); line-height: 1.15; }
-  .precio { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--color-acento); }
+  h1 { margin: 4px 0 0; font-size: clamp(1.7rem, 6vw, 2.6rem); line-height: 1.1; }
+  .precio { margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--burnt-orange); }
   .resumen { margin: 0; color: var(--color-suave); }
 
   .ficha {
@@ -114,7 +115,7 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
     border-radius: var(--radio);
     background: var(--color-superficie);
   }
-  dt { color: var(--color-suave); }
+  dt { color: var(--color-suave); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; align-self: center; }
   dd { margin: 0; }
 
   .pedir { width: 100%; }
@@ -122,7 +123,7 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
 
   @media (min-width: 900px) {
     .producto { grid-template-columns: 1.1fr 1fr; gap: 40px; }
-    .producto__medios { position: sticky; top: 76px; align-self: start; }
+    .producto__medios { position: sticky; top: 80px; align-self: start; }
     .pedir { width: auto; }
   }
 </style>

@@ -1,0 +1,24 @@
+---
+import Isotipo from './Isotipo.astro';
+
+interface Props {
+  tamano?: number;
+}
+
+const { tamano = 34 } = Astro.props;
+---
+
+<a href="/" class="logo" aria-label="Prismatika, inicio">
+  <Isotipo tamano={tamano} />
+  <span class="logo__texto"><span class="logo__prism">PRISM</span><span class="texto-degradado">ATIKA</span></span>
+</a>
+
+<style>
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo__texto { font-family: var(--fuente-marca); font-size: 1.05rem; letter-spacing: 0.02em; }
+  @media (max-width: 400px) {
+    .logo { gap: 8px; }
+    .logo__texto { font-size: 0.88rem; }
+  }
+  .logo__prism { color: var(--magenta-glow); text-shadow: 0 0 14px rgb(255 46 147 / 0.6); }
+</style>

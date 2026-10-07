@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+<defs><radialGradient id="g" cx="50%" cy="42%" r="65%"><stop offset="0" stop-color="#5a2b47"/><stop offset="1" stop-color="#2a242b"/></radialGradient>
+<filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
+<rect width="600" height="600" fill="url(#g)"/>
+<g transform="translate(150 110) scale(6.25)" fill="none" stroke="#ff2e93" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><g filter="url(#b)" opacity=".8"><path d="M24 3l19 11v20L24 45 5 34V14z"/><path d="M24 3l-10 20h20z"/><path d="M14 23L5 14M34 23l9-9M14 23l10 22 10-22M14 23L5 34M34 23l9 11"/></g><path d="M24 3l19 11v20L24 45 5 34V14z"/><path d="M24 3l-10 20h20z"/><path d="M14 23L5 14M34 23l9-9M14 23l10 22 10-22M14 23L5 34M34 23l9 11"/></g>
+<text x="300" y="545" fill="#fdfbf7" fill-opacity=".85" font-family="Montserrat,system-ui,sans-serif" font-size="26" font-weight="700" letter-spacing="3" text-anchor="middle">FOTO 1</text>
+</svg>
