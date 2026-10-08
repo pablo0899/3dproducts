@@ -13,15 +13,13 @@ const productos = (await getCollection('productos')).sort(
 
 <Base>
   <section class="portada seccion-oscura">
-    <!-- Luz prismática decorativa -->
+    <!-- Isotipo con haces de luz -->
     <div class="prisma" aria-hidden="true">
       <span class="prisma__haz prisma__haz--1"></span>
       <span class="prisma__haz prisma__haz--2"></span>
       <span class="prisma__haz prisma__haz--3"></span>
-      <span class="prisma__cristal"></span>
-      <span class="prisma__faceta"></span>
-      <span class="prisma__orbita"></span>
-      <Destello tamano={34} class="prisma__destello" />
+      <img class="prisma__isotipo" src="/marca/isotipo.webp" alt="" width="640" height="640" fetchpriority="high" />
+      <Destello tamano={30} class="prisma__destello" />
     </div>
 
     <div class="contenedor portada__texto">
@@ -106,7 +104,7 @@ const productos = (await getCollection('productos')).sort(
   .portada {
     position: relative;
     overflow: hidden;
-    padding-block: 64px 72px;
+    padding-block: 36px 64px;
   }
   .portada__texto { position: relative; z-index: 1; display: grid; gap: 16px; justify-items: start; }
   .portada .titulo-seccion { margin: 0; }
@@ -120,15 +118,12 @@ const productos = (await getCollection('productos')).sort(
   }
   .portada__sub { margin: 0 0 8px; max-width: 40ch; color: rgb(253 251 247 / 0.78); }
 
-  /* Prisma: cristal, haces de luz y órbita (solo CSS) */
+  /* Isotipo con haces de luz. En móvil va arriba del texto, completo; en escritorio, a la derecha */
   .prisma {
-    position: absolute;
-    top: 50%;
-    right: -120px;
-    width: 260px;
-    height: 320px;
-    transform: translateY(-50%);
-    opacity: 0.35;
+    position: relative;
+    width: 128px;
+    height: 128px;
+    margin: 0 0 12px 8px;
     pointer-events: none;
   }
   .prisma__haz {
@@ -145,27 +140,20 @@ const productos = (await getCollection('productos')).sort(
   .prisma__haz--1 { transform: rotate(160deg); }
   .prisma__haz--2 { transform: rotate(200deg); background: linear-gradient(90deg, transparent, rgb(216 58 107 / 0.7), transparent); }
   .prisma__haz--3 { transform: rotate(-20deg); height: 30px; }
-  .prisma__cristal, .prisma__faceta {
+  .prisma__haz { width: 300px; height: 28px; opacity: 0.6; }
+  .prisma__isotipo {
     position: absolute;
-    inset: 40px 50px;
-    clip-path: polygon(50% 0, 100% 58%, 50% 100%, 0 58%);
+    inset: 50% auto auto 50%;
+    width: 100%;
+    height: auto;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 40px rgb(216 58 107 / 0.45));
+    animation: flotar 7s ease-in-out infinite;
   }
-  .prisma__cristal { background: var(--degradado-prisma); box-shadow: 0 0 60px rgb(216 58 107 / 0.6); }
-  .prisma__faceta {
-    background: linear-gradient(200deg, rgb(253 251 247 / 0.55), transparent 45%, rgb(58 36 59 / 0.5));
-    clip-path: polygon(50% 0, 100% 58%, 50% 100%);
+  @keyframes flotar {
+    50% { transform: translate(-50%, -54%) rotate(2deg); }
   }
-  .prisma__orbita {
-    position: absolute;
-    left: -10px;
-    right: -10px;
-    top: 52%;
-    height: 90px;
-    border: 1px solid rgb(244 182 194 / 0.6);
-    border-radius: 50%;
-    transform: rotate(-14deg);
-  }
-  :global(.prisma__destello) { position: absolute; top: 18px; left: 30px; display: none; }
+  :global(.prisma__destello) { position: absolute; top: 4px; right: 12px; display: none; }
 
   /* ── Esencia ── */
   .esencia { padding-block: 64px 24px; }
@@ -245,7 +233,9 @@ const productos = (await getCollection('productos')).sort(
   @media (min-width: 600px) { .esencia__lista { grid-template-columns: repeat(3, 1fr); } }
   @media (min-width: 900px) {
     .portada { padding-block: 120px 128px; }
-    .prisma { right: 8%; width: 360px; height: 420px; opacity: 1; }
+    .prisma { position: absolute; top: 50%; right: 7%; width: 380px; height: 380px; margin: 0; transform: translateY(-50%); }
+    .prisma__haz { width: 520px; height: 46px; opacity: 1; }
+    .prisma__haz--3 { height: 30px; }
     :global(.prisma__destello) { display: block; }
     .rejilla { grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .esencia__lista { grid-template-columns: repeat(6, 1fr); }

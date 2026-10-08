@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
-import Destello from '../components/Destello.astro';
 import { SITIO } from '../config';
 
 interface Props {
@@ -10,7 +9,7 @@ interface Props {
   imagen?: string;
 }
 
-const { titulo, descripcion = SITIO.descripcion, imagen } = Astro.props;
+const { titulo, descripcion = SITIO.descripcion, imagen = '/marca/og.jpg' } = Astro.props;
 const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : `${SITIO.nombre} · ${SITIO.descriptor}`;
 const anio = new Date().getFullYear();
 ---
@@ -25,8 +24,9 @@ const anio = new Date().getFullYear();
     <meta name="description" content={descripcion} />
     <meta property="og:title" content={tituloCompleto} />
     <meta property="og:description" content={descripcion} />
-    {imagen && <meta property="og:image" content={new URL(imagen, Astro.site)} />}
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:image" content={new URL(imagen, Astro.site)} />
+    <link rel="icon" href="/marca/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/marca/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -51,7 +51,7 @@ const anio = new Date().getFullYear();
 
     <footer id="contacto" class="pie seccion-oscura">
       <div class="contenedor pie__fila">
-        <Destello tamano={28} />
+        <img class="pie__isotipo" src="/marca/isotipo-96.webp" alt="" width="96" height="96" loading="lazy" />
         <p class="pie__cierre">{SITIO.cierre}</p>
         <p class="pie__texto">
           ¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real.
@@ -99,6 +99,7 @@ const anio = new Date().getFullYear();
 
   .pie { margin-top: 96px; padding-block: 64px 40px; }
   .pie__fila { display: grid; gap: 18px; justify-items: start; }
+  .pie__isotipo { width: 56px; height: 56px; }
   .pie__cierre {
     margin: 0;
     max-width: 18ch;
