@@ -13,6 +13,7 @@ Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, o
 - **Regla principal:** los textos públicos **nunca** dicen que los productos son impresos en 3D. Evitar "impresión", "impreso", "capa por capa", "filamento", "PLA", "PETG" y "3D" visible (usar "360°"). Esto aplica a los títulos, las descripciones, los materiales y los alt de las imágenes. La lámina dice "arte, tecnología y diseño"; en el sitio se usa "arte y diseño".
 - **Materiales:** se describen por el beneficio o el acabado ("Acabado mate pintado a mano", "Plástico de alta resistencia", "Acabado sedoso").
 - **Pedidos personalizados:** "¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real."
+- Los nombres de archivos y componentes internos (`Visor3D`, `modelo.glb`) pueden decir 3D porque el visitante no los ve.
 
 ## Contacto y llamados a la acción
 
@@ -29,7 +30,6 @@ Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, o
 - **`TuIdea.astro`:** tres pasos (Cuéntanos tu idea → Te enviamos una propuesta → La hacemos real) y un formulario con nombre, línea (de `CATEGORIAS` + "Otra idea"), idea, fecha y teléfono opcional. **No hay backend:** al enviar, el JS arma un `mailto:` (o un `wa.me` si hay WhatsApp) con el mensaje ya redactado. Los inputs usan 16 px para evitar el zoom automático del iPhone.
 - **`Llamado.astro`:** banda terciopelo con título en cursiva, botón a `/#tu-idea` y el correo como atajo. Props: `titulo`, `texto`, `boton` y `asunto` (el asunto del mailto).
 - **Utilidades:** `enlaceCorreo(asunto, cuerpo)` en `src/utils.ts`.
-- Los nombres de archivos y componentes internos (`Visor3D`, `modelo.glb`) pueden decir 3D porque el visitante no los ve.
 
 ## Identidad visual: "Electric Velvet × Sunset Artifact"
 
