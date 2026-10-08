@@ -4,6 +4,8 @@ import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import Icono from '../components/Icono.astro';
 import Destello from '../components/Destello.astro';
+import Llamado from '../components/Llamado.astro';
+import TuIdea from '../components/TuIdea.astro';
 import { SITIO, CATEGORIAS, ESENCIA } from '../config';
 
 const productos = (await getCollection('productos')).sort(
@@ -26,7 +28,10 @@ const productos = (await getCollection('productos')).sort(
       <p class="titulo-seccion">{SITIO.descriptor}</p>
       <h1>{SITIO.eslogan}</h1>
       <p class="portada__sub">{SITIO.subtitulo}</p>
-      <a href="#catalogo" class="boton">Descubre la colección</a>
+      <div class="portada__acciones">
+        <a href="#tu-idea" class="boton">Cuéntanos tu idea</a>
+        <a href="#catalogo" class="boton boton--secundario">Ver la colección</a>
+      </div>
     </div>
   </section>
 
@@ -44,6 +49,7 @@ const productos = (await getCollection('productos')).sort(
         </li>
       ))}
     </ul>
+    <a href="#tu-idea" class="esencia__enlace">¿Ya la estás imaginando? Cuéntanos tu idea <span aria-hidden="true">→</span></a>
   </section>
 
   <section id="catalogo" class="contenedor catalogo">
@@ -66,9 +72,16 @@ const productos = (await getCollection('productos')).sort(
       {productos.map((producto) => <TarjetaProducto producto={producto} />)}
     </div>
     <p class="vacio" hidden>
-      Muy pronto tendremos piezas en esta línea. ¿Quieres una a tu medida? <a href="#contacto">Escríbenos</a>.
+      Muy pronto tendremos piezas en esta línea. ¿Quieres una a tu medida? <a href="#tu-idea">Cuéntanos tu idea</a>.
     </p>
+
+    <Llamado
+      titulo="¿No está lo que buscas? Lo creamos para ti."
+      texto="Cada pieza puede llevar tu nombre, tus colores o la historia que quieras contar."
+    />
   </section>
+
+  <TuIdea />
 </Base>
 
 <script>
@@ -117,6 +130,7 @@ const productos = (await getCollection('productos')).sort(
     line-height: 1.05;
   }
   .portada__sub { margin: 0 0 8px; max-width: 40ch; color: rgb(253 251 247 / 0.78); }
+  .portada__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
 
   /* Isotipo con haces de luz. En móvil va arriba del texto, completo; en escritorio, a la derecha */
   .prisma {
@@ -224,6 +238,16 @@ const productos = (await getCollection('productos')).sort(
     font-weight: 600;
     cursor: pointer;
   }
+  .esencia__enlace {
+    display: inline-block;
+    margin-top: 36px;
+    color: var(--berry-magenta);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgb(216 58 107 / 0.35);
+    text-underline-offset: 5px;
+  }
+  .esencia__enlace:hover { color: var(--terracotta); }
   .vacio { padding: 32px 0; color: var(--color-suave); }
   .vacio a { color: var(--berry-magenta); }
 

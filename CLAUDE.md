@@ -13,6 +13,22 @@ Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, o
 - **Regla principal:** los textos públicos **nunca** dicen que los productos son impresos en 3D. Evitar "impresión", "impreso", "capa por capa", "filamento", "PLA", "PETG" y "3D" visible (usar "360°"). Esto aplica a los títulos, las descripciones, los materiales y los alt de las imágenes. La lámina dice "arte, tecnología y diseño"; en el sitio se usa "arte y diseño".
 - **Materiales:** se describen por el beneficio o el acabado ("Acabado mate pintado a mano", "Plástico de alta resistencia", "Acabado sedoso").
 - **Pedidos personalizados:** "¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real."
+
+## Contacto y llamados a la acción
+
+- **Correo oficial:** `prismatixalapa@gmail.com` (`SITIO.email`). Es el canal principal.
+- **WhatsApp e Instagram:** `SITIO.whatsapp` y `SITIO.instagram` están **vacíos a propósito**. Mientras lo estén, sus botones no aparecen en ningún lado. Al poner el número (formato `521…`) o la URL, aparecen solos: en el pie, en el formulario ("Enviar por WhatsApp") y en cada producto.
+- **Nombre de la acción:** el usuario **no quiere "Agenda tu idea"**. Se usa **"Cuéntanos tu idea"** en los botones y **"Dale forma a tu idea"** como título de la sección. Otros textos de la familia: "Lo quiero · Escríbenos", "¿Lo quieres con tu toque? Personalízalo →".
+- **Patrón** (inspirado en una página de referencia que repite "agendar cita" en cada sección): un solo destino para todos los llamados, la sección `#tu-idea` (`TuIdea.astro`). Aparece en:
+  1. La cabecera: botón fijo "Cuéntanos tu idea"; abajo de 360 px dice "Tu idea" y abajo de 480 px se oculta el enlace "Colección".
+  2. La portada: "Cuéntanos tu idea" (principal) + "Ver la colección" (secundario).
+  3. Después de Esencia, como enlace de texto.
+  4. Después del catálogo: `Llamado.astro` ("¿No está lo que buscas? Lo creamos para ti.").
+  5. En cada producto: "Lo quiero · Escríbenos" (mailto con el producto y su URL), "Personalízalo" y un `Llamado` al final.
+  6. El pie: el correo en grande + botón.
+- **`TuIdea.astro`:** tres pasos (Cuéntanos tu idea → Te enviamos una propuesta → La hacemos real) y un formulario con nombre, línea (de `CATEGORIAS` + "Otra idea"), idea, fecha y teléfono opcional. **No hay backend:** al enviar, el JS arma un `mailto:` (o un `wa.me` si hay WhatsApp) con el mensaje ya redactado. Los inputs usan 16 px para evitar el zoom automático del iPhone.
+- **`Llamado.astro`:** banda terciopelo con título en cursiva, botón a `/#tu-idea` y el correo como atajo. Props: `titulo`, `texto`, `boton` y `asunto` (el asunto del mailto).
+- **Utilidades:** `enlaceCorreo(asunto, cuerpo)` en `src/utils.ts`.
 - Los nombres de archivos y componentes internos (`Visor3D`, `modelo.glb`) pueden decir 3D porque el visitante no los ve.
 
 ## Identidad visual: "Electric Velvet × Sunset Artifact"
@@ -69,7 +85,7 @@ src/config.ts                  SITIO (nombre, descriptor, eslogan, cierre, conta
 src/content.config.ts          Esquema Zod de la colección `productos`
 src/content/productos/*.md     Un producto por archivo; el nombre del archivo es el id/URL
 public/productos/<id>/         Fotos y modelo.glb de cada producto (se sirven tal cual)
-src/utils.ts                   formatearPrecio(), enlaceWhatsapp()
+src/utils.ts                   formatearPrecio(), enlaceWhatsapp(), enlaceCorreo()
 src/styles/global.css          Paleta y tokens (:root), degradados, .seccion-oscura, .contenedor, .boton, .etiqueta, .titulo-seccion, .texto-degradado
 src/layouts/Base.astro         <head> (favicon/og desde public/marca) + Google Fonts, cabecera sticky ivory con Logo, pie oscuro con isotipo, cierre de marca y contacto (#contacto)
 public/marca/                  Isotipo transparente (webp/png), favicon, apple-touch-icon y og.jpg
@@ -78,10 +94,12 @@ src/components/
   Destello.astro               Estrella de 4 puntas en degradado (acento en la portada de escritorio)
   Icono.astro                  Íconos de línea fina (líneas de producto y esencia)
   TarjetaProducto.astro        Tarjeta del catálogo (badge "360°", "Agotado")
+  Llamado.astro                Banda de llamado a la acción → /#tu-idea + correo
+  TuIdea.astro                 Sección #tu-idea: pasos + formulario que arma el correo/WhatsApp
   Galeria.astro                Carrusel con scroll-snap y miniaturas
   Visor3D.astro                <model-viewer>; carga el modelo con IntersectionObserver. El visor es cuadrado como la galería; ojo: model-viewer trae height: 150px por defecto, así que necesita height: 100%
-src/pages/index.astro          Portada oscura (eslogan + isotipo con haces de luz), sección Esencia, tarjetas "Explora por línea" que filtran la rejilla (JS en el cliente) y mensaje si una línea está vacía
-src/pages/productos/[id].astro Detalle: pestañas Fotos / Vista 360°, ficha técnica y botón de WhatsApp
+src/pages/index.astro          Portada oscura (eslogan + isotipo + 2 botones), Esencia, "Explora por línea" que filtra la rejilla (JS en el cliente), Llamado y TuIdea
+src/pages/productos/[id].astro Detalle: pestañas Fotos / Vista 360°, ficha técnica, "Lo quiero · Escríbenos" (mailto), WhatsApp si existe y Llamado
 src/pages/404.astro            Página "Esto no existe… todavía." (la usa not_found_handling del Worker)
 ```
 
@@ -113,7 +131,7 @@ El cuerpo en Markdown es la descripción larga que se muestra en la página del 
 - Los productos de ejemplo (uno por línea) usan fotos SVG de relleno con la paleta y GLB generados por script (estadio y d20). Hay que reemplazarlos por los reales.
 - En YAML, un `resumen` que contenga ": " debe ir entre comillas.
 - Para revisar en móvil sin teléfono: Edge headless no baja de ~500 px de ancho, así que se usa una página temporal con un `<iframe>` de 390 px.
-- No hay backend: los pedidos se hacen por WhatsApp (`wa.me`) con un mensaje prellenado.
+- No hay backend: los pedidos llegan por correo (`mailto:`) o por WhatsApp (`wa.me`, cuando haya número), con el mensaje prellenado.
 
 ## Comandos
 
@@ -150,13 +168,14 @@ npm run preview         # sirve el build
 - **Rebranding 2 (2026-10-07):** se adoptó la identidad **Prismatika** (Design Studio · Xalapa) a partir de la lámina del usuario: paleta neón sobre ciruela, Krona One + Montserrat, isotipo de prisma, iconografía neón y las cinco líneas de producto. El usuario decidió mantener la regla de no mencionar la impresión 3D.
 - **Rebranding 3 (2026-10-07):** la identidad pasa a **Prismatix**, "Estudio creativo · Xalapa", con la lámina "Electric Velvet × Sunset Artifact". El sitio cambió de neón oscuro a editorial ivory + terciopelo ciruela, con Playfair Display + Montserrat, el logo con la "A" en degradado, el destello, la sección Esencia y los íconos de línea fina. Se ignoró la sección "Experiencia de marca" porque mencionaba partes de coches.
 - **Isotipo (2026-10-08):** se integró el isotipo oficial (cinta triangular) en el logo, la portada, el pie, el favicon y la imagen para compartir. Sustituye al prisma CSS y al favicon de destello.
+- **Contacto (2026-10-08):** se agregó el correo `prismatixalapa@gmail.com`, se ocultaron WhatsApp e Instagram hasta tener datos reales y se repitió el llamado "Cuéntanos tu idea" en toda la página, con la sección y el formulario `#tu-idea`.
 - **Otros nombres considerados:** Justo Eso, Me Faltaba, Chunche, Ocurrencia, Mira Nomás.
 
 ## Pendientes
 
 - Revisar la disponibilidad de `prismatix.mx` y `.com`, del @ en Instagram y TikTok, comprar el dominio y conectarlo (ver "Dominio").
 - Si existe el isotipo en vector o PNG transparente de alta resolución, reemplazar los archivos de `public/marca/`. Si existe el wordmark oficial, reemplazar el tipográfico de `Logo.astro`.
-- Poner los datos reales en `src/config.ts`: WhatsApp (hoy `5215500000000`), Instagram y email.
+- Poner el número de WhatsApp y la URL de Instagram en `src/config.ts` (hoy están vacíos, así que no se muestran).
 - Reemplazar los productos de ejemplo por los reales, con fotos en el estilo fotográfico de la marca y modelos .glb.
 - Opcional: renombrar el Worker y el repositorio a "prismatix" (`name` en `wrangler.jsonc` y la URL de workers.dev cambiarían).
 - Opcional: cambiar el correo de los commits (hoy es el de trabajo) y decidir si el repositorio pasa a privado.

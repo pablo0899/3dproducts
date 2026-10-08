@@ -1,0 +1,68 @@
+---
+// Llamado a la acción que se repite entre secciones: siempre lleva a la
+// sección "Dale forma a tu idea" (#tu-idea) y ofrece el correo como atajo.
+import Destello from './Destello.astro';
+import { SITIO } from '../config';
+import { enlaceCorreo } from '../utils';
+
+interface Props {
+  titulo: string;
+  texto?: string;
+  boton?: string;
+  asunto?: string;
+}
+
+const { titulo, texto, boton = 'Cuéntanos tu idea', asunto = 'Quiero una pieza Prismatix' } = Astro.props;
+---
+
+<aside class="llamado">
+  <Destello tamano={22} class="llamado__destello" />
+  <div class="llamado__texto">
+    <p class="llamado__titulo">{titulo}</p>
+    {texto && <p class="llamado__sub">{texto}</p>}
+  </div>
+  <div class="llamado__acciones">
+    <a href="/#tu-idea" class="boton">{boton}</a>
+    <a href={enlaceCorreo(asunto)} class="llamado__correo">{SITIO.email}</a>
+  </div>
+</aside>
+
+<style>
+  .llamado {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    margin-block: 40px;
+    padding: 28px 22px;
+    border-radius: var(--radio);
+    background: var(--fondo-terciopelo);
+    color: var(--ivory-dust);
+    overflow: hidden;
+  }
+  :global(.llamado__destello) { position: absolute; top: 18px; right: 18px; }
+  .llamado__texto { display: grid; gap: 6px; padding-right: 28px; }
+  .llamado__titulo {
+    margin: 0;
+    font-family: var(--fuente-display);
+    font-style: italic;
+    font-size: clamp(1.4rem, 5.5vw, 1.9rem);
+    line-height: 1.2;
+  }
+  .llamado__sub { margin: 0; color: rgb(253 251 247 / 0.75); font-size: 0.92rem; }
+  .llamado__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .llamado__correo {
+    color: var(--soft-rose);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: rgb(244 182 194 / 0.4);
+    overflow-wrap: anywhere;
+  }
+  .llamado__correo:hover { color: var(--burnt-orange); }
+
+  @media (min-width: 768px) {
+    .llamado { grid-template-columns: 1fr auto; align-items: center; padding: 32px 40px; }
+    .llamado__acciones { flex-direction: column; align-items: flex-end; gap: 10px; }
+  }
+</style>

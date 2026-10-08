@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
 import { SITIO } from '../config';
+import { enlaceCorreo } from '../utils';
 
 interface Props {
   titulo?: string;
@@ -39,8 +40,10 @@ const anio = new Date().getFullYear();
       <div class="contenedor cabecera__fila">
         <Logo />
         <nav>
-          <a href="/#catalogo">Productos</a>
-          <a href="#contacto">Contacto</a>
+          <a href="/#catalogo" class="nav__enlace">Colección</a>
+          <a href="/#tu-idea" class="boton boton--chico">
+            <span class="nav__largo">Cuéntanos tu idea</span><span class="nav__corto">Tu idea</span>
+          </a>
         </nav>
       </div>
     </header>
@@ -56,10 +59,11 @@ const anio = new Date().getFullYear();
         <p class="pie__texto">
           ¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real.
         </p>
+        <a class="pie__correo" href={enlaceCorreo('Quiero una pieza Prismatix')}>{SITIO.email}</a>
         <div class="pie__enlaces">
-          <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a>
-          <a href={SITIO.instagram} target="_blank" rel="noopener">Instagram</a>
-          <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
+          <a href="/#tu-idea" class="boton boton--secundario">Cuéntanos tu idea</a>
+          {SITIO.whatsapp && <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a>}
+          {SITIO.instagram && <a href={SITIO.instagram} target="_blank" rel="noopener">Instagram</a>}
         </div>
         <div class="pie__firma">
           <Logo claro />
@@ -71,6 +75,7 @@ const anio = new Date().getFullYear();
 </html>
 
 <style>
+  html { scroll-behavior: smooth; }
   .cabecera {
     position: sticky;
     top: 0;
@@ -86,8 +91,8 @@ const anio = new Date().getFullYear();
     gap: 12px;
     min-height: 64px;
   }
-  nav { display: flex; gap: 22px; }
-  nav a {
+  nav { display: flex; align-items: center; gap: 20px; }
+  .nav__enlace {
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.18em;
@@ -95,9 +100,10 @@ const anio = new Date().getFullYear();
     text-decoration: none;
     color: var(--color-suave);
   }
-  nav a:hover { color: var(--berry-magenta); }
+  .nav__enlace:hover { color: var(--berry-magenta); }
+  .nav__corto { display: none; }
 
-  .pie { margin-top: 96px; padding-block: 64px 40px; }
+  .pie { margin-top: 0; padding-block: 64px 40px; }
   .pie__fila { display: grid; gap: 18px; justify-items: start; }
   .pie__isotipo { width: 56px; height: 56px; }
   .pie__cierre {
@@ -109,9 +115,19 @@ const anio = new Date().getFullYear();
     line-height: 1.15;
   }
   .pie__texto { margin: 0; max-width: 46ch; color: rgb(253 251 247 / 0.75); }
-  .pie__enlaces { display: flex; flex-wrap: wrap; gap: 10px 24px; font-weight: 500; }
-  .pie__enlaces a { color: var(--soft-rose); text-decoration: none; }
-  .pie__enlaces a:hover { color: var(--burnt-orange); }
+  .pie__correo {
+    font-family: var(--fuente-display);
+    font-size: clamp(1.15rem, 5vw, 1.5rem);
+    color: var(--soft-rose);
+    text-decoration: underline;
+    text-decoration-color: rgb(244 182 194 / 0.35);
+    text-underline-offset: 6px;
+    overflow-wrap: anywhere;
+  }
+  .pie__correo:hover { color: var(--burnt-orange); }
+  .pie__enlaces { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-weight: 500; }
+  .pie__enlaces a:not(.boton) { color: var(--soft-rose); text-decoration: none; }
+  .pie__enlaces a:not(.boton):hover { color: var(--burnt-orange); }
   .pie__firma {
     display: flex;
     flex-wrap: wrap;
@@ -125,11 +141,12 @@ const anio = new Date().getFullYear();
     font-size: 0.8rem;
   }
 
-  @media (max-width: 400px) {
-    nav { gap: 14px; }
-    nav a { letter-spacing: 0.12em; }
+  /* Cabecera en teléfonos: se oculta "Colección" y el botón se acorta en pantallas muy angostas */
+  @media (max-width: 480px) {
+    .nav__enlace { display: none; }
   }
-  @media (max-width: 340px) {
-    nav a:first-child { display: none; }
+  @media (max-width: 360px) {
+    .nav__largo { display: none; }
+    .nav__corto { display: inline; }
   }
 </style>

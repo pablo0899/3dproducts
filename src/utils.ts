@@ -8,3 +8,7 @@ export function formatearPrecio(precio?: number) {
 export function enlaceWhatsapp(mensaje: string) {
   return `https://wa.me/${SITIO.whatsapp}?text=${encodeURIComponent(mensaje)}`;
 }
+
+export function enlaceCorreo(asunto: string, cuerpo = '') {
+  return `mailto:${SITIO.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+}

@@ -112,6 +112,16 @@ h1, h2, h3 {
 }
 .boton:hover { background: #c22f5d; transform: translateY(-1px); }
 
+/* Secundario: contorno; toma el color del texto (sirve en fondo claro y oscuro) */
+.boton--secundario {
+  background: transparent;
+  color: inherit;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+.boton--secundario:hover { background: rgb(216 58 107 / 0.12); }
+
+.boton--chico { min-height: 40px; padding: 8px 16px; font-size: 0.68rem; letter-spacing: 0.1em; }
+
 .etiqueta {
   display: inline-block;
   font-size: 0.68rem;

@@ -3,7 +3,9 @@ import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Galeria from '../../components/Galeria.astro';
 import Visor3D from '../../components/Visor3D.astro';
-import { formatearPrecio, enlaceWhatsapp } from '../../utils';
+import Llamado from '../../components/Llamado.astro';
+import { SITIO } from '../../config';
+import { formatearPrecio, enlaceWhatsapp, enlaceCorreo } from '../../utils';
 
 export async function getStaticPaths() {
   const productos = await getCollection('productos');
@@ -13,7 +15,7 @@ export async function getStaticPaths() {
 const { producto } = Astro.props;
 const { nombre, resumen, fotos, modelo, precio, categoria, material, dimensiones, colores, disponible } = producto.data;
 const { Content } = await render(producto);
-const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
+const mensaje = `Hola, Prismatix. Me interesa "${nombre}" (${Astro.url.href}).\n\n¿Me pueden dar más información?`;
 ---
 
 <Base titulo={nombre} descripcion={resumen} imagen={fotos[0]}>
@@ -50,15 +52,27 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
         <dt>Estado</dt><dd>{disponible ? 'Disponible' : 'Agotado — bajo pedido'}</dd>
       </dl>
 
-      <a class="boton pedir" href={enlaceWhatsapp(mensaje)} target="_blank" rel="noopener">
-        Pedir por WhatsApp
-      </a>
+      <div class="pedir">
+        <a class="boton" href={enlaceCorreo(`Me interesa: ${nombre}`, mensaje)}>Lo quiero · Escríbenos</a>
+        {SITIO.whatsapp && (
+          <a class="boton boton--secundario" href={enlaceWhatsapp(mensaje)} target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        )}
+        <a class="pedir__personalizar" href="/#tu-idea">¿Lo quieres con tu toque? Personalízalo <span aria-hidden="true">→</span></a>
+      </div>
 
       <div class="descripcion">
         <Content />
       </div>
     </div>
   </article>
+
+  <div class="contenedor">
+    <Llamado
+      titulo="¿Te imaginas una versión solo tuya?"
+      texto="Cambiamos colores, tamaños y detalles para que cuente tu historia."
+      asunto={`Quiero personalizar: ${nombre}`}
+    />
+  </div>
 </Base>
 
 <script>
@@ -122,7 +136,18 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
   dt { color: var(--color-suave); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; align-self: center; }
   dd { margin: 0; }
 
-  .pedir { width: 100%; }
+  .pedir { display: grid; gap: 10px; width: 100%; }
+  .pedir .boton { width: 100%; }
+  .pedir__personalizar {
+    justify-self: center;
+    margin-top: 4px;
+    color: var(--berry-magenta);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgb(216 58 107 / 0.35);
+    text-underline-offset: 5px;
+  }
   .descripcion { width: 100%; }
   .descripcion :global(ul) { padding-left: 1.2em; }
   .descripcion :global(li::marker) { color: var(--berry-magenta); }
@@ -130,6 +155,8 @@ const mensaje = `Hola, me interesa el producto "${nombre}" (${Astro.url.href})`;
   @media (min-width: 900px) {
     .producto { grid-template-columns: 1.1fr 1fr; gap: 40px; }
     .producto__medios { position: sticky; top: 80px; align-self: start; }
-    .pedir { width: auto; }
+    .pedir { justify-items: start; }
+    .pedir .boton { width: auto; }
+    .pedir__personalizar { justify-self: start; }
   }
 </style>

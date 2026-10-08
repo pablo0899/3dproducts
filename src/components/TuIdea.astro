@@ -1,0 +1,181 @@
+---
+// Sección "Dale forma a tu idea" (#tu-idea): destino de todos los llamados a la acción.
+// No hay backend: el formulario arma un correo (y un WhatsApp, si está configurado)
+// con lo que escribió la persona.
+import Icono from './Icono.astro';
+import { SITIO, CATEGORIAS } from '../config';
+import { enlaceCorreo } from '../utils';
+
+const pasos = [
+  { titulo: 'Cuéntanos tu idea', texto: 'Qué te imaginas, para quién es y, si tienes, fotos de referencia.' },
+  { titulo: 'Te enviamos una propuesta', texto: 'Diseño, vista previa, precio y tiempo de entrega en uno o dos días.' },
+  { titulo: 'La hacemos real', texto: 'Cuando la apruebas, comenzamos. Te avisamos en cuanto esté lista.' },
+];
+---
+
+<section id="tu-idea" class="agenda" aria-labelledby="titulo-agenda">
+  <div class="contenedor agenda__rejilla">
+    <div class="agenda__intro">
+      <p class="titulo-seccion">Dale forma a tu idea</p>
+      <h2 id="titulo-agenda">Tú la imaginas, <em>nosotros la hacemos real.</em></h2>
+      <ol class="pasos">
+        {pasos.map((p, i) => (
+          <li>
+            <span class="pasos__numero">{i + 1}</span>
+            <div>
+              <strong>{p.titulo}</strong>
+              <p>{p.texto}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p class="agenda__directo">
+        ¿Prefieres escribir directo?<br />
+        <a href={enlaceCorreo('Quiero una pieza Prismatix')}>{SITIO.email}</a>
+        {SITIO.whatsapp && <> · <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a></>}
+      </p>
+    </div>
+
+    <form class="formulario" data-email={SITIO.email} data-whatsapp={SITIO.whatsapp}>
+      <label>
+        <span>Tu nombre</span>
+        <input name="nombre" type="text" autocomplete="name" required />
+      </label>
+      <label>
+        <span>¿Qué te gustaría crear?</span>
+        <select name="linea">
+          {CATEGORIAS.map((c) => <option>{c.nombre}</option>)}
+          <option selected>Otra idea</option>
+        </select>
+      </label>
+      <label>
+        <span>Cuéntanos tu idea</span>
+        <textarea name="idea" rows="4" required placeholder="Ej. Una figura de mi perro Coco para regalarle a mi mamá en su cumpleaños."></textarea>
+      </label>
+      <div class="formulario__fila">
+        <label>
+          <span>¿Para cuándo?</span>
+          <input name="fecha" type="date" />
+        </label>
+        <label>
+          <span>Tu teléfono <small>(opcional)</small></span>
+          <input name="telefono" type="tel" autocomplete="tel" inputmode="tel" />
+        </label>
+      </div>
+      <div class="formulario__acciones">
+        <button type="submit" class="boton" data-canal="correo">Enviar por correo</button>
+        {SITIO.whatsapp && <button type="submit" class="boton boton--secundario" data-canal="whatsapp">Enviar por WhatsApp</button>}
+      </div>
+      <p class="formulario__nota">Se abrirá tu app de correo con el mensaje listo. Solo tienes que enviarlo.</p>
+    </form>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('.formulario').forEach((form) => {
+    let canal = 'correo';
+    form.querySelectorAll<HTMLButtonElement>('[data-canal]').forEach((b) =>
+      b.addEventListener('click', () => (canal = b.dataset.canal!)),
+    );
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const d = new FormData(form);
+      const valor = (k: string) => String(d.get(k) ?? '').trim();
+      const fecha = valor('fecha')
+        ? new Date(valor('fecha') + 'T12:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+        : 'Sin fecha definida';
+      const mensaje = [
+        `Hola, Prismatix. Soy ${valor('nombre')}.`,
+        '',
+        `Me gustaría crear: ${valor('linea')}`,
+        `Mi idea: ${valor('idea')}`,
+        `Para cuándo: ${fecha}`,
+        valor('telefono') ? `Mi teléfono: ${valor('telefono')}` : '',
+      ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
+
+      if (canal === 'whatsapp' && form.dataset.whatsapp) {
+        window.open(`https://wa.me/${form.dataset.whatsapp}?text=${encodeURIComponent(mensaje)}`, '_blank');
+      } else {
+        const asunto = `Nueva idea: ${valor('linea')} · ${valor('nombre')}`;
+        window.location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
+      }
+    });
+  });
+</script>
+
+<style>
+  .agenda {
+    scroll-margin-top: 64px;
+    padding-block: 48px 64px;
+    background: linear-gradient(180deg, transparent, rgb(244 182 194 / 0.18) 30%, rgb(244 182 194 / 0.18));
+  }
+  .agenda__rejilla { display: grid; gap: 40px; }
+  .agenda__intro { display: grid; gap: 20px; align-content: start; }
+  .agenda .titulo-seccion { margin: 0; color: var(--berry-magenta); }
+  h2 { margin: 0; font-size: clamp(2rem, 8vw, 3rem); }
+  h2 em { color: var(--terracotta); }
+
+  .pasos { display: grid; gap: 18px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .pasos li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
+  .pasos__numero {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--plum-night);
+    color: var(--ivory-dust);
+    font-family: var(--fuente-display);
+    font-size: 1.1rem;
+  }
+  .pasos strong { font-weight: 600; }
+  .pasos p { margin: 2px 0 0; color: var(--color-suave); font-size: 0.92rem; }
+
+  .agenda__directo { margin: 8px 0 0; color: var(--color-suave); font-size: 0.92rem; }
+  .agenda__directo a { color: var(--berry-magenta); font-weight: 600; overflow-wrap: anywhere; }
+
+  .formulario {
+    display: grid;
+    gap: 16px;
+    padding: 24px 20px;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    background: var(--color-superficie);
+    box-shadow: 0 18px 40px rgb(58 36 59 / 0.08);
+  }
+  label { display: grid; gap: 6px; }
+  label span {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-suave);
+  }
+  label small { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  input, select, textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid rgb(58 36 59 / 0.2);
+    border-radius: 10px;
+    background: var(--ivory-dust);
+    color: var(--color-texto);
+    font: inherit;
+    font-size: 1rem; /* 16px: evita el zoom automático en iPhone */
+  }
+  textarea { resize: vertical; min-height: 110px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--berry-magenta); outline-offset: 1px; border-color: transparent; }
+  .formulario__fila { display: grid; gap: 16px; }
+  .formulario__acciones { display: grid; gap: 10px; margin-top: 4px; }
+  .formulario__acciones .boton { width: 100%; }
+  .formulario__nota { margin: 0; color: var(--color-suave); font-size: 0.8rem; text-align: center; }
+
+  @media (min-width: 560px) {
+    .formulario__fila { grid-template-columns: 1fr 1fr; }
+    .formulario { padding: 32px; }
+  }
+  @media (min-width: 900px) {
+    .agenda__rejilla { grid-template-columns: 1fr 1.1fr; gap: 64px; align-items: start; }
+  }
+</style>
