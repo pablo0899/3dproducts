@@ -77,8 +77,8 @@ La fuente es la lámina "Mapa de marca Prismatix" (imagen `identidad.jpg` del us
 ## Estructura
 
 ```
-astro.config.mjs               site = URL pública (usada en og:image y enlaces absolutos)
-wrangler.jsonc                 Config del Worker de Cloudflare (assets estáticos desde dist/)
+astro.config.mjs               site = https://prismatix.mx (usada en og:image y enlaces absolutos)
+wrangler.jsonc                 Config del Worker de Cloudflare (assets estáticos desde dist/ y dominio propio en routes)
 .node-version                  Node 22 para el build en Cloudflare
 public/_headers                Caché: /_astro/* inmutable 1 año, /productos/* 1 día
 src/config.ts                  SITIO (nombre, descriptor, eslogan, cierre, contacto, moneda), CATEGORIAS (líneas con ícono) y ESENCIA (valores con ícono)
@@ -145,20 +145,18 @@ npm run preview         # sirve el build
 
 - **Repositorio:** https://github.com/pablo0899/3dproducts (rama `main`, público). La cuenta de GitHub del proyecto es **pablo0899**, no pablo-0899. En esta PC la cuenta activa de `gh` puede ser pablo-0899, así que el repositorio tiene un credential helper local (`git config --local`) que usa `gh auth token --user pablo0899`. Por eso `git push` funciona sin tener que cambiar de cuenta.
 - **Hosting:** Cloudflare **Worker** con assets estáticos (no Pages), en el plan gratuito. Se eligió porque el tráfico es ilimitado y permite uso comercial. Vercel Hobby se descartó porque no permite uso comercial.
-- **URL actual:** https://3dproducts.idipl0899.workers.dev
+- **URL pública:** https://prismatix.mx (y `www`). La de workers.dev, https://3dproducts.idipl0899.workers.dev, sigue activa.
 - **Flujo:** cada `git push` a `main` dispara el build en Cloudflare (`npm run build`) y publica `dist/` con `wrangler deploy`.
 - `wrangler.jsonc` tiene `workers_dev: true` y `preview_urls: true`, porque en el panel venían deshabilitadas. El `name` debe seguir siendo `3dproducts`, que es el nombre del Worker en Cloudflare.
 - Comprobar sin publicar: `npx wrangler deploy --dry-run` (después de `npm run build`).
 
-## Dominio (plan)
+## Dominio
 
-- Con el cambio de nombre a Prismatix, el candidato ahora es **`prismatix.mx`** (más `prismatix.com` como protección), pero falta revisar la disponibilidad. Los planes anteriores (`tangibleestudio.mx`, `prismatika.mx`) ya no aplican.
-- Cloudflare Registrar no vende `.mx`. Pasos:
-  1. Comprar el dominio en Akky, Neubox o GoDaddy.
-  2. En Cloudflare, agregar el dominio con el plan Free.
-  3. Cambiar los nameservers en el registrador por los de Cloudflare.
-  4. En el Worker, ir a Settings → Domains & Routes → Custom domain y agregar el dominio y `www`.
-- Después de conectarlo, actualizar `site` en `astro.config.mjs`.
+- **Dominio:** `prismatix.mx`, comprado en **Akky** (2026-10-16) sin extras. No se contrató el "DNS Personalizado", las alertas SMS ni la seguridad avanzada. `prismatix.com` ya está registrado por otra persona.
+- **DNS:** la zona está en Cloudflare (plan Free). En Akky solo se cambiaron los nameservers a `eugene.ns.cloudflare.com` y `saanvi.ns.cloudflare.com`.
+- **Conexión con el Worker:** `routes` en `wrangler.jsonc` declara `prismatix.mx` y `www.prismatix.mx` con `custom_domain: true`. Cloudflare crea los registros DNS y el certificado al desplegar. No se configuran a mano en el panel.
+- `site` en `astro.config.mjs` es `https://prismatix.mx`.
+- La renovación de Akky es anual (~$689 MXN con IVA).
 
 ## Historial de decisiones
 
@@ -173,7 +171,8 @@ npm run preview         # sirve el build
 
 ## Pendientes
 
-- Revisar la disponibilidad de `prismatix.mx` y `.com`, del @ en Instagram y TikTok, comprar el dominio y conectarlo (ver "Dominio").
+- Revisar la disponibilidad del @ en Instagram y TikTok.
+- Opcional: redirigir `www.prismatix.mx` → `prismatix.mx` (Redirect Rule) y crear un correo `@prismatix.mx` con Email Routing que reenvíe a Gmail.
 - Si existe el isotipo en vector o PNG transparente de alta resolución, reemplazar los archivos de `public/marca/`. Si existe el wordmark oficial, reemplazar el tipográfico de `Logo.astro`.
 - Poner el número de WhatsApp y la URL de Instagram en `src/config.ts` (hoy están vacíos, así que no se muestran).
 - Reemplazar los productos de ejemplo por los reales, con fotos en el estilo fotográfico de la marca y modelos .glb.

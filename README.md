@@ -71,11 +71,11 @@ Consejos para que cargue rápido en celular:
 
 ## Publicar
 
-El sitio está en **Cloudflare Workers** (plan gratuito, con assets estáticos): https://3dproducts.idipl0899.workers.dev
+El sitio está en **Cloudflare Workers** (plan gratuito, con assets estáticos): https://prismatix.mx (también responde en https://3dproducts.idipl0899.workers.dev)
 
 Cada `git push` a `main` lo compila y lo publica automáticamente en uno o dos minutos. La configuración está en:
 
-- `wrangler.jsonc`: nombre del Worker, carpeta `dist` y URLs públicas activadas
+- `wrangler.jsonc`: nombre del Worker, carpeta `dist`, URLs públicas activadas y el dominio `prismatix.mx` (+ `www`)
 - `.node-version`: Node 22
 - `public/_headers`: caché de los archivos
 

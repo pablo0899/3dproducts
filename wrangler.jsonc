@@ -9,5 +9,10 @@
   },
   // Mantiene activas la dirección pública y las de vista previa
   "workers_dev": true,
-  "preview_urls": true
+  "preview_urls": true,
+  // Dominio propio (la zona prismatix.mx está en Cloudflare; el DNS y el HTTPS se crean solos)
+  "routes": [
+    { "pattern": "prismatix.mx", "custom_domain": true },
+    { "pattern": "www.prismatix.mx", "custom_domain": true }
+  ]
 }
