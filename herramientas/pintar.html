@@ -107,6 +107,7 @@
 </head>
 <body>
 <header>
+  <a href="/salir" id="salir" style="float:right;margin-top:14px;color:var(--suave);font-size:13px">Salir</a>
   <h1>Pintar modelo</h1>
   <p>GLB a color de Tripo → .3mf con tus filamentos, listo para ElegooSlicer.</p>
 </header>
@@ -910,6 +911,9 @@ $('#descargar').onclick = async () => {
 };
 
 function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+// Abierta desde el disco no hay sesión que cerrar
+if (location.protocol === 'file:') $('#salir').hidden = true;
 
 notaDetalle();
 pintarInventario();

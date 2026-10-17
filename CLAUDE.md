@@ -102,7 +102,7 @@ src/pages/index.astro          Portada oscura (eslogan + isotipo + 2 botones), E
 src/pages/productos/[id].astro Detalle: pestañas Fotos / Vista 360°, ficha técnica, "Lo quiero · Escríbenos" (mailto), WhatsApp si existe y Llamado
 src/pages/404.astro            Página "Esto no existe… todavía." (la usa not_found_handling del Worker)
 herramientas/                  Uso interno. No es parte del sitio; se publica aparte en https://herramienta.prismatix.mx con contraseña. También se abre directo desde el disco
-  worker.js, wrangler.jsonc    Worker "prismatix-herramienta": autenticación básica (secreto CLAVE), noindex y sirve los archivos de esta carpeta
+  worker.js, wrangler.jsonc    Worker "prismatix-herramienta": página /entrar con la marca (solo contraseña = secreto CLAVE), cookie de sesión firmada con HMAC por 30 días, /salir, noindex. Sirve los archivos de esta carpeta
   pintar.html                  GLB a color de Tripo → .3mf pintado para ElegooSlicer. El color de cada triángulo sale de la textura, se agrupa (k-means), las familias de color van a un filamento, se quitan los detalles que la boquilla no traza y se exporta. Incluye la lista "Mis filamentos" (localStorage, exportable a JSON) y la vista con capas de impresión
   color.js                     Filamentos del usuario, Lab, ΔE2000, k-means y sugerencia por familias
   malla.js                     Vecinos, áreas, limpieza de zonas (suavizar, abrirZonas, quitarIslas) y escritura del 3MF con paint_color
@@ -157,7 +157,7 @@ npm run preview         # sirve el build
 - **Herramienta interna (`herramientas/`):** es un Worker aparte, `prismatix-herramienta`, en `herramienta.prismatix.mx`.
   - **Por qué va aparte:** si estuviera en el mismo Worker, cada visita al sitio pasaría por código y contaría contra el límite gratuito de solicitudes.
   - **Despliegue:** el `git push` no la despliega. Se despliega a mano desde la raíz con `npx wrangler deploy -c herramientas/wrangler.jsonc`, y eso requiere `npx wrangler login` en la PC.
-  - **Contraseña:** es el secreto `CLAVE`. Se cambia con `npx wrangler secret put CLAVE -c herramientas/wrangler.jsonc` o en el panel (Worker → Settings → Variables and Secrets). El usuario de la ventana de acceso puede ser cualquiera.
+  - **Contraseña:** es el secreto `CLAVE`. Se cambia con `npx wrangler secret put CLAVE -c herramientas/wrangler.jsonc` o en el panel (Worker → Settings → Variables and Secrets). Se entra en `/entrar`, que solo pide contraseña; no hay usuario. La sesión dura 30 días en ese navegador, y cambiar `CLAVE` cierra todas las sesiones abiertas.
   - **Prueba local:** `npx wrangler dev -c herramientas/wrangler.jsonc --var CLAVE:prueba`.
 
 ## Dominio
