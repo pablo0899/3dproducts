@@ -1,0 +1,21 @@
+// Worker aparte para herramienta.prismatix.mx (el sitio público es el Worker "3dproducts" de la raíz).
+// Va separado para que el sitio siga sirviendo sus archivos sin pasar por código: si compartieran
+// Worker, cada visita al sitio contaría contra el límite gratuito de solicitudes.
+// Desplegar desde la raíz del repositorio: npx wrangler deploy -c herramientas/wrangler.jsonc
+{
+  "name": "prismatix-herramienta",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-30",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    // Todo pasa por worker.js primero (para pedir la contraseña)
+    "run_worker_first": true,
+    "html_handling": "none"
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "herramienta.prismatix.mx", "custom_domain": true }
+  ]
+}

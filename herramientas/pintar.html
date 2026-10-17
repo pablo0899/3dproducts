@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pintar modelo</title>
+<!--
+  Herramienta interna (no se publica): toma el GLB a color que genera Tripo, reduce sus colores
+  a los filamentos del usuario, quita los detalles que la boquilla no puede trazar y descarga un
+  .3mf pintado para ElegooSlicer (Centauri Carbon 2, 4 ranuras del CANVAS). Abrir directo en el
+  navegador; necesita internet solo para cargar three.js.
+-->
+<style>
+  :root {
+    --ciruela: #3A243B;
+    --berry: #D83A6B;
+    --marfil: #FDFBF7;
+    --linea: #E6DCD8;
+    --suave: #7A6A78;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--marfil);
+    color: var(--ciruela);
+    font: 15px/1.5 Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header, main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+  h1 { font-family: "Playfair Display", Georgia, serif; font-weight: 400; margin: 8px 0 0; font-size: 28px; }
+  header p { margin: 4px 0 0; color: var(--suave); }
+  h2 {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--berry); margin: 0 0 12px;
+  }
+  #pasos { counter-reset: paso; display: grid; gap: 16px; min-width: 0; }
+  #pasos h2::before { counter-increment: paso; content: counter(paso) " · "; }
+  main { display: grid; gap: 16px; }
+  @media (min-width: 1000px) {
+    main { grid-template-columns: minmax(0, 1.5fr) minmax(360px, 1fr); align-items: start; }
+    #columna-visor { position: sticky; top: 16px; }
+  }
+  section {
+    background: #fff; border: 1px solid var(--linea); border-radius: 14px; padding: 16px;
+    min-width: 0;
+  }
+  button, .boton {
+    font: inherit; font-size: 13px; cursor: pointer; border-radius: 999px;
+    border: 1px solid var(--ciruela); background: #fff; color: var(--ciruela);
+    padding: 8px 14px; min-height: 40px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  button:disabled { opacity: .4; cursor: default; }
+  button.principal, .boton.principal { background: var(--ciruela); color: var(--marfil); }
+  button.chico { min-height: 30px; padding: 2px 10px; font-size: 12px; }
+  button.activo { background: var(--berry); border-color: var(--berry); color: #fff; }
+  .boton input { display: none; }
+  select, input[type=text], input[type=number] {
+    font: inherit; font-size: 15px; padding: 6px 8px; border-radius: 8px;
+    border: 1px solid var(--linea); background: #fff; color: inherit; max-width: 100%;
+  }
+  .controles { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-top: 12px; }
+  .controles:first-child { margin-top: 0; }
+  .ayuda { color: var(--suave); font-size: 13px; margin: 10px 0 0; }
+  .nota { font-size: 12px; color: var(--suave); }
+
+  #visor {
+    position: relative; margin: 0 auto; width: min(100%, 78vh); aspect-ratio: 1;
+    border-radius: 14px; overflow: hidden; background: #EFEAE6; border: 1px solid var(--linea);
+  }
+  #visor canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #visor-vacio { position: absolute; inset: 0; display: grid; place-items: center; color: var(--suave); margin: 0; pointer-events: none; text-align: center; padding: 24px; }
+  #visor-vacio[hidden] { display: none; }
+  .barra-visor { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 10px; font-size: 13px; }
+  .segmentado { display: inline-flex; border: 1px solid var(--ciruela); border-radius: 999px; overflow: hidden; }
+  .segmentado button { border: 0; border-radius: 0; min-height: 36px; }
+  .segmentado button.activo { background: var(--ciruela); color: var(--marfil); }
+
+  .muestra { width: 28px; height: 28px; border-radius: 8px; flex: none; border: 1px solid rgba(0,0,0,.15); display: inline-block; }
+  .ranura { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea); }
+  .ranura:first-child { border-top: 0; }
+  .ranura .num {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--ciruela); color: var(--marfil);
+    display: grid; place-items: center; font-size: 12px; flex: none;
+  }
+  .ranura select { flex: 1; min-width: 0; }
+  .ranura .pct { font-size: 12px; color: var(--suave); min-width: 40px; text-align: right; }
+  #mensaje { font-size: 13px; margin: 10px 0 0; min-height: 1.5em; }
+  #resumen:empty { display: none; }
+  #resumen { margin-top: 12px; font-size: 13px; }
+  #resumen p { margin: 6px 0; }
+  .consejo { background: #FFF3F6; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
+  ol.pasos-slicer { margin: 6px 0 0; padding-left: 20px; }
+
+  details summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+  .filamento { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); }
+  .filamento:first-child { border-top: 0; }
+  .filamento input[type=color] { width: 44px; height: 36px; padding: 0; border: 1px solid var(--linea); border-radius: 8px; background: none; }
+  .filamento input[type=text] { min-width: 0; width: 100%; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.183.2/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.183.2/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<header>
+  <h1>Pintar modelo</h1>
+  <p>GLB a color de Tripo → .3mf con tus filamentos, listo para ElegooSlicer.</p>
+</header>
+
+<main>
+  <div id="columna-visor">
+    <div id="visor">
+      <canvas id="gl"></canvas>
+      <p id="visor-vacio">Abre el GLB que descargaste de Tripo.</p>
+    </div>
+    <div class="barra-visor">
+      <div class="segmentado" id="modo">
+        <button data-modo="original">Modelo de Tripo</button>
+        <button data-modo="pintado" class="activo">Cómo quedaría</button>
+      </div>
+      <label><input type="checkbox" id="realista" checked> Capas de impresión</label>
+      <label><input type="checkbox" id="alambre"> Ver malla</label>
+    </div>
+    <p class="ayuda">Arrastra para girar · clic derecho o Shift + arrastrar para mover · rueda para acercar.</p>
+  </div>
+
+  <div id="pasos">
+    <section>
+      <h2>Modelo</h2>
+      <div class="controles">
+        <label class="boton principal">Abrir GLB<input type="file" id="archivo-modelo" accept=".glb"></label>
+        <label>Altura <input type="number" id="altura" min="5" max="250" step="1" value="80" style="width:5em"> mm</label>
+      </div>
+      <p class="nota" id="info-modelo">En Tripo, descarga el modelo en <strong>GLB</strong>: es el formato que trae los colores.</p>
+    </section>
+
+    <section>
+      <h2>Filamentos</h2>
+      <div class="controles">
+        <label>Ranuras
+          <select id="num-ranuras"><option>1</option><option>2</option><option>3</option><option selected>4</option></select>
+        </label>
+        <button id="sugerir" disabled>Volver a sugerir</button>
+      </div>
+      <div id="lista-ranuras" style="margin-top:8px"></div>
+
+      <div style="margin-top:16px">
+        <div class="controles">
+          <strong style="font-size:13px">Colores del modelo → filamento</strong>
+          <label>Detectar
+            <select id="num-grupos"><option>4</option><option>6</option><option selected>8</option><option>10</option><option>12</option></select>
+          </label>
+        </div>
+        <p class="ayuda" style="margin-top:6px">La textura trae luces y sombras: el mismo pelaje sale en dos o tres tonos.
+          Mándalos al mismo filamento. <em>Ver</em> marca en rosa dónde está ese color.</p>
+        <div id="lista-grupos" style="margin-top:4px"></div>
+        <div class="controles" id="fila-base" hidden>
+          <label>Base <select id="color-base"></select></label>
+          <span class="nota" id="nota-base"></span>
+        </div>
+        <div class="controles">
+          <label><input type="checkbox" id="ajustar-luz" checked> Corregir lo oscuro de la textura</label>
+          <label><input type="checkbox" id="quitar-luz"> Compensar la luz de arriba</label>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Impresión y descarga</h2>
+      <div class="controles">
+        <label>Boquilla
+          <select id="boquilla">
+            <option value="0.2">0.2 mm</option>
+            <option value="0.4" selected>0.4 mm</option>
+            <option value="0.6">0.6 mm</option>
+          </select>
+        </label>
+        <label>Detalle
+          <select id="detalle-color">
+            <option value="1.5">Fino</option>
+            <option value="2" selected>Normal</option>
+            <option value="3">Limpio</option>
+          </select>
+        </label>
+        <label>Suavizar bordes
+          <select id="suavizado">
+            <option value="0">no</option>
+            <option value="2" selected>poco</option>
+            <option value="6">mucho</option>
+          </select>
+        </label>
+      </div>
+      <p class="nota" id="nota-detalle"></p>
+      <div class="controles">
+        <button id="descargar" class="principal" disabled>Descargar .3mf</button>
+      </div>
+      <p id="mensaje"></p>
+      <div id="resumen"></div>
+    </section>
+
+    <section>
+      <h2>Mis filamentos</h2>
+      <details>
+        <summary>Editar la lista (<span id="cuantos-filamentos"></span>)</summary>
+        <p class="ayuda">Los colores son estimados (ELEGOO no publica códigos). Si uno no se parece al carrete,
+          ajústalo: lo ideal es tomarlo de una pieza ya impresa con buena luz. Se guarda en este navegador.</p>
+        <div id="lista-filamentos" style="margin-top:8px"></div>
+        <div class="controles">
+          <button id="agregar" class="chico">+ Agregar</button>
+          <button id="exportar" class="chico">Exportar</button>
+          <label class="boton chico">Importar<input type="file" id="importar" accept="application/json,.json"></label>
+          <button id="restablecer" class="chico">Restablecer</button>
+        </div>
+      </details>
+    </section>
+  </div>
+</main>
+
+<script src="color.js"></script>
+<script src="malla.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { zipSync, strToU8 } from 'three/addons/libs/fflate.module.js';
+
+const CENTRO_CAMA = [128, 128];   // Centauri Carbon 2: cama de 256 × 256 mm
+const MAX_MUESTRAS = 40000;
+
+const $ = (s) => document.querySelector(s);
+const pausa = () => new Promise((r) => setTimeout(r, 30));   // deja que se pinte el mensaje antes de calcular
+
+const estado = {
+  malla: null,      // { pos, tri, color }: posiciones en mm (Z arriba) y color de cada triángulo
+  vec: null,        // vecinos por arista
+  geo: null,        // áreas, normales y centros por triángulo
+  etiquetas: null,  // ranura (0–3) de cada triángulo
+  nombre: 'modelo',
+  modo: 'pintado',
+  grupos: null,     // colores detectados en la textura: { hex, lab, peso, ranura }
+  grupoDe: null,    // grupo de cada triángulo
+  resaltado: -1,    // grupo que se marca en rosa con "Ver"
+  colorCorregido: null,  // color de cada triángulo sin la luz horneada (si se compensa)
+  base: null,       // altura (mm) de la tapa de la base, si el modelo tiene base
+  colorBase: 'auto',     // 'auto' (un solo color), 'textura' o el número de ranura
+};
+let inventario = leerFilamentos();
+let ranuras = [];
+
+// ---------- Escena ----------
+
+const visor = $('#visor');
+const lienzo = $('#gl');
+const renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor('#EFEAE6');
+
+const escena = new THREE.Scene();
+const camara = new THREE.PerspectiveCamera(40, 1, 0.1, 10000);
+camara.up.set(0, 0, 1);   // los modelos para imprimir usan Z hacia arriba
+escena.add(camara);
+escena.add(new THREE.HemisphereLight(0xffffff, 0x8a7f88, 1.6));
+const luz = new THREE.DirectionalLight(0xffffff, 1.6);
+luz.position.set(0.4, 0.6, 0);
+camara.add(luz, luz.target);
+luz.target.position.set(0, 0, -1);
+
+const controles = new OrbitControls(camara, lienzo);
+controles.addEventListener('change', dibujar);
+
+const material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide });
+let mallaVista = null;
+
+// Capas de impresión: líneas a la altura de capa de la boquilla. Se desvanecen cuando el modelo
+// está lejos (más finas que un pixel), para que no salga moiré.
+const uniformes = { capa: { value: 0.2 }, lineas: { value: 1 } };
+material.onBeforeCompile = (sh) => {
+  Object.assign(sh.uniforms, uniformes);
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', '#include <common>\nvarying float vZ;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvZ = (modelMatrix * vec4(transformed, 1.0)).z;');
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <common>', '#include <common>\nvarying float vZ;\nuniform float capa;\nuniform float lineas;')
+    .replace('#include <color_fragment>', `#include <color_fragment>
+      if (lineas > 0.5) {
+        float z = vZ / capa;
+        float f = fract(z);
+        float visible = 1.0 - smoothstep(0.25, 0.6, fwidth(z));
+        diffuseColor.rgb *= 1.0 - visible * 0.22 * (1.0 - smoothstep(0.0, 0.3, f) * smoothstep(1.0, 0.7, f));
+      }`);
+};
+
+function dibujar() {
+  renderer.render(escena, camara);
+}
+
+function ajustarVisor() {
+  const w = visor.clientWidth, h = visor.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  camara.aspect = w / h;
+  camara.updateProjectionMatrix();
+  dibujar();
+}
+new ResizeObserver(ajustarVisor).observe(visor);
+
+function construirMalla() {
+  const { pos, tri } = estado.malla;
+  const n = tri.length / 3;
+  const p = new Float32Array(n * 9);
+  for (let t = 0; t < n; t++) {
+    for (let k = 0; k < 3; k++) {
+      const v = tri[t * 3 + k] * 3, o = t * 9 + k * 3;
+      p[o] = pos[v]; p[o + 1] = pos[v + 1]; p[o + 2] = pos[v + 2];
+    }
+  }
+  if (mallaVista) { escena.remove(mallaVista); mallaVista.geometry.dispose(); }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 9), 3));
+  // Sin normales: flatShading las calcula en el shader (ahorra memoria con millones de triángulos)
+  mallaVista = new THREE.Mesh(geo, material);
+  mallaVista.frustumCulled = false;
+  escena.add(mallaVista);
+  $('#visor-vacio').hidden = true;
+}
+
+// sRGB (0–255) → lineal, que es lo que esperan los colores por vértice de three.js
+const LINEAL = Float32Array.from({ length: 256 }, (_, i) => { const v = i / 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+
+function colorear() {
+  if (!mallaVista) return;
+  const pintado = estado.modo === 'pintado' && estado.etiquetas;
+  const colores = ranuras.map((j) => new THREE.Color(inventario[j]?.hex || '#D9D4D0'));
+  const attr = mallaVista.geometry.getAttribute('color');
+  const a = attr.array;
+  const n = a.length / 9;
+  const tc = estado.malla.color;
+  const resaltado = pintado && estado.grupoDe && estado.resaltado >= 0 ? estado.resaltado : -1;
+  const rosa = new THREE.Color('#FF2E93');
+  for (let t = 0; t < n; t++) {
+    let r, g, b;
+    if (!pintado) { r = LINEAL[tc[t * 3]]; g = LINEAL[tc[t * 3 + 1]]; b = LINEAL[tc[t * 3 + 2]]; }
+    else if (resaltado >= 0 && estado.grupoDe[t] === resaltado) { r = rosa.r; g = rosa.g; b = rosa.b; }
+    else { const c = colores[estado.etiquetas[t]] || colores[0]; r = c.r; g = c.g; b = c.b; }
+    for (let k = 0; k < 9; k += 3) { a[t * 9 + k] = r; a[t * 9 + k + 1] = g; a[t * 9 + k + 2] = b; }
+  }
+  attr.needsUpdate = true;
+  dibujar();
+}
+
+function cambiarModo(modo) {
+  estado.modo = modo;
+  document.querySelectorAll('#modo button').forEach((b) => b.classList.toggle('activo', b.dataset.modo === modo));
+  const realista = modo === 'pintado' && $('#realista').checked;
+  uniformes.lineas.value = realista ? 1 : 0;
+  material.roughness = realista ? 0.55 : 0.85;   // PLA: mate con un poco de brillo
+  material.needsUpdate = true;
+  colorear();
+}
+
+function caja() {
+  const p = estado.malla.pos;
+  const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < p.length; i += 3) {
+    for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], p[i + k]); max[k] = Math.max(max[k], p[i + k]); }
+  }
+  const centro = new THREE.Vector3((min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2);
+  const radio = Math.hypot(max[0] - min[0], max[1] - min[1], max[2] - min[2]) / 2;
+  return { centro, radio, tam: [max[0] - min[0], max[1] - min[1], max[2] - min[2]] };
+}
+
+function encuadrar() {
+  if (!estado.malla) return;
+  const { centro, radio } = caja();
+  const d = (radio / Math.sin((camara.fov * Math.PI) / 360)) * 1.1;
+  camara.near = d / 100;
+  camara.far = d * 100;
+  camara.position.set(centro.x, centro.y - d, centro.z);   // de frente (−Y), como en el slicer
+  controles.target.copy(centro);
+  camara.updateProjectionMatrix();
+  controles.update();
+  dibujar();
+}
+
+// ---------- Impresión ----------
+
+const boquilla = () => +$('#boquilla').value;
+const detalleMinimo = () => boquilla() * +$('#detalle-color').value;
+function notaDetalle() {
+  $('#nota-detalle').textContent = `Detalle mínimo de color: ${detalleMinimo().toFixed(1)} mm. Las zonas más angostas (rayitas, puntos, orillas finas) toman el color de al lado. La vista muestra capas de ${(boquilla() / 2).toFixed(2)} mm.`;
+  uniformes.capa.value = boquilla() / 2;
+}
+
+async function pintar() {
+  if (!estado.malla || !ranuras.length) return;
+  mensaje('Pintando…');
+  await pausa();
+  const t0 = performance.now();
+  const etiquetas = etiquetasDeTextura();
+  suavizar(etiquetas, estado.vec, +$('#suavizado').value);
+  // Lo que la boquilla no puede trazar: zonas más angostas que el detalle mínimo y manchitas sueltas
+  const ancho = detalleMinimo();
+  abrirZonas(etiquetas, estado.vec, estado.geo.centros, ancho);
+  quitarIslas(etiquetas, estado.vec, estado.geo.areas, ancho * ancho);
+  pintarBase(etiquetas);
+  estado.etiquetas = etiquetas;
+  mensaje(`Listo en ${((performance.now() - t0) / 1000).toFixed(1)} s.`);
+  cambiarModo('pintado');
+  resumen();
+}
+
+// Cada triángulo va al grupo de color más cercano y de ahí a la ranura de ese grupo
+function etiquetasDeTextura() {
+  if (!estado.grupos) detectarGrupos();
+  const c = colorAnalisis();
+  const n = c.length / 3;
+  const centros = estado.grupos.map((g) => g.lab);
+  const cache = new Int16Array(64 * 64 * 64).fill(-1);
+  const grupoDe = new Uint8Array(n);
+  const etiquetas = new Int8Array(n);
+  for (let t = 0; t < n; t++) {
+    const r = c[t * 3], g = c[t * 3 + 1], b = c[t * 3 + 2];
+    const k = ((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2);
+    let gi = cache[k];
+    if (gi < 0) {
+      const lab = rgbALab([r, g, b]);
+      let min = Infinity;
+      centros.forEach((m, i) => { const d = (lab[0] - m[0]) ** 2 + (lab[1] - m[1]) ** 2 + (lab[2] - m[2]) ** 2; if (d < min) { min = d; gi = i; } });
+      cache[k] = gi;
+    }
+    grupoDe[t] = gi;
+    etiquetas[t] = estado.grupos[gi].ranura;
+  }
+  estado.grupoDe = grupoDe;
+  return etiquetas;
+}
+
+// La base de un solo color: la textura la trae con sombras del modelo encima
+function pintarBase(etiquetas) {
+  if (estado.base === null || estado.colorBase === 'textura') return;
+  let ranura = +estado.colorBase;
+  if (estado.colorBase === 'auto') {
+    // Solo lo que se ve (tapa y canto): la cara de abajo viene oscura en la textura
+    const suma = [0, 0, 0, 0];
+    for (let t = 0; t < etiquetas.length; t++) {
+      if (esBase(t) && estado.geo.normales[t * 3 + 2] > -0.3) suma[etiquetas[t]] += estado.geo.areas[t];
+    }
+    ranura = suma.indexOf(Math.max(...suma));
+  }
+  if (!(ranura >= 0 && ranura < ranuras.length)) return;
+  for (let t = 0; t < etiquetas.length; t++) if (esBase(t)) etiquetas[t] = ranura;
+}
+
+// La base del modelo (el disco donde está parado): la tapa es una superficie plana grande, mirando
+// hacia arriba, cerca del piso. Devuelve la altura de la tapa en mm o null si no hay base.
+function detectarBase() {
+  const { normales, centros, areas } = estado.geo;
+  const n = areas.length;
+  let maxZ = 0;
+  for (let t = 0; t < n; t++) maxZ = Math.max(maxZ, centros[t * 3 + 2]);
+  const paso = 0.25, tope = maxZ * 0.3;
+  const hist = new Float64Array(Math.ceil(tope / paso) + 1);
+  let total = 0;
+  for (let t = 0; t < n; t++) {
+    total += areas[t];
+    const z = centros[t * 3 + 2];
+    if (normales[t * 3 + 2] > 0.95 && z > 0.3 && z < tope) hist[Math.floor(z / paso)] += areas[t];
+  }
+  let mejor = -1;
+  hist.forEach((a, i) => { if (mejor < 0 || a > hist[mejor]) mejor = i; });
+  if (mejor < 0 || hist[mejor] < total * 0.04) return null;
+  return (mejor + 1) * paso;
+}
+
+function esBase(t) {
+  return estado.base !== null && estado.geo.centros[t * 3 + 2] <= estado.base + 0.1;
+}
+
+// ---------- Colores de la textura ----------
+// Los colores del modelo se agrupan (k-means) y cada grupo va a una ranura. Así las sombras
+// horneadas en la textura (café claro y café oscuro del mismo pelaje) pueden ir al mismo filamento.
+
+// Opcional: la textura trae la luz "horneada" (lo que mira hacia arriba sale más claro). Se mide la
+// claridad promedio según hacia dónde mira cada triángulo (sin contar la base) y se compensa.
+// Ayudó con unos modelos y empeoró otros, por eso viene apagado.
+function colorAnalisis() {
+  if (!$('#quitar-luz').checked) return estado.malla.color;
+  if (estado.colorCorregido) return estado.colorCorregido;
+  const c = estado.malla.color;
+  const { normales, areas } = estado.geo;
+  const n = areas.length, B = 12;
+  const sumL = new Float64Array(B), sumA = new Float64Array(B);
+  const cacheL = new Float32Array(1 << 18).fill(-1);
+  const clave = (t) => ((c[t * 3] >> 2) << 12) | ((c[t * 3 + 1] >> 2) << 6) | (c[t * 3 + 2] >> 2);
+  const bins = new Uint8Array(n);
+  for (let t = 0; t < n; t++) {
+    const b = Math.min(B - 1, Math.floor(((normales[t * 3 + 2] + 1) / 2) * B));
+    bins[t] = b;
+    if (esBase(t)) continue;
+    const k = clave(t);
+    if (cacheL[k] < 0) cacheL[k] = rgbALab([c[t * 3], c[t * 3 + 1], c[t * 3 + 2]])[0];
+    sumL[b] += cacheL[k] * areas[t];
+    sumA[b] += areas[t];
+  }
+  const totalA = sumA.reduce((s, v) => s + v, 0);
+  const global = sumL.reduce((s, v) => s + v, 0) / totalA;
+  let factor = Array.from(sumA, (a, b) => (a > totalA * 0.01 ? sumL[b] / a / global : 1));
+  factor = factor.map((f, b) => (f + (factor[b - 1] ?? f) + (factor[b + 1] ?? f)) / 3);   // suavizar entre vecinos
+  const salida = new Uint8Array(c.length);
+  const cache = new Map();
+  for (let t = 0; t < n; t++) {
+    const k = clave(t) * B + bins[t];
+    let rgb = cache.get(k);
+    if (!rgb) {
+      const f = factor[bins[t]];
+      const lab = rgbALab([c[t * 3], c[t * 3 + 1], c[t * 3 + 2]]);
+      rgb = labARgb([Math.min(100, lab[0] / f), lab[1] / f, lab[2] / f]);
+      cache.set(k, rgb);
+    }
+    salida[t * 3] = rgb[0]; salida[t * 3 + 1] = rgb[1]; salida[t * 3 + 2] = rgb[2];
+  }
+  return (estado.colorCorregido = salida);
+}
+
+function detectarGrupos() {
+  const textura = colorAnalisis();
+  const { areas } = estado.geo;
+  // Muestras repartidas según el área: un triángulo grande pesa más que uno chico
+  const totalArea = areas.reduce((s, v) => s + v, 0);
+  const paso = totalArea / MAX_MUESTRAS;
+  const puntos = [];
+  let acum = 0, siguiente = paso / 2;
+  for (let t = 0; t < areas.length; t++) {
+    acum += areas[t];
+    while (acum >= siguiente) {
+      const rgb = [textura[t * 3], textura[t * 3 + 1], textura[t * 3 + 2]];
+      puntos.push({ rgb, lab: rgbALab(rgb) });
+      siguiente += paso;
+    }
+  }
+  const grupos = kmeans(puntos, +$('#num-grupos').value, 0.002);
+  // Colores chicos pero muy distintos (la lengua, un collar rojo) se pierden entre los grandes:
+  // lo que queda lejos de todos los grupos forma grupos aparte
+  const lejos = puntos.filter((p) => Math.min(...grupos.map((g) => Math.hypot(p.lab[0] - g.lab[0], p.lab[1] - g.lab[1], p.lab[2] - g.lab[2]))) > 20);
+  if (lejos.length >= Math.max(10, puntos.length * 0.001)) {
+    for (const g of kmeans(lejos, 2, 0.1)) grupos.push({ ...g, peso: (g.peso * lejos.length) / puntos.length });
+  }
+  estado.grupos = grupos.map((g) => ({ ...g, ranura: 0 }));
+  ajustarLuz(estado.grupos);
+  estado.resaltado = -1;
+  return estado.grupos;
+}
+
+// Las texturas de IA salen más oscuras que el animal real (el blanco se ve gris, el leonado café).
+// Para comparar con los filamentos se estira la claridad: el tono más claro cuenta como blanco
+// y el más oscuro como negro. El color que se muestra sigue siendo el original.
+function ajustarLuz(grupos) {
+  const visibles = grupos.filter((g) => g.peso >= 0.03);
+  const L = (visibles.length ? visibles : grupos).map((g) => g.lab[0]);
+  const min = Math.min(...L), max = Math.max(...L);
+  const usar = $('#ajustar-luz').checked && max - min > 10;
+  for (const g of grupos) {
+    if (!usar) { g.labComparar = g.lab; continue; }
+    const t = Math.min(1, Math.max(0, (g.lab[0] - min) / (max - min)));
+    const e = (12 + t * 83) / Math.max(g.lab[0], 1);   // la croma crece con la claridad, como en una foto bien expuesta
+    g.labComparar = [12 + t * 83, g.lab[1] * Math.min(e, 1.6), g.lab[2] * Math.min(e, 1.6)];
+  }
+}
+
+// Cada grupo a la ranura con el filamento más parecido (cuando cambian las ranuras a mano)
+function mapearGrupos() {
+  const labs = ranuras.map((j) => rgbALab(hexARgb(inventario[j].hex)));
+  for (const g of estado.grupos) {
+    let min = Infinity;
+    labs.forEach((l, s) => { const d = deltaE(g.labComparar || g.lab, l); if (d < min) { min = d; g.ranura = s; } });
+  }
+}
+
+// Sugerencia: familias de color (ver sugerirPorFamilias en color.js) → un filamento por familia
+async function sugerir() {
+  if (!estado.malla) return;
+  mensaje('Buscando los colores del modelo…');
+  await pausa();
+  const grupos = estado.grupos || detectarGrupos();
+  const s = sugerirPorFamilias(grupos, inventario, Math.min(+$('#num-ranuras').value, inventario.length));
+  ranuras = s.ranuras;
+  $('#num-ranuras').value = String(ranuras.length);
+  grupos.forEach((g, i) => (g.ranura = s.asignacion[i]));
+  pintarRanuras();
+  await pintar();
+}
+
+// ---------- Interfaz ----------
+
+function mensaje(texto) { $('#mensaje').textContent = texto; }
+
+function pintarRanuras() {
+  const cont = $('#lista-ranuras');
+  cont.innerHTML = '';
+  const n = +$('#num-ranuras').value;
+  ranuras = ranuras.slice(0, n);
+  while (ranuras.length < n) ranuras.push(Math.min(ranuras.length, inventario.length - 1));
+  const areas = porcentajes();
+  ranuras.forEach((j, r) => {
+    const fila = document.createElement('div');
+    fila.className = 'ranura';
+    const opciones = inventario.map((f, k) => `<option value="${k}" ${k === j ? 'selected' : ''}>${esc(f.nombre)}</option>`).join('');
+    fila.innerHTML = `<span class="num">${r + 1}</span><span class="muestra" style="background:${inventario[j]?.hex}"></span>
+      <select aria-label="Filamento de la ranura ${r + 1}">${opciones}</select>
+      <span class="pct">${areas ? Math.round(areas[r] * 100) + ' %' : ''}</span>`;
+    // Cambiar el filamento de una ranura no cambia las zonas, solo su color
+    fila.querySelector('select').onchange = (e) => {
+      ranuras[r] = +e.target.value;
+      pintarRanuras();
+      colorear();
+      if (estado.etiquetas) resumen();
+    };
+    cont.appendChild(fila);
+  });
+  pintarGrupos();
+  $('#sugerir').disabled = !estado.malla;
+  $('#descargar').disabled = !estado.etiquetas;
+}
+
+function pintarGrupos() {
+  const cont = $('#lista-grupos');
+  $('#fila-base').hidden = !(estado.grupos && estado.base !== null);
+  const opciones = ranuras.map((j, s) => `<option value="${s}">${s + 1} · ${esc(inventario[j].nombre)}</option>`).join('');
+  if (estado.base !== null) {
+    const sel = $('#color-base');
+    sel.innerHTML = '<option value="auto">Un solo color (el que más tiene)</option><option value="textura">Como en la textura</option>' + opciones;
+    if (estado.colorBase !== 'auto' && estado.colorBase !== 'textura' && +estado.colorBase >= ranuras.length) estado.colorBase = 'auto';
+    sel.value = estado.colorBase;
+    $('#nota-base').textContent = `Detectada: los primeros ${estado.base.toFixed(1)} mm.`;
+  }
+  cont.innerHTML = '';
+  if (!estado.grupos) return;
+  estado.grupos.forEach((g, i) => {
+    const fila = document.createElement('div');
+    fila.className = 'ranura';
+    fila.innerHTML = `<span class="muestra" style="background:${g.hex}" title="${g.hex}"></span>
+      <span class="pct">${g.peso < 0.01 ? (g.peso * 100).toFixed(1) : Math.round(g.peso * 100)} %</span><span class="nota">→</span>
+      <span class="muestra" style="background:${inventario[ranuras[g.ranura]]?.hex}"></span>
+      <select aria-label="Filamento para este color">${opciones}</select>
+      <button class="chico${estado.resaltado === i ? ' activo' : ''}">Ver</button>`;
+    const sel = fila.querySelector('select');
+    sel.value = g.ranura;
+    sel.onchange = async () => { g.ranura = +sel.value; pintarGrupos(); await pintar(); };
+    fila.querySelector('button').onclick = () => {
+      estado.resaltado = estado.resaltado === i ? -1 : i;
+      pintarGrupos();
+      if (estado.modo !== 'pintado') cambiarModo('pintado'); else colorear();
+    };
+    cont.appendChild(fila);
+  });
+}
+
+function porcentajes() {
+  if (!estado.etiquetas) return null;
+  const a = [0, 0, 0, 0];
+  let total = 0;
+  estado.etiquetas.forEach((e, t) => { a[e] += estado.geo.areas[t]; total += estado.geo.areas[t]; });
+  return a.map((v) => v / total);
+}
+
+function resumen() {
+  pintarRanuras();
+  const zonas = contarZonas(estado.etiquetas, estado.vec);
+  let html = `<p><strong>${zonas.toLocaleString('es-MX')}</strong> zonas de color. Cada zona extra suma cambios de filamento y purga.</p>`;
+  if (zonas > 60) html += '<div class="consejo">Hay muchas zonas chicas. Cambia el detalle a “Limpio” para ahorrar purga.</div>';
+  html += `<div class="consejo"><strong>En ElegooSlicer:</strong>
+    <ol class="pasos-slicer">
+      <li>Abre el .3mf descargado (si pregunta, acepta cargarlo como modelo).</li>
+      <li>Deja ${ranuras.length} filamentos en la lista, en este orden: ${ranuras.map((j, r) => `${r + 1} = ${esc(inventario[j].nombre)}`).join(', ')}.</li>
+      <li>Revisa con la vista previa de rebanado; si algo quedó raro, retócalo con la herramienta de pintura.</li>
+    </ol></div>`;
+  $('#resumen').innerHTML = html;
+}
+
+function infoModelo() {
+  const { tam } = caja();
+  $('#info-modelo').textContent = `${estado.nombre} · ${tam.map((v) => v.toFixed(1)).join(' × ')} mm · `
+    + `${(estado.malla.tri.length / 3).toLocaleString('es-MX')} triángulos`;
+}
+
+// ---------- Mis filamentos ----------
+
+function pintarInventario() {
+  const cont = $('#lista-filamentos');
+  cont.innerHTML = '';
+  $('#cuantos-filamentos').textContent = `${inventario.length} filamentos`;
+  inventario.forEach((f, i) => {
+    const fila = document.createElement('div');
+    fila.className = 'filamento';
+    fila.innerHTML = `<input type="color" value="${f.hex}" aria-label="Color">
+      <input type="text" value="${esc(f.nombre)}" aria-label="Nombre">
+      <button class="chico" aria-label="Eliminar">✕</button>`;
+    const [color, nombre, borrar] = fila.querySelectorAll('input, button');
+    color.onchange = () => { f.hex = color.value.toUpperCase(); cambioInventario(); };
+    nombre.onchange = () => { f.nombre = nombre.value; cambioInventario(); };
+    borrar.onclick = () => {
+      inventario.splice(i, 1);
+      ranuras = ranuras.filter((j) => j !== i).map((j) => (j > i ? j - 1 : j));
+      cambioInventario();
+    };
+    cont.appendChild(fila);
+  });
+}
+
+async function cambioInventario() {
+  guardarFilamentos(inventario);
+  pintarInventario();
+  if (estado.malla) await sugerir();
+  else pintarRanuras();
+}
+
+$('#agregar').onclick = () => {
+  inventario.push({ nombre: 'Nuevo filamento', hex: '#888888', fijo: false });
+  guardarFilamentos(inventario);
+  pintarInventario();
+  $('#lista-filamentos').lastElementChild.querySelector('input[type=text]').select();
+};
+$('#exportar').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(inventario, null, 2)], { type: 'application/json' }));
+  a.download = 'filamentos.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('#importar').onchange = async (e) => {
+  try {
+    const lista = JSON.parse(await e.target.files[0].text());
+    if (!Array.isArray(lista)) throw new Error();
+    inventario = lista
+      .filter((f) => /^#[0-9a-f]{6}$/i.test(f.hex))
+      .map((f) => ({ nombre: String(f.nombre || f.hex), hex: f.hex.toUpperCase(), fijo: !!f.fijo }));
+    await cambioInventario();
+  } catch { alert('Ese archivo no es una lista de filamentos válida.'); }
+  e.target.value = '';
+};
+$('#restablecer').onclick = async () => {
+  if (!confirm('¿Volver a la lista original? Se pierden tus cambios.')) return;
+  inventario = FILAMENTOS_BASE.map((f) => ({ ...f }));
+  await cambioInventario();
+};
+
+// ---------- Carga ----------
+
+// GLB (Tripo): une todas las partes en una sola malla y toma el color de cada triángulo de la
+// textura en su centro. Los vértices repetidos en las costuras de la textura se unen por posición
+// para que los triángulos queden conectados.
+async function leerGLB(datos) {
+  const gltf = await new GLTFLoader().parseAsync(datos, '');
+  gltf.scene.updateMatrixWorld(true);
+  const lienzoTextura = document.createElement('canvas');
+  const ctxTextura = lienzoTextura.getContext('2d', { willReadFrequently: true });
+  const texturas = new Map();
+  const pixeles = (tex) => {
+    if (!texturas.has(tex)) {
+      const img = tex.image;
+      lienzoTextura.width = img.width; lienzoTextura.height = img.height;
+      ctxTextura.drawImage(img, 0, 0);
+      texturas.set(tex, { datos: ctxTextura.getImageData(0, 0, img.width, img.height).data, w: img.width, h: img.height });
+    }
+    return texturas.get(tex);
+  };
+  const unidos = new Map();
+  const pos = [], tri = [], color = [];
+  const v = new THREE.Vector3();
+  let conColor = false;
+  gltf.scene.traverse((o) => {
+    if (!o.isMesh) return;
+    const g = o.geometry;
+    const P = g.getAttribute('position'), UV = g.getAttribute('uv'), C = g.getAttribute('color');
+    const mat = Array.isArray(o.material) ? o.material[0] : o.material;
+    const tex = mat?.map && UV ? pixeles(mat.map) : null;
+    const base = mat?.color ? mat.color.clone().convertLinearToSRGB() : new THREE.Color(1, 1, 1);
+    if (tex || C) conColor = true;
+    const ids = new Uint32Array(P.count);
+    for (let i = 0; i < P.count; i++) {
+      v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld);
+      const clave = `${Math.round(v.x * 1e5)},${Math.round(v.y * 1e5)},${Math.round(v.z * 1e5)}`;
+      let k = unidos.get(clave);
+      if (k === undefined) { k = pos.length / 3; unidos.set(clave, k); pos.push(v.x, v.y, v.z); }
+      ids[i] = k;
+    }
+    const indice = g.index ? g.index.array : null;
+    const n = indice ? indice.length / 3 : P.count / 3;
+    for (let t = 0; t < n; t++) {
+      const a = indice ? indice[t * 3] : t * 3, b = indice ? indice[t * 3 + 1] : t * 3 + 1, c = indice ? indice[t * 3 + 2] : t * 3 + 2;
+      tri.push(ids[a], ids[b], ids[c]);
+      if (tex) {
+        let u = (UV.getX(a) + UV.getX(b) + UV.getX(c)) / 3, w = (UV.getY(a) + UV.getY(b) + UV.getY(c)) / 3;
+        u -= Math.floor(u); w -= Math.floor(w);
+        const i = (Math.min(tex.h - 1, Math.floor(w * tex.h)) * tex.w + Math.min(tex.w - 1, Math.floor(u * tex.w))) * 4;
+        color.push(tex.datos[i], tex.datos[i + 1], tex.datos[i + 2]);
+      } else if (C) {
+        const prom = (k) => ((C.getComponent(a, k) + C.getComponent(b, k) + C.getComponent(c, k)) / 3);
+        const lin = new THREE.Color(prom(0), prom(1), prom(2)).convertLinearToSRGB();
+        color.push(lin.r * 255, lin.g * 255, lin.b * 255);
+      } else color.push(base.r * 255, base.g * 255, base.b * 255);
+    }
+  });
+  if (!tri.length) throw new Error('el GLB no tiene triángulos');
+  if (!conColor) throw new Error('este GLB no trae colores. En Tripo, revisa que el modelo tenga textura antes de descargarlo');
+  return { pos: Float64Array.from(pos), tri: Uint32Array.from(tri), color: Uint8Array.from(color) };
+}
+
+async function cargarModelo(archivo) {
+  mensaje('Leyendo el modelo…');
+  await pausa();
+  try {
+    const malla = await leerGLB(await archivo.arrayBuffer());
+    // El GLB viene con Y hacia arriba y sin unidades: se para sobre Z y se escala a la altura elegida
+    levantarYEscalar(malla, +$('#altura').value, true);
+    estado.malla = malla;
+    estado.nombre = archivo.name.replace(/\.[^.]+$/, '');
+    estado.grupos = null;
+    estado.grupoDe = null;
+    estado.resaltado = -1;
+    estado.colorBase = 'auto';
+    $('#num-ranuras').value = '4';
+    prepararMalla();
+    encuadrar();
+    await sugerir();
+  } catch (err) {
+    mensaje('No pude leer el modelo: ' + err.message);
+    console.error(err);
+  }
+}
+
+function prepararMalla() {
+  estado.vec = vecinos(estado.malla);
+  estado.geo = areasYNormales(estado.malla);
+  estado.etiquetas = null;
+  estado.colorCorregido = null;
+  estado.base = detectarBase();
+  construirMalla();
+  infoModelo();
+}
+
+// ---------- Eventos ----------
+
+$('#archivo-modelo').onchange = (e) => { if (e.target.files[0]) cargarModelo(e.target.files[0]); e.target.value = ''; };
+$('#altura').onchange = async (e) => {
+  if (!estado.malla || !(+e.target.value > 0)) return;
+  levantarYEscalar(estado.malla, +e.target.value, false);
+  prepararMalla();
+  encuadrar();
+  await pintar();
+};
+document.querySelectorAll('#modo button').forEach((b) => (b.onclick = () => cambiarModo(b.dataset.modo)));
+$('#alambre').onchange = (e) => { material.wireframe = e.target.checked; dibujar(); };
+$('#realista').onchange = () => cambiarModo(estado.modo);
+for (const id of ['#boquilla', '#detalle-color', '#suavizado']) {
+  $(id).onchange = async () => {
+    try { localStorage.setItem('prismatix-impresion', JSON.stringify({ boquilla: $('#boquilla').value, detalle: $('#detalle-color').value })); } catch {}
+    notaDetalle();
+    if (estado.etiquetas) await pintar(); else dibujar();
+  };
+}
+try {
+  const guardado = JSON.parse(localStorage.getItem('prismatix-impresion'));
+  if (guardado) { $('#boquilla').value = guardado.boquilla; $('#detalle-color').value = guardado.detalle; }
+} catch {}
+$('#num-ranuras').onchange = async () => {
+  pintarRanuras();
+  if (estado.grupos && estado.grupos.some((g) => g.ranura >= ranuras.length)) {
+    mapearGrupos();
+    await pintar();
+  } else colorear();
+};
+for (const id of ['#ajustar-luz', '#quitar-luz', '#num-grupos']) {
+  $(id).onchange = async () => {
+    if (!estado.malla) return;
+    estado.colorCorregido = null;
+    estado.grupos = null;
+    await sugerir();
+  };
+}
+$('#color-base').onchange = async (e) => {
+  estado.colorBase = e.target.value;
+  await pintar();
+};
+$('#sugerir').onclick = sugerir;
+
+function armar3MF() {
+  return zipSync({
+    '[Content_Types].xml': strToU8(TIPOS_3MF),
+    '_rels/.rels': strToU8(RELS_3MF),
+    '3D/3dmodel.model': bloquesABytes(modelo3MF(estado.malla, estado.etiquetas, estado.nombre, CENTRO_CAMA)),
+  }, { level: 4 });
+}
+
+$('#descargar').onclick = async () => {
+  mensaje('Armando el .3mf…');
+  await pausa();
+  const zip = armar3MF();
+  mensaje(`Listo: ${(zip.length / 1048576).toFixed(1)} MB.`);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([zip], { type: 'model/3mf' }));
+  a.download = `${estado.nombre}-pintado.3mf`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+notaDetalle();
+pintarInventario();
+pintarRanuras();
+cambiarModo('pintado');
+ajustarVisor();
+
+// Para pruebas automáticas
+window.pintarModelo = { estado, cargarModelo, armar3MF, cambiarModo, pintar, sugerir, camara, controles, encuadrar, get ranuras() { return ranuras; } };
+</script>
+</body>
+</html>
