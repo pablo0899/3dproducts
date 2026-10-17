@@ -1,18 +1,24 @@
 ---
-// Llamado a la acción que se repite entre secciones: siempre lleva a la
-// sección "Dale forma a tu idea" (#tu-idea) y ofrece el correo como atajo.
+// Llamado a la acción que se repite entre secciones. El botón principal abre el primer
+// canal (Instagram); después vienen los demás y el correo al final.
 import Destello from './Destello.astro';
-import { SITIO } from '../config';
-import { enlaceCorreo } from '../utils';
+import Icono from './Icono.astro';
+import { canales, atributosCanal } from '../utils';
 
 interface Props {
   titulo: string;
   texto?: string;
-  boton?: string;
-  asunto?: string;
+  asunto?: string; // asunto del correo
+  mensaje?: string; // mensaje que se copia (Instagram/Facebook) o se prellena (correo/WhatsApp)
 }
 
-const { titulo, texto, boton = 'Cuéntanos tu idea', asunto = 'Quiero una pieza Prismatix' } = Astro.props;
+const {
+  titulo,
+  texto,
+  asunto = 'Quiero una pieza Prismatix',
+  mensaje = 'Hola, Prismatix. Tengo una idea y me gustaría hacerla realidad con ustedes.',
+} = Astro.props;
+const [principal, ...otros] = canales(asunto, mensaje);
 ---
 
 <aside class="llamado">
@@ -22,8 +28,21 @@ const { titulo, texto, boton = 'Cuéntanos tu idea', asunto = 'Quiero una pieza 
     {texto && <p class="llamado__sub">{texto}</p>}
   </div>
   <div class="llamado__acciones">
-    <a href="/#tu-idea" class="boton">{boton}</a>
-    <a href={enlaceCorreo(asunto)} class="llamado__correo">{SITIO.email}</a>
+    <a class="boton" {...atributosCanal(principal)}>
+      {(principal.id === 'instagram' || principal.id === 'facebook') && <Icono nombre={principal.id} tamano={20} />}
+      Escríbenos por {principal.nombre}
+    </a>
+    {otros.length > 0 && (
+      <p class="llamado__otros">
+        O por{' '}
+        {otros.map((c, i) => (
+          <>
+            {i > 0 && (i === otros.length - 1 ? ' o ' : ', ')}
+            <a {...atributosCanal(c)}>{c.nombre}</a>
+          </>
+        ))}
+      </p>
+    )}
   </div>
 </aside>
 
@@ -50,16 +69,15 @@ const { titulo, texto, boton = 'Cuéntanos tu idea', asunto = 'Quiero una pieza 
   }
   .llamado__sub { margin: 0; color: rgb(253 251 247 / 0.75); font-size: 0.92rem; }
   .llamado__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
-  .llamado__correo {
+  .llamado__otros { margin: 0; color: rgb(253 251 247 / 0.7); font-size: 0.86rem; }
+  .llamado__otros a {
     color: var(--soft-rose);
-    font-size: 0.85rem;
     font-weight: 500;
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-color: rgb(244 182 194 / 0.4);
-    overflow-wrap: anywhere;
   }
-  .llamado__correo:hover { color: var(--burnt-orange); }
+  .llamado__otros a:hover { color: var(--burnt-orange); }
 
   @media (min-width: 768px) {
     .llamado { grid-template-columns: 1fr auto; align-items: center; padding: 32px 40px; }

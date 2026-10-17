@@ -27,8 +27,12 @@
     radial-gradient(520px 380px at 10% 90%, rgb(224 122 95 / 0.22), transparent 70%),
     linear-gradient(160deg, var(--plum-night) 0%, #2b1a2c 60%, var(--deep-plum) 100%);
 
+  --color-tinte: #fbf0ef;     /* ivory con un toque de Soft Rose, para bandas */
+  --sombra: 0 1px 2px rgb(58 36 59 / 0.06), 0 12px 32px -12px rgb(58 36 59 / 0.18);
+
   --radio: 12px;
-  --ancho-max: 1120px;
+  --radio-grande: 20px;
+  --ancho-max: 1200px;
   --fuente: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --fuente-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
 
@@ -47,16 +51,23 @@ body {
   background: var(--color-fondo);
 }
 
+[hidden] { display: none !important; }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 
 /* Titulares en serif (Playfair Display), textos en Montserrat */
 h1, h2, h3 {
   font-family: var(--fuente-display);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
+p { text-wrap: pretty; }
+
+/* Título de sección en Playfair (escala ≈1.25) con una entrada corta debajo */
+.titular { margin: 0; font-size: clamp(2rem, 7vw, 3.25rem); }
+.entrada { margin: 12px 0 0; max-width: 52ch; color: var(--color-suave); font-size: 1.02rem; }
 
 /* Rótulos de sección: mayúsculas pequeñas con espaciado, como la lámina */
 .titulo-seccion {

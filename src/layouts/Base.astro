@@ -1,8 +1,9 @@
 ---
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import Icono from '../components/Icono.astro';
 import { SITIO } from '../config';
-import { enlaceCorreo } from '../utils';
+import { canales, atributosCanal, usuarioInstagram, enlaceCorreo } from '../utils';
 
 interface Props {
   titulo?: string;
@@ -13,6 +14,9 @@ interface Props {
 const { titulo, descripcion = SITIO.descripcion, imagen = '/marca/og.jpg' } = Astro.props;
 const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : `${SITIO.nombre} · ${SITIO.descriptor}`;
 const anio = new Date().getFullYear();
+// Contacto del pie: el primer canal es el botón; los demás van como enlaces y el correo al final
+const [principal, ...otros] = canales('Quiero una pieza Prismatix');
+const redes = otros.filter((c) => c.id !== 'correo');
 ---
 
 <!doctype html>
@@ -54,16 +58,33 @@ const anio = new Date().getFullYear();
 
     <footer id="contacto" class="pie seccion-oscura">
       <div class="contenedor pie__fila">
-        <img class="pie__isotipo" src="/marca/isotipo-96.webp" alt="" width="96" height="96" loading="lazy" />
-        <p class="pie__cierre">{SITIO.cierre}</p>
-        <p class="pie__texto">
-          ¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real.
-        </p>
-        <a class="pie__correo" href={enlaceCorreo('Quiero una pieza Prismatix')}>{SITIO.email}</a>
-        <div class="pie__enlaces">
-          <a href="/#tu-idea" class="boton boton--secundario">Cuéntanos tu idea</a>
-          {SITIO.whatsapp && <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a>}
-          {SITIO.instagram && <a href={SITIO.instagram} target="_blank" rel="noopener">Instagram</a>}
+        <div class="pie__marca">
+          <img class="pie__isotipo" src="/marca/isotipo-96.webp" alt="" width="96" height="96" loading="lazy" />
+          <p class="pie__cierre">{SITIO.cierre}</p>
+        </div>
+        <div class="pie__contacto">
+          <p class="pie__texto">
+            ¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real.
+          </p>
+          {usuarioInstagram ? (
+            <a class="pie__principal" href={SITIO.instagram} target="_blank" rel="noopener">
+              <Icono nombre="instagram" tamano={30} />@{usuarioInstagram}
+            </a>
+          ) : (
+            <a class="pie__principal" href={enlaceCorreo('Quiero una pieza Prismatix')}>{SITIO.email}</a>
+          )}
+          <div class="pie__enlaces">
+            <a class="boton" {...atributosCanal(principal)}>Escríbenos por {principal.nombre}</a>
+            {redes.map((c) => (
+              <a class="pie__red" {...atributosCanal(c)}>
+                {(c.id === 'instagram' || c.id === 'facebook') && <Icono nombre={c.id} tamano={22} />}
+                {c.nombre}
+              </a>
+            ))}
+          </div>
+          {principal.id !== 'correo' && (
+            <p class="pie__otro">O por correo: <a href={enlaceCorreo('Quiero una pieza Prismatix')}>{SITIO.email}</a></p>
+          )}
         </div>
         <div class="pie__firma">
           <Logo claro />
@@ -71,8 +92,41 @@ const anio = new Date().getFullYear();
         </div>
       </div>
     </footer>
+
+    <p class="aviso" role="status" hidden></p>
   </body>
 </html>
+
+<script>
+  // Instagram y Facebook no aceptan un mensaje prellenado: al abrirlos se copia el mensaje
+  // al portapapeles para que la persona solo lo pegue en el chat.
+  const aviso = document.querySelector<HTMLElement>('.aviso')!;
+  let temporizador: number | undefined;
+
+  function avisar(texto: string) {
+    aviso.textContent = texto;
+    aviso.hidden = false;
+    clearTimeout(temporizador);
+    temporizador = window.setTimeout(() => (aviso.hidden = true), 9000);
+  }
+
+  function copiarMensaje(mensaje: string, canal: string) {
+    navigator.clipboard?.writeText(mensaje).then(
+      () => avisar(`Copiamos tu mensaje. Pégalo en el chat de ${canal}.`),
+      () => {},
+    );
+  }
+  // El formulario de #tu-idea arma su mensaje y pide copiarlo con este evento
+  document.addEventListener('copiar-mensaje', (e) => {
+    const { mensaje, canal } = (e as CustomEvent<{ mensaje: string; canal: string }>).detail;
+    copiarMensaje(mensaje, canal);
+  });
+
+  document.addEventListener('click', (e) => {
+    const enlace = (e.target as Element).closest<HTMLElement>('[data-copiar]');
+    if (enlace) copiarMensaje(enlace.dataset.copiar!, enlace.dataset.canal!);
+  });
+</script>
 
 <style>
   html { scroll-behavior: smooth; }
@@ -103,42 +157,73 @@ const anio = new Date().getFullYear();
   .nav__enlace:hover { color: var(--berry-magenta); }
   .nav__corto { display: none; }
 
-  .pie { margin-top: 0; padding-block: 64px 40px; }
-  .pie__fila { display: grid; gap: 18px; justify-items: start; }
+  .pie { margin-top: 0; padding-block: 72px 32px; }
+  .pie__fila { display: grid; gap: 40px; }
+  .pie__marca { display: grid; gap: 20px; justify-items: start; }
+  .pie__contacto { display: grid; gap: 18px; justify-items: start; align-content: end; }
   .pie__isotipo { width: 56px; height: 56px; }
   .pie__cierre {
     margin: 0;
     max-width: 18ch;
     font-family: var(--fuente-display);
     font-style: italic;
-    font-size: clamp(1.8rem, 7vw, 2.8rem);
-    line-height: 1.15;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    line-height: 1.1;
   }
   .pie__texto { margin: 0; max-width: 46ch; color: rgb(253 251 247 / 0.75); }
-  .pie__correo {
+  .pie__principal {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
     font-family: var(--fuente-display);
-    font-size: clamp(1.15rem, 5vw, 1.5rem);
+    font-size: clamp(1.5rem, 6.5vw, 2.2rem);
     color: var(--soft-rose);
     text-decoration: underline;
     text-decoration-color: rgb(244 182 194 / 0.35);
     text-underline-offset: 6px;
     overflow-wrap: anywhere;
   }
-  .pie__correo:hover { color: var(--burnt-orange); }
+  .pie__principal:hover { color: var(--burnt-orange); }
   .pie__enlaces { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-weight: 500; }
   .pie__enlaces a:not(.boton) { color: var(--soft-rose); text-decoration: none; }
   .pie__enlaces a:not(.boton):hover { color: var(--burnt-orange); }
+  .pie__red { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+  .pie__otro { margin: 0; color: rgb(253 251 247 / 0.6); font-size: 0.86rem; }
+  .pie__otro a { color: inherit; overflow-wrap: anywhere; }
+  .pie__otro a:hover { color: var(--soft-rose); }
+
+  /* Aviso flotante cuando se copia el mensaje para pegarlo en Instagram o Facebook */
+  .aviso {
+    position: fixed;
+    inset: auto 16px 16px;
+    z-index: 20;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    border-radius: var(--radio);
+    background: var(--plum-night);
+    color: var(--ivory-dust);
+    font-size: 0.9rem;
+    box-shadow: var(--sombra);
+    animation: aviso 0.3s ease both;
+  }
+  @keyframes aviso { from { opacity: 0; translate: 0 8px; } }
   .pie__firma {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 8px 16px;
+    grid-column: 1 / -1;
     width: 100%;
-    margin-top: 24px;
     padding-top: 24px;
     border-top: 1px solid rgb(244 182 194 / 0.2);
     color: rgb(253 251 247 / 0.6);
     font-size: 0.8rem;
+  }
+
+  @media (min-width: 900px) {
+    .pie { padding-block: 112px 40px; }
+    .pie__fila { grid-template-columns: 1.2fr 1fr; gap: 64px 72px; }
   }
 
   /* Cabecera en teléfonos: se oculta "Colección" y el botón se acorta en pantallas muy angostas */

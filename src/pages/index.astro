@@ -11,6 +11,7 @@ import { SITIO, CATEGORIAS, ESENCIA } from '../config';
 const productos = (await getCollection('productos')).sort(
   (a, b) => Number(b.data.destacado) - Number(a.data.destacado) || a.data.orden - b.data.orden,
 );
+const cuantos = (linea: string) => productos.filter((p) => p.data.categoria === linea).length;
 ---
 
 <Base>
@@ -33,39 +34,56 @@ const productos = (await getCollection('productos')).sort(
         <a href="#catalogo" class="boton boton--secundario">Ver la colección</a>
       </div>
     </div>
-  </section>
 
-  <section class="esencia contenedor" aria-labelledby="titulo-esencia">
-    <h2 class="titulo-seccion" id="titulo-esencia">Esencia</h2>
-    <p class="esencia__frase">
-      Fusionamos arte y diseño para crear piezas que cuentan historias, despiertan emociones y se convierten en{' '}
-      <em>recuerdos duraderos.</em>
-    </p>
-    <ul class="esencia__lista">
-      {ESENCIA.map((e) => (
-        <li>
-          <Icono nombre={e.icono} tamano={30} />
-          <span>{e.titulo}</span>
-        </li>
-      ))}
-    </ul>
-    <a href="#tu-idea" class="esencia__enlace">¿Ya la estás imaginando? Cuéntanos tu idea <span aria-hidden="true">→</span></a>
-  </section>
-
-  <section id="catalogo" class="contenedor catalogo">
-    <h2 class="titulo-seccion">Explora por línea</h2>
-    <div class="lineas" role="group" aria-label="Filtrar por línea de producto">
+    <!-- Accesos directos: cada línea abre la colección ya filtrada -->
+    <nav class="contenedor portada__lineas" aria-label="Líneas de producto">
       {CATEGORIAS.map((c) => (
-        <button type="button" class="linea" data-filtro={c.nombre} aria-pressed="false">
-          <Icono nombre={c.icono} tamano={36} />
+        <a href={`/?linea=${encodeURIComponent(c.nombre)}#catalogo`} data-ir-linea={c.nombre}>
+          <Icono nombre={c.icono} tamano={26} />
           <span>{c.nombre}</span>
-        </button>
+        </a>
       ))}
+    </nav>
+  </section>
+
+  <section class="esencia" aria-labelledby="titulo-esencia">
+    <div class="contenedor esencia__rejilla">
+      <div class="esencia__intro">
+        <h2 class="titulo-seccion" id="titulo-esencia">Esencia</h2>
+        <p class="esencia__frase">
+          Fusionamos arte y diseño para crear piezas que cuentan historias, despiertan emociones y se convierten en{' '}
+          <em>recuerdos duraderos.</em>
+        </p>
+        <a href="#tu-idea" class="esencia__enlace">¿Ya la estás imaginando? Cuéntanos tu idea <span aria-hidden="true">→</span></a>
+      </div>
+      <ul class="esencia__lista">
+        {ESENCIA.map((e) => (
+          <li>
+            <Icono nombre={e.icono} tamano={28} />
+            <h3>{e.titulo}</h3>
+            <p>{e.texto}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section id="catalogo" class="contenedor catalogo" aria-labelledby="titulo-rejilla">
+    <div class="catalogo__cabecera">
+      <h2 class="titular" id="titulo-rejilla">La colección</h2>
+      <p class="entrada">Piezas listas para regalar o coleccionar. Todas se pueden personalizar.</p>
     </div>
 
-    <div class="catalogo__cabecera">
-      <h2 id="titulo-rejilla">Toda la colección</h2>
-      <button type="button" class="ver-todo" hidden>Ver todo ✕</button>
+    <div class="lineas" role="group" aria-label="Filtrar por línea de producto">
+      <button type="button" class="linea" data-filtro="" aria-pressed="true">
+        Todo <span class="linea__cuenta">{productos.length}</span>
+      </button>
+      {CATEGORIAS.map((c) => (
+        <button type="button" class="linea" data-filtro={c.nombre} aria-pressed="false">
+          <Icono nombre={c.icono} tamano={20} />
+          {c.nombre} <span class="linea__cuenta">{cuantos(c.nombre)}</span>
+        </button>
+      ))}
     </div>
 
     <div class="rejilla">
@@ -87,8 +105,6 @@ const productos = (await getCollection('productos')).sort(
 <script>
   const lineas = document.querySelectorAll<HTMLButtonElement>('.lineas button');
   const tarjetas = document.querySelectorAll<HTMLElement>('.rejilla [data-categoria]');
-  const titulo = document.querySelector<HTMLElement>('#titulo-rejilla')!;
-  const verTodo = document.querySelector<HTMLButtonElement>('.ver-todo')!;
   const vacio = document.querySelector<HTMLElement>('.vacio')!;
 
   function filtrar(filtro: string) {
@@ -98,18 +114,23 @@ const productos = (await getCollection('productos')).sort(
       t.hidden = !!filtro && t.dataset.categoria !== filtro;
       if (!t.hidden) visibles++;
     });
-    titulo.textContent = filtro || 'Toda la colección';
-    verTodo.hidden = !filtro;
     vacio.hidden = visibles > 0;
   }
 
-  lineas.forEach((boton) => {
-    boton.addEventListener('click', () => {
-      const activo = boton.getAttribute('aria-pressed') === 'true';
-      filtrar(activo ? '' : boton.dataset.filtro!);
+  lineas.forEach((boton) => boton.addEventListener('click', () => filtrar(boton.dataset.filtro!)));
+
+  // Accesos de la portada: filtran sin recargar y bajan a la colección
+  document.querySelectorAll<HTMLAnchorElement>('[data-ir-linea]').forEach((enlace) => {
+    enlace.addEventListener('click', (e) => {
+      e.preventDefault();
+      filtrar(enlace.dataset.irLinea!);
+      document.getElementById('catalogo')!.scrollIntoView({ behavior: 'smooth' });
     });
   });
-  verTodo.addEventListener('click', () => filtrar(''));
+
+  // /?linea=Mascotas#catalogo (desde la página de un producto)
+  const inicial = new URLSearchParams(location.search).get('linea');
+  if (inicial && [...lineas].some((b) => b.dataset.filtro === inicial)) filtrar(inicial);
 </script>
 
 <style>
@@ -117,44 +138,76 @@ const productos = (await getCollection('productos')).sort(
   .portada {
     position: relative;
     overflow: hidden;
-    padding-block: 36px 64px;
+    padding-top: 32px;
   }
-  .portada__texto { position: relative; z-index: 1; display: grid; gap: 16px; justify-items: start; }
+  .portada__texto { position: relative; z-index: 1; display: grid; gap: 18px; justify-items: start; }
   .portada .titulo-seccion { margin: 0; }
   .portada h1 {
     margin: 0;
     max-width: 11ch;
     font-style: italic;
-    font-weight: 400;
-    font-size: clamp(2.6rem, 12vw, 5rem);
-    line-height: 1.05;
+    font-size: clamp(2.75rem, 12.5vw, 5.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    text-wrap: initial;
   }
-  .portada__sub { margin: 0 0 8px; max-width: 40ch; color: rgb(253 251 247 / 0.78); }
+  .portada__sub { margin: 0 0 6px; max-width: 42ch; font-size: 1.02rem; color: rgb(253 251 247 / 0.8); }
   .portada__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  /* Franja de líneas al pie de la portada; en móvil se desliza de lado */
+  .portada__lineas {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-top: 48px;
+    padding-block: 20px 24px;
+    border-top: 1px solid rgb(244 182 194 / 0.18);
+    scrollbar-width: none;
+  }
+  .portada__lineas::-webkit-scrollbar { display: none; }
+  .portada__lineas a {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 6px 16px 6px 10px;
+    border-radius: 999px;
+    background: rgb(253 251 247 / 0.06);
+    color: rgb(253 251 247 / 0.86);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .portada__lineas a :global(svg) { color: var(--soft-rose); }
+  .portada__lineas a:hover { background: rgb(253 251 247 / 0.14); color: var(--ivory-dust); }
 
   /* Isotipo con haces de luz. En móvil va arriba del texto, completo; en escritorio, a la derecha */
   .prisma {
     position: relative;
     width: 128px;
     height: 128px;
-    margin: 0 0 12px 8px;
+    margin: 0 0 12px 24px;
     pointer-events: none;
   }
   .prisma__haz {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 520px;
-    height: 46px;
+    width: 300px;
+    height: 28px;
     border-radius: 50%;
     background: linear-gradient(90deg, transparent, rgb(244 182 194 / 0.7), rgb(224 122 95 / 0.6), transparent);
     filter: blur(14px);
+    opacity: 0.6;
     transform-origin: 0 50%;
   }
   .prisma__haz--1 { transform: rotate(160deg); }
   .prisma__haz--2 { transform: rotate(200deg); background: linear-gradient(90deg, transparent, rgb(216 58 107 / 0.7), transparent); }
-  .prisma__haz--3 { transform: rotate(-20deg); height: 30px; }
-  .prisma__haz { width: 300px; height: 28px; opacity: 0.6; }
+  .prisma__haz--3 { transform: rotate(-20deg); }
   .prisma__isotipo {
     position: absolute;
     inset: 50% auto auto 50%;
@@ -169,78 +222,42 @@ const productos = (await getCollection('productos')).sort(
   }
   :global(.prisma__destello) { position: absolute; top: 4px; right: 12px; display: none; }
 
+  /* Única entrada animada del sitio: la portada aparece en secuencia al cargar */
+  .portada__texto > *, .prisma { animation: aparecer 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .portada__texto > :nth-child(2) { animation-delay: 0.08s; }
+  .portada__texto > :nth-child(3) { animation-delay: 0.18s; }
+  .portada__texto > :nth-child(4) { animation-delay: 0.26s; }
+  .prisma { animation-duration: 1.4s; }
+  @keyframes aparecer {
+    from { opacity: 0; translate: 0 14px; }
+  }
+
   /* ── Esencia ── */
-  .esencia { padding-block: 64px 24px; }
+  .esencia { padding-block: 72px; }
+  .esencia__rejilla { display: grid; gap: 40px; }
+  .esencia__intro { display: grid; gap: 20px; align-content: start; justify-items: start; }
+  .esencia__intro .titulo-seccion { margin: 0; }
   .esencia__frase {
-    margin: 0 0 32px;
-    max-width: 30ch;
+    margin: 0;
+    max-width: 24ch;
     font-family: var(--fuente-display);
-    font-size: clamp(1.5rem, 5.5vw, 2.2rem);
-    line-height: 1.3;
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
+    line-height: 1.28;
   }
   .esencia__frase em { color: var(--terracotta); }
   .esencia__lista {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px 16px;
+    gap: 28px 20px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
-  .esencia__lista li { display: grid; justify-items: center; gap: 10px; text-align: center; color: var(--plum-night); }
-  .esencia__lista span { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
-
-  /* ── Catálogo ── */
-  .catalogo { padding-top: 56px; }
-  .lineas {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    margin: 0 -16px 24px;
-    padding: 4px 16px 12px;
-    scrollbar-width: none;
-  }
-  .lineas::-webkit-scrollbar { display: none; }
-  .linea {
-    flex: 0 0 128px;
-    display: grid;
-    justify-items: center;
-    gap: 10px;
-    padding: 18px 10px 14px;
-    border: 1px solid var(--color-borde);
-    border-radius: var(--radio);
-    background: var(--color-superficie);
-    color: var(--plum-night);
-    font: inherit;
-    font-size: 0.66rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    line-height: 1.4;
-    text-transform: uppercase;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  }
-  .linea svg { color: var(--deep-plum); }
-  .linea:hover { border-color: var(--berry-magenta); }
-  .linea[aria-pressed='true'] { background: var(--plum-night); border-color: var(--plum-night); color: var(--ivory-dust); }
-  .linea[aria-pressed='true'] svg { color: var(--soft-rose); }
-
-  .catalogo__cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-  .catalogo__cabecera h2 { margin: 0; font-size: clamp(1.6rem, 6vw, 2.2rem); }
-  .ver-todo {
-    min-height: 40px;
-    border: 0;
-    background: none;
-    color: var(--berry-magenta);
-    font: inherit;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
+  .esencia__lista li { display: grid; gap: 6px; align-content: start; padding-top: 18px; border-top: 1px solid var(--color-borde); }
+  .esencia__lista :global(svg) { margin-bottom: 6px; color: var(--deep-plum); }
+  .esencia__lista h3 { margin: 0; font-size: 1.12rem; line-height: 1.25; }
+  .esencia__lista p { margin: 0; color: var(--color-suave); font-size: 0.86rem; line-height: 1.55; }
   .esencia__enlace {
-    display: inline-block;
-    margin-top: 36px;
     color: var(--berry-magenta);
     font-weight: 600;
     text-decoration: underline;
@@ -248,22 +265,78 @@ const productos = (await getCollection('productos')).sort(
     text-underline-offset: 5px;
   }
   .esencia__enlace:hover { color: var(--terracotta); }
+
+  /* ── Catálogo ── */
+  .catalogo { scroll-margin-top: 64px; padding-top: 72px; border-top: 1px solid var(--color-borde); }
+  .catalogo__cabecera { margin-bottom: 28px; }
+  .lineas {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin: 0 -16px 28px;
+    padding: 2px 16px 6px;
+    scrollbar-width: none;
+  }
+  .lineas::-webkit-scrollbar { display: none; }
+  .linea {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 14px;
+    border: 1px solid rgb(58 36 59 / 0.18);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--plum-night);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .linea :global(svg) { color: var(--deep-plum); }
+  .linea__cuenta { color: var(--color-suave); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+  .linea:hover { border-color: var(--plum-night); }
+  .linea[aria-pressed='true'] { background: var(--plum-night); border-color: var(--plum-night); color: var(--ivory-dust); }
+  .linea[aria-pressed='true'] :global(svg), .linea[aria-pressed='true'] .linea__cuenta { color: var(--soft-rose); }
+
   .vacio { padding: 32px 0; color: var(--color-suave); }
   .vacio a { color: var(--berry-magenta); }
 
-  /* 1 columna en móvil pequeño, 2 en móvil grande, 3-4 en escritorio */
-  .rejilla { display: grid; gap: 20px; grid-template-columns: 1fr; }
-  @media (min-width: 420px) { .rejilla { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
-  @media (min-width: 600px) { .esencia__lista { grid-template-columns: repeat(3, 1fr); } }
+  /* 2 columnas en móvil, 3 en tableta, 4 en escritorio */
+  .rejilla { display: grid; gap: 28px 12px; grid-template-columns: repeat(2, 1fr); }
+
+  @media (min-width: 600px) {
+    .esencia__lista { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 768px) {
+    .rejilla { grid-template-columns: repeat(3, 1fr); gap: 40px 20px; }
+    .catalogo__cabecera { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+    .catalogo__cabecera .entrada { margin: 0 0 6px; max-width: 38ch; text-align: right; }
+  }
   @media (min-width: 900px) {
-    .portada { padding-block: 120px 128px; }
-    .prisma { position: absolute; top: 50%; right: 7%; width: 380px; height: 380px; margin: 0; transform: translateY(-50%); }
-    .prisma__haz { width: 520px; height: 46px; opacity: 1; }
+    .portada { padding-top: 112px; }
+    .portada__lineas { justify-content: space-between; margin-top: 104px; overflow: visible; }
+    .portada__lineas a { background: none; padding-inline: 4px; }
+    .portada__lineas a:hover { background: none; color: var(--soft-rose); }
+    .prisma { position: absolute; top: 44%; right: 7%; width: 400px; height: 400px; margin: 0; transform: translateY(-50%); }
+    .prisma__haz { width: 540px; height: 46px; opacity: 1; }
     .prisma__haz--3 { height: 30px; }
     :global(.prisma__destello) { display: block; }
-    .rejilla { grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .esencia__lista { grid-template-columns: repeat(6, 1fr); }
-    .lineas { display: grid; grid-template-columns: repeat(5, 1fr); overflow: visible; margin-inline: 0; padding-inline: 0; }
+
+    .esencia { padding-block: 112px; }
+    .esencia__rejilla { grid-template-columns: 5fr 7fr; gap: 72px; }
+    .esencia__intro { position: sticky; top: 112px; }
+    .esencia__lista { gap: 40px 28px; }
+
+    .catalogo { padding-top: 104px; }
+    .lineas { flex-wrap: wrap; gap: 6px; overflow: visible; margin-inline: 0; padding-inline: 0; }
   }
   @media (min-width: 1100px) { .rejilla { grid-template-columns: repeat(4, 1fr); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portada__texto > *, .prisma { opacity: 1; translate: none; }
+  }
 </style>

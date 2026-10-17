@@ -2,7 +2,8 @@
 // Iconografía de la marca: trazo fino, simple, orgánico y con personalidad.
 export type NombreIcono =
   | 'mascota' | 'figura' | 'estadio' | 'souvenir' | 'dado'
-  | 'destello' | 'sol' | 'diamante' | 'montana' | 'corazon' | 'destellos';
+  | 'destello' | 'sol' | 'diamante' | 'montana' | 'corazon' | 'destellos'
+  | 'instagram' | 'facebook';
 
 interface Props {
   nombre: NombreIcono;
@@ -82,6 +83,19 @@ const { nombre, tamano = 40 } = Astro.props;
       <path d="M20 8c.8 8 6 13 14 14-8 1-13.2 6-14 14-.8-8-6-13-14-14 8-1 13.2-6 14-14z" />
       <path d="M38 4c.4 3 2 5 5 5.5-3 .5-4.6 2.5-5 5.5-.4-3-2-5-5-5.5 3-.5 4.6-2.5 5-5.5z" />
       <path d="M38 32c.3 2.4 1.6 4 4 4.4-2.4.4-3.7 2-4 4.4-.3-2.4-1.6-4-4-4.4 2.4-.4 3.7-2 4-4.4z" />
+    </>
+  )}
+  {nombre === 'instagram' && (
+    <>
+      <rect x="9" y="9" width="30" height="30" rx="9" />
+      <circle cx="24" cy="24" r="7" />
+      <circle cx="32.5" cy="15.5" r="1" fill="currentColor" />
+    </>
+  )}
+  {nombre === 'facebook' && (
+    <>
+      <circle cx="24" cy="24" r="15" />
+      <path d="M26.5 39V26h4l.6-4.5h-4.6v-3c0-1.3.4-2.2 2.3-2.2h2.4v-4a31 31 0 0 0-3.5-.2c-3.5 0-5.8 2.1-5.8 6v3.4h-4V26h4v13" />
     </>
   )}
 </svg>

@@ -1,10 +1,14 @@
 ---
 // Sección "Dale forma a tu idea" (#tu-idea): destino de todos los llamados a la acción.
-// No hay backend: el formulario arma un correo (y un WhatsApp, si está configurado)
-// con lo que escribió la persona.
+// No hay backend: el formulario arma el mensaje con lo que escribió la persona y lo manda
+// por el canal elegido. Prioridad: Instagram, Facebook, WhatsApp (si hay número) y el correo al final.
 import Icono from './Icono.astro';
 import { SITIO, CATEGORIAS } from '../config';
-import { enlaceCorreo } from '../utils';
+import { canales, atributosCanal } from '../utils';
+
+const lista = canales('Quiero una pieza Prismatix', 'Hola, Prismatix. Tengo una idea y me gustaría hacerla realidad con ustedes.');
+const redes = lista.filter((c) => c.id !== 'correo');
+const correo = lista.find((c) => c.id === 'correo')!;
 
 const pasos = [
   { titulo: 'Cuéntanos tu idea', texto: 'Qué te imaginas, para quién es y, si tienes, fotos de referencia.' },
@@ -29,14 +33,23 @@ const pasos = [
           </li>
         ))}
       </ol>
-      <p class="agenda__directo">
-        ¿Prefieres escribir directo?<br />
-        <a href={enlaceCorreo('Quiero una pieza Prismatix')}>{SITIO.email}</a>
-        {SITIO.whatsapp && <> · <a href={`https://wa.me/${SITIO.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a></>}
-      </p>
+      <div class="agenda__directo">
+        <p>¿Prefieres escribir directo?</p>
+        <ul>
+          {redes.map((c) => (
+            <li>
+              <a {...atributosCanal(c)}>
+                {(c.id === 'instagram' || c.id === 'facebook') && <Icono nombre={c.id} tamano={22} />}
+                {c.id === 'instagram' ? 'Mándanos un DM en Instagram' : `Escríbenos por ${c.nombre}`}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p class="agenda__correo">O por correo: <a {...atributosCanal(correo)}>{SITIO.email}</a></p>
+      </div>
     </div>
 
-    <form class="formulario" data-email={SITIO.email} data-whatsapp={SITIO.whatsapp}>
+    <form class="formulario" data-email={SITIO.email}>
       <label>
         <span>Tu nombre</span>
         <input name="nombre" type="text" autocomplete="name" required />
@@ -63,20 +76,33 @@ const pasos = [
         </label>
       </div>
       <div class="formulario__acciones">
-        <button type="submit" class="boton" data-canal="correo">Enviar por correo</button>
-        {SITIO.whatsapp && <button type="submit" class="boton boton--secundario" data-canal="whatsapp">Enviar por WhatsApp</button>}
+        {lista.map((c, i) => (
+          <button
+            type="submit"
+            class:list={[c.id === 'correo' ? 'formulario__correo' : 'boton', { 'boton--secundario': i > 0 && c.id !== 'correo' }]}
+            data-canal={c.id}
+            data-nombre={c.nombre}
+            data-url={c.id === 'whatsapp' ? `https://wa.me/${SITIO.whatsapp}` : c.url}
+          >
+            {(c.id === 'instagram' || c.id === 'facebook') && <Icono nombre={c.id} tamano={20} />}
+            {c.id === 'correo' ? 'Prefiero enviarlo por correo' : `Enviar por ${c.nombre}`}
+          </button>
+        ))}
       </div>
-      <p class="formulario__nota">Se abrirá tu app de correo con el mensaje listo. Solo tienes que enviarlo.</p>
+      <p class="formulario__nota">
+        {lista[0].id === 'instagram' || lista[0].id === 'facebook'
+          ? 'Copiamos tu mensaje y abrimos el chat: solo pégalo y envíalo.'
+          : 'Se abrirá tu app de correo con el mensaje listo. Solo tienes que enviarlo.'}
+      </p>
     </form>
   </div>
 </section>
 
 <script>
   document.querySelectorAll<HTMLFormElement>('.formulario').forEach((form) => {
-    let canal = 'correo';
-    form.querySelectorAll<HTMLButtonElement>('[data-canal]').forEach((b) =>
-      b.addEventListener('click', () => (canal = b.dataset.canal!)),
-    );
+    const botones = form.querySelectorAll<HTMLButtonElement>('[data-canal]');
+    let elegido = botones[0];
+    botones.forEach((b) => b.addEventListener('click', () => (elegido = b)));
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -94,11 +120,16 @@ const pasos = [
         valor('telefono') ? `Mi teléfono: ${valor('telefono')}` : '',
       ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
 
-      if (canal === 'whatsapp' && form.dataset.whatsapp) {
-        window.open(`https://wa.me/${form.dataset.whatsapp}?text=${encodeURIComponent(mensaje)}`, '_blank');
-      } else {
+      const { canal, nombre, url } = elegido.dataset;
+      if (canal === 'correo') {
         const asunto = `Nueva idea: ${valor('linea')} · ${valor('nombre')}`;
         window.location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
+      } else if (canal === 'whatsapp') {
+        window.open(`${url}?text=${encodeURIComponent(mensaje)}`, '_blank');
+      } else {
+        // Instagram y Facebook: se copia el mensaje (aviso en Base.astro) y se abre el chat
+        document.dispatchEvent(new CustomEvent('copiar-mensaje', { detail: { mensaje, canal: nombre } }));
+        window.open(url, '_blank');
       }
     });
   });
@@ -107,16 +138,27 @@ const pasos = [
 <style>
   .agenda {
     scroll-margin-top: 64px;
-    padding-block: 48px 64px;
-    background: linear-gradient(180deg, transparent, rgb(244 182 194 / 0.18) 30%, rgb(244 182 194 / 0.18));
+    padding-block: 72px;
+    background: var(--color-tinte);
   }
   .agenda__rejilla { display: grid; gap: 40px; }
   .agenda__intro { display: grid; gap: 20px; align-content: start; }
   .agenda .titulo-seccion { margin: 0; color: var(--berry-magenta); }
-  h2 { margin: 0; font-size: clamp(2rem, 8vw, 3rem); }
+  h2 { margin: 0; max-width: 14ch; font-size: clamp(2rem, 7vw, 3.25rem); }
   h2 em { color: var(--terracotta); }
 
-  .pasos { display: grid; gap: 18px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .pasos { display: grid; gap: 0; margin: 8px 0 0; padding: 0; list-style: none; counter-reset: paso; }
+  .pasos li { position: relative; padding-bottom: 22px; }
+  /* Línea que une los pasos */
+  .pasos li:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 19.5px;
+    top: 44px;
+    bottom: 4px;
+    width: 1px;
+    background: rgb(58 36 59 / 0.2);
+  }
   .pasos li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
   .pasos__numero {
     display: grid;
@@ -132,32 +174,41 @@ const pasos = [
   .pasos strong { font-weight: 600; }
   .pasos p { margin: 2px 0 0; color: var(--color-suave); font-size: 0.92rem; }
 
-  .agenda__directo { margin: 8px 0 0; color: var(--color-suave); font-size: 0.92rem; }
-  .agenda__directo a { color: var(--berry-magenta); font-weight: 600; overflow-wrap: anywhere; }
+  .agenda__directo { display: grid; gap: 6px; margin-top: 8px; color: var(--color-suave); font-size: 0.92rem; }
+  .agenda__directo p { margin: 0; }
+  .agenda__directo ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+  .agenda__directo li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    color: var(--plum-night);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgb(58 36 59 / 0.25);
+    text-underline-offset: 5px;
+  }
+  .agenda__directo li a :global(svg) { color: var(--berry-magenta); }
+  .agenda__directo li a:hover { color: var(--berry-magenta); }
+  .agenda__correo a { color: inherit; overflow-wrap: anywhere; }
+  .agenda__correo a:hover { color: var(--berry-magenta); }
 
   .formulario {
     display: grid;
     gap: 16px;
     padding: 24px 20px;
-    border: 1px solid var(--color-borde);
-    border-radius: var(--radio);
+    border-radius: var(--radio-grande);
     background: var(--color-superficie);
-    box-shadow: 0 18px 40px rgb(58 36 59 / 0.08);
+    box-shadow: var(--sombra);
   }
   label { display: grid; gap: 6px; }
-  label span {
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-suave);
-  }
-  label small { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  label span { font-size: 0.86rem; font-weight: 500; color: var(--plum-night); }
+  label small { font-weight: 400; color: var(--color-suave); }
   input, select, textarea {
     width: 100%;
     min-height: 48px;
     padding: 12px 14px;
-    border: 1px solid rgb(58 36 59 / 0.2);
+    border: 1px solid rgb(58 36 59 / 0.18);
     border-radius: 10px;
     background: var(--ivory-dust);
     color: var(--color-texto);
@@ -169,6 +220,19 @@ const pasos = [
   .formulario__fila { display: grid; gap: 16px; }
   .formulario__acciones { display: grid; gap: 10px; margin-top: 4px; }
   .formulario__acciones .boton { width: 100%; }
+  .formulario__correo {
+    min-height: 44px;
+    border: 0;
+    background: none;
+    color: var(--color-suave);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+  .formulario__correo:hover { color: var(--berry-magenta); }
   .formulario__nota { margin: 0; color: var(--color-suave); font-size: 0.8rem; text-align: center; }
 
   @media (min-width: 560px) {
@@ -176,6 +240,8 @@ const pasos = [
     .formulario { padding: 32px; }
   }
   @media (min-width: 900px) {
+    .agenda { padding-block: 112px; }
+    .formulario { padding: 40px; }
     .agenda__rejilla { grid-template-columns: 1fr 1.1fr; gap: 64px; align-items: start; }
   }
 </style>

@@ -15,8 +15,9 @@ export const SITIO = {
   // Número de WhatsApp con código de país, sin + ni espacios (ej. 5212281234567).
   // Mientras esté vacío, los botones de WhatsApp no aparecen y todo va al correo.
   whatsapp: '',
-  // URL del perfil de Instagram; vacío = no se muestra.
-  instagram: '',
+  // URLs de las redes sociales; vacío = no se muestran.
+  instagram: 'https://www.instagram.com/prismatix.mx/',
+  facebook: 'https://www.facebook.com/profile.php?id=61595064758804',
   moneda: 'MXN',
 };
 
@@ -32,10 +33,10 @@ export const CATEGORIAS = [
 
 // Esencia de marca (lámina de identidad).
 export const ESENCIA = [
-  { titulo: 'Creatividad sin límites', icono: 'destello' },
-  { titulo: 'Personalización real', icono: 'sol' },
-  { titulo: 'Objetos de autor', icono: 'diamante' },
-  { titulo: 'Exploración y colección', icono: 'montana' },
-  { titulo: 'Conexión emocional', icono: 'corazon' },
-  { titulo: 'Xalapa y el mundo', icono: 'destellos' },
+  { titulo: 'Creatividad sin límites', icono: 'destello', texto: 'Si lo puedes imaginar, encontramos la forma de hacerlo.' },
+  { titulo: 'Personalización real', icono: 'sol', texto: 'Tus colores, tu nombre, tu historia. Cada pieza es solo tuya.' },
+  { titulo: 'Objetos de autor', icono: 'diamante', texto: 'Diseñados con cuidado y terminados pieza por pieza.' },
+  { titulo: 'Exploración y colección', icono: 'montana', texto: 'Piezas para buscar, coleccionar y presumir en tu repisa.' },
+  { titulo: 'Conexión emocional', icono: 'corazon', texto: 'Objetos que guardan lo que amas.' },
+  { titulo: 'Xalapa y el mundo', icono: 'destellos', texto: 'Xalapa también se colecciona, y viaja contigo a donde vayas.' },
 ] as const;
