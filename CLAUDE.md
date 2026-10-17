@@ -169,6 +169,78 @@ npm run preview         # sirve el build
 - La renovación de Akky es anual (~$689 MXN con IVA).
 - **Correo:** Email Routing (MX `route1-3.mx.cloudflare.net`) reenvía `hola@prismatix.mx` a Gmail. El SPF debe quedar `v=spf1 include:_spf.mx.cloudflare.net include:_spf.google.com ~all` para poder enviar desde Gmail.
 
+## Taller: de la foto del cliente a la impresora
+
+Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplica al sitio público, no aquí: la herramienta está detrás de contraseña y sin indexar.
+
+### Equipo
+
+- **Impresora:** Elegoo Centauri Carbon 2 Combo con el CANVAS (hasta **4 filamentos** por pieza) y la **boquilla de 0.4 mm** de fábrica. El proyecto `ATOM COLOR.3mf` del usuario decía 0.2 mm, pero era un ajuste suelto de ese archivo.
+- **Slicer:** ElegooSlicer 1.5, basado en OrcaSlicer, instalado en `C:\Program Files\ElegooSlicer`. Los perfiles del usuario están en `%APPDATA%\ElegooSlicer\user\default`.
+- **Filamentos:** todos ELEGOO. Son la lista de fábrica de la herramienta (`FILAMENTOS_BASE` en `herramientas/color.js`, clave de localStorage `prismatix-filamentos-v2`):
+  - PLA: Negro, Marrón, Beige, Mármol y Nogal.
+  - PLA+: Blanco, Madera, Naranja, Amarillo, Verde y Azul.
+  - PLA Mate: Rosa, Amarillo, Azul hielo y Morado.
+
+  Los hex son **estimados** de fotos de producto, porque ELEGOO no publica códigos de color. Se dejaron fuera dos: el **ABS Rosa**, que no se combina con PLA en una misma pieza (temperaturas distintas), y un **PLA Silk** de 4 bobinas cuyos colores no están confirmados.
+
+### Flujo de trabajo
+
+1. El cliente manda la foto de su mascota.
+2. El usuario genera el modelo en **Tripo** (tripo3d.ai) y lo descarga en **GLB**, que es el formato que trae la textura (los colores). El STL y el 3MF de Tripo salen en blanco.
+3. El GLB pasa por `herramientas/pintar.html` en https://herramienta.prismatix.mx. A veces el usuario lo manda a Claude, que lo procesa y revisa las vistas antes de entregarlo.
+4. Se descarga el `.3mf` pintado, se abre en ElegooSlicer y se cargan los filamentos **en el orden de las ranuras que indica la herramienta**. El archivo guarda el número de ranura, no el color.
+
+### Cómo funciona `pintar.html`
+
+1. **Lectura (`leerGLB`):**
+   - Une las partes del GLB en una sola malla. Tripo entrega unas 40 partes y unos 2 M de triángulos.
+   - Une los vértices repetidos de las costuras de la textura, para que los triángulos queden conectados.
+   - Toma el color de cada triángulo en el centro de su UV.
+   - Pasa de Y arriba a Z arriba, con el frente hacia −Y, y escala a la altura elegida (80 mm por defecto).
+2. **Grupos de color:**
+   - Hace un k-means en Lab (8 grupos) con muestras repartidas según el área.
+   - Lo que queda lejos de todos los grupos forma grupos aparte, así no se pierden colores chicos como la lengua.
+3. **Sugerencia (`sugerirPorFamilias` en `color.js`).** Las texturas de Tripo traen la luz "horneada": salen más oscuras que el animal (el blanco se ve gris y el leonado café), y el negro de la máscara puede salir más claro que el pelaje en sombra. Por eso:
+   - se estira la claridad de los grupos (el más claro cuenta como blanco y el más oscuro como negro);
+   - los grupos neutros (saturación C/L < 0.25) se parten en oscuro y claro donde está el salto de claridad más grande. Lo oscuro va al filamento neutro más oscuro y lo claro al más claro;
+   - los grupos de color se juntan por tono (±35°), y cada familia va al filamento más parecido a su parte bien iluminada (percentil 75 de claridad).
+4. **Tabla "Colores del modelo → filamento":** se puede cambiar cualquier grupo, y "Ver" lo marca en rosa sobre el modelo.
+5. **Limpieza para que sea imprimible:**
+   - Suavizado por mayoría.
+   - Apertura geodésica (`abrirZonas` en `malla.js`). Funde las zonas más angostas que el **detalle mínimo** (boquilla × 1.5 / 2 / 3; con 0.4 mm y "Normal" son 0.8 mm).
+   - Se quitan las manchas de menos de detalle² mm².
+6. **Base de un solo color:** detecta la tapa plana más grande cerca del piso. Por defecto usa el color que más tiene, sin contar la cara de abajo, que en la textura viene oscura.
+7. **Vista "Cómo quedaría":** colores de los filamentos, acabado de PLA y líneas de capa (boquilla / 2) que se ven al acercar.
+8. **Exportación:** escribe un 3MF de un solo objeto, centrado en la cama de 256 × 256 mm. El XML va por bloques porque pesa unos 180 MB y el ZIP unos 22 MB.
+
+### Formato de la pintura en el 3MF
+
+- **Atributo:** cada triángulo lleva `paint_color`, que es el formato de Orca/Bambu y el que lee ElegooSlicer.
+- **Códigos:** para un triángulo entero, los filamentos 1, 2, 3 y 4 son `4`, `8`, `0C` y `1C` (`codigoPintura` en `malla.js`).
+- **Verificación:** se comprobó con `elegoo-slicer.exe --outputdir dir --export-3mf salida.3mf entrada.3mf`. Reabre el archivo y conserva la pintura triángulo por triángulo, incluso con 2 M de triángulos (unos 9 s).
+- **Rebanado por línea de comandos:** `--slice` falló con los perfiles del usuario y no se usa.
+
+### Límites conocidos
+
+- **La sugerencia automática no siempre acierta.**
+  - **Boxer** (`boxer dog 3d model.glb`): salió solo, Marrón para el pelaje, Blanco para el pecho, las patas y la base, y Negro para la máscara.
+  - **Chihuahua** (`chihuahua 3d model.glb`): el pelaje casi negro sale como cuatro grises por la luz horneada y la sugerencia propone Mármol y Marrón. Se decidió a ojo con la tabla: pelaje Negro, blancos Blanco, lengua Rosa mate y base Blanco.
+  - **Antes de entregar un 3MF**, revisar las vistas de frente, lado y espalda contra "Modelo de Tripo".
+- **"Compensar la luz de arriba"** está apagado por defecto: ayudó con el chihuahua pero arruinó al boxer.
+- Lo geométrico (orejas muy delgadas, piezas que no se sostienen) no se revisa. Eso queda para la vista previa del slicer.
+
+### Probar la herramienta
+
+- **Lógica en Node:**
+  - `malla.js` exporta sus funciones con `module.exports` si existe, pero `package.json` tiene `"type": "module"`: hay que cargarlo con `new Function('module', código)`.
+  - fflate está en `node_modules/three/examples/jsm/libs/fflate.module.js`.
+- **Navegador:**
+  - Edge headless no abre `file://` desde CDP: hay que servir la carpeta con `python -m http.server`.
+  - WebGL necesita `--enable-unsafe-swiftshader --use-angle=swiftshader`.
+  - `window.pintarModelo` expone el estado y las funciones para pruebas automáticas.
+- **Archivos de prueba del usuario:** los GLB de boxer y chihuahua, `foto.jpeg` y `ATOM COLOR.3mf` (pintado a mano por el usuario, 475 mil triángulos). Están en `C:\Users\idipl\OneDrive\Escritorio`.
+
 ## Historial de decisiones
 
 - **Estructura inicial:** Astro + model-viewer, con los productos en Markdown y los recursos en `public/`.
@@ -178,23 +250,12 @@ npm run preview         # sirve el build
 - **Rebranding 3 (2026-10-07):** la identidad pasa a **Prismatix**, "Estudio creativo · Xalapa", con la lámina "Electric Velvet × Sunset Artifact". El sitio cambió de neón oscuro a editorial ivory + terciopelo ciruela, con Playfair Display + Montserrat, el logo con la "A" en degradado, el destello, la sección Esencia y los íconos de línea fina. Se ignoró la sección "Experiencia de marca" porque mencionaba partes de coches.
 - **Isotipo (2026-10-08):** se integró el isotipo oficial (cinta triangular) en el logo, la portada, el pie, el favicon y la imagen para compartir. Sustituye al prisma CSS y al favicon de destello.
 - **Contacto (2026-10-08):** se agregó el correo `prismatixalapa@gmail.com`, se ocultaron WhatsApp e Instagram hasta tener datos reales y se repitió el llamado "Cuéntanos tu idea" en toda la página, con la sección y el formulario `#tu-idea`.
-- **Herramienta de pintura (2026-10-16):** el usuario pinta él mismo cada pieza según las fotos del cliente. Impresora: Elegoo Centauri Carbon 2 Combo (CANVAS, 4 filamentos) con ElegooSlicer, que está basado en Orca. La pintura va por triángulo en el atributo `paint_color`: `4`, `8`, `0C` y `1C` corresponden a los filamentos 1 a 4. Se verificó reabriendo el archivo con `elegoo-slicer.exe --export-3mf salida.3mf entrada.3mf`, que conserva la pintura. El rebanado por línea de comandos (`--slice`) falló con los perfiles del usuario y no se usa.
-- **Modelos con IA (2026-10-16):** el usuario genera cada mascota con **Tripo** (tripo3d.ai) a partir de la foto del cliente. Proyectar la foto sobre un modelo en blanco no sirvió con material real: la foto suele ser un retrato de frente, el modelo es el cuerpo completo y su forma no coincide con el perro real. La solución es descargar de Tripo el **GLB con textura**. En ese GLB la textura sale más oscura que el animal (el blanco se ve gris y el leonado café), y el negro de la máscara puede salir más claro que el pelaje en sombra. Por eso: se estira la claridad, los grupos de color se juntan en familias (los neutros se separan por saturación C/L < 0.25 y se parten en oscuro/claro; los de color se agrupan por tono) y a cada familia le toca un filamento. Con el boxer de prueba (`boxer dog 3d model.glb`, 1.97 M triángulos) quedó Caramelo/Negro/Blanco sin ajustes manuales. ElegooSlicer abre un 3MF de 2 M triángulos en ~9 s.
-- **Solo GLB (2026-10-16):** a propuesta del usuario se quitó la ruta de fotos. Ya no hay fotos ni alineación, ni modelos en blanco STL/3MF/OBJ, ni subdivisión, y se borró `paleta.html`. La herramienta solo convierte el GLB a color en 3MF imprimible. El flujo de trabajo es: el usuario manda el GLB, se revisan las vistas, se ajusta la tabla si hace falta y se entrega el 3MF.
-- **Imprimible y realista (2026-10-16):** el usuario quiere mandar el GLB y recibir el 3MF con sus filamentos, sin detalles imposibles de imprimir. Se agregaron cinco cosas:
-  - **Detalle mínimo** = boquilla × (1.5 / 2 / 3). Es una apertura geodésica (`abrirZonas` en `malla.js`) que funde las zonas más angostas que eso.
-  - **Base de un solo color**, detectada como la tapa plana más grande cerca del piso. Al elegir su color no se cuenta la cara de abajo, que en la textura viene oscura.
-  - **Rescate de colores chicos**, como la lengua.
-  - **Vista realista** con líneas de capa (altura de capa = boquilla / 2).
-  - **Compensar la luz de arriba** (apagado por defecto): ayudó con el chihuahua pero arruinó al boxer.
-- **La sugerencia automática no siempre acierta.** El chihuahua (`chihuahua 3d model.glb`) sale como cuatro grises por la luz horneada, y hubo que decidir a ojo con la tabla de grupos y "Ver": pelaje Negro, blancos Blanco, lengua Rosa y base Blanco. Cuando el usuario mande un GLB, revisar las vistas antes de entregar.
-- **Filamentos del usuario (2026-10-16):** son todos ELEGOO y están cargados como lista de fábrica en `color.js` (`FILAMENTOS_BASE`, clave `prismatix-filamentos-v2`):
-  - PLA: Negro, Marrón, Beige, Mármol y Nogal.
-  - PLA+: Blanco, Madera, Naranja, Amarillo, Verde y Azul.
-  - PLA Mate: Rosa, Amarillo, Azul hielo y Morado.
+- **Herramienta del taller (2026-10-16):** se construyó en este orden:
+  1. Una paleta "foto → filamentos".
+  2. Proyectar fotos del cliente sobre modelos en blanco, alineando a mano.
+  3. Convertir el GLB a color de Tripo.
 
-  Los hex son estimados, porque ELEGOO no publica códigos de color. Se dejaron fuera el ABS Rosa, que no se mezcla con PLA, y un PLA Silk de 4 bobinas cuyos colores no están confirmados. Con esta lista, el boxer sale Marrón/Blanco/Negro y el chihuahua Negro/Blanco/Rosa mate.
-- **Boquilla: 0.4 mm**, la de fábrica de la Centauri Carbon 2. Esto lo confirmó el usuario: el detalle mínimo de color es 0.8 mm y las capas de la vista son de 0.2 mm. El proyecto `ATOM COLOR.3mf` decía 0.2 mm, pero era un ajuste suelto de ese archivo. Los colores de filamento de ese proyecto eran los de fábrica, no los reales.
+  Las dos primeras se descartaron con material real: la foto suele ser un retrato de frente, el modelo es el cuerpo completo y su forma no coincide con el perro real. A propuesta del usuario quedó solo la ruta del GLB, con contraseña en un subdominio. Detalles en "Taller".
 - **Otros nombres considerados:** Justo Eso, Me Faltaba, Chunche, Ocurrencia, Mira Nomás.
 
 ## Pendientes
@@ -205,4 +266,7 @@ npm run preview         # sirve el build
 - Poner el número de WhatsApp y la URL de Instagram en `src/config.ts` (hoy están vacíos, así que no se muestran).
 - Reemplazar los productos de ejemplo por los reales, con fotos en el estilo fotográfico de la marca y modelos .glb.
 - Opcional: renombrar el Worker y el repositorio a "prismatix" (`name` en `wrangler.jsonc` y la URL de workers.dev cambiarían).
-- Opcional: cambiar el correo de los commits (hoy es el de trabajo) y decidir si el repositorio pasa a privado.
+- Opcional: cambiar el correo de los commits (hoy es el de trabajo) y decidir si el repositorio pasa a privado. El código de la herramienta del taller también es visible en GitHub, aunque la página tiene contraseña.
+- Taller: afinar los hex de los filamentos con piezas impresas reales, sobre todo el Marrón, el Madera y el Nogal.
+- Taller: confirmar los colores del PLA Silk para agregarlos a la lista.
+- Taller, opcional: que el `git push` también despliegue la herramienta. Habría que cambiar el comando de deploy del build de Cloudflare a `npx wrangler deploy && npx wrangler deploy -c herramientas/wrangler.jsonc`. Hoy se despliega a mano.
