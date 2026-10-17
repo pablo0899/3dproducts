@@ -11,7 +11,7 @@ export const SITIO = {
   subtitulo: 'Creemos que la imaginación también se puede tocar. Transformamos ideas en objetos únicos, personalizados y llenos de significado.',
   cierre: 'Más que objetos, son historias en forma de arte.',
   descripcion: 'Prismatix, estudio creativo en Xalapa: figuras personalizadas, coleccionables, souvenirs xalapeños y piezas para juegos. Ideas que se vuelven reales.',
-  email: 'prismatixalapa@gmail.com',
+  email: 'hola@prismatix.mx',
   // Número de WhatsApp con código de país, sin + ni espacios (ej. 5212281234567).
   // Mientras esté vacío, los botones de WhatsApp no aparecen y todo va al correo.
   whatsapp: '',

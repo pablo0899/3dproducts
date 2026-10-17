@@ -17,7 +17,7 @@ Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, o
 
 ## Contacto y llamados a la acción
 
-- **Correo oficial:** `prismatixalapa@gmail.com` (`SITIO.email`). Es el canal principal.
+- **Correo oficial:** `hola@prismatix.mx` (`SITIO.email`). Es el canal principal. Cloudflare Email Routing lo reenvía a `prismatixalapa@gmail.com`, y Gmail responde como `hola@` con "Enviar como" (SMTP de Gmail con una contraseña de aplicación).
 - **WhatsApp e Instagram:** `SITIO.whatsapp` y `SITIO.instagram` están **vacíos a propósito**. Mientras lo estén, sus botones no aparecen en ningún lado. Al poner el número (formato `521…`) o la URL, aparecen solos: en el pie, en el formulario ("Enviar por WhatsApp") y en cada producto.
 - **Nombre de la acción:** el usuario **no quiere "Agenda tu idea"**. Se usa **"Cuéntanos tu idea"** en los botones y **"Dale forma a tu idea"** como título de la sección. Otros textos de la familia: "Lo quiero · Escríbenos", "¿Lo quieres con tu toque? Personalízalo →".
 - **Patrón** (inspirado en una página de referencia que repite "agendar cita" en cada sección): un solo destino para todos los llamados, la sección `#tu-idea` (`TuIdea.astro`). Aparece en:
@@ -157,6 +157,7 @@ npm run preview         # sirve el build
 - **Conexión con el Worker:** `routes` en `wrangler.jsonc` declara `prismatix.mx` y `www.prismatix.mx` con `custom_domain: true`. Cloudflare crea los registros DNS y el certificado al desplegar. No se configuran a mano en el panel.
 - `site` en `astro.config.mjs` es `https://prismatix.mx`.
 - La renovación de Akky es anual (~$689 MXN con IVA).
+- **Correo:** Email Routing (MX `route1-3.mx.cloudflare.net`) reenvía `hola@prismatix.mx` a Gmail. El SPF debe quedar `v=spf1 include:_spf.mx.cloudflare.net include:_spf.google.com ~all` para poder enviar desde Gmail.
 
 ## Historial de decisiones
 
@@ -172,7 +173,7 @@ npm run preview         # sirve el build
 ## Pendientes
 
 - Revisar la disponibilidad del @ en Instagram y TikTok.
-- Opcional: redirigir `www.prismatix.mx` → `prismatix.mx` (Redirect Rule) y crear un correo `@prismatix.mx` con Email Routing que reenvíe a Gmail.
+- Opcional: redirigir `www.prismatix.mx` → `prismatix.mx` (Redirect Rule).
 - Si existe el isotipo en vector o PNG transparente de alta resolución, reemplazar los archivos de `public/marca/`. Si existe el wordmark oficial, reemplazar el tipográfico de `Logo.astro`.
 - Poner el número de WhatsApp y la URL de Instagram en `src/config.ts` (hoy están vacíos, así que no se muestran).
 - Reemplazar los productos de ejemplo por los reales, con fotos en el estilo fotográfico de la marca y modelos .glb.
