@@ -161,6 +161,8 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
   }
   .portada__sub { margin: 0 0 6px; max-width: 42ch; font-size: 1.02rem; color: rgb(253 251 247 / 0.8); }
   .portada__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
+  /* Sin la franja de líneas (hay una sola), el texto cierra la portada y necesita aire abajo */
+  .portada__texto:last-child { padding-bottom: 64px; }
 
   /* Franja de líneas al pie de la portada; en móvil se desliza de lado */
   .portada__lineas {
@@ -326,6 +328,7 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
   }
   @media (min-width: 900px) {
     .portada { padding-top: 112px; }
+    .portada__texto:last-child { padding-bottom: 112px; }
     .portada__lineas { justify-content: space-between; margin-top: 104px; overflow: visible; }
     .portada__lineas a { background: none; padding-inline: 4px; }
     .portada__lineas a:hover { background: none; color: var(--soft-rose); }
