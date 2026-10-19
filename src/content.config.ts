@@ -21,6 +21,8 @@ const productos = defineCollection({
     disponible: z.boolean().default(true),
     destacado: z.boolean().default(false),
     orden: z.number().default(100),
+    // true = no se muestra en el sitio (ni tarjeta ni página); útil para guardar borradores
+    oculto: z.boolean().default(false),
   }),
 });
 

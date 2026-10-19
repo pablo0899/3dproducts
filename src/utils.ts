@@ -24,16 +24,16 @@ export interface Canal {
   copiar?: string;
 }
 
-// Medios de contacto en orden de prioridad: Instagram, Facebook, WhatsApp (si hay número) y al final el correo.
+// Medios de contacto en orden de prioridad: WhatsApp (si hay número), Instagram, Facebook y al final el correo.
 // El primero es el botón principal en todas las secciones; los vacíos no aparecen.
 export function canales(asunto: string, mensaje = ''): Canal[] {
   const lista: Canal[] = [];
+  if (SITIO.whatsapp) lista.push({ id: 'whatsapp', nombre: 'WhatsApp', url: enlaceWhatsapp(mensaje) });
   if (SITIO.instagram) {
     const url = usuarioInstagram ? `https://ig.me/m/${usuarioInstagram}` : SITIO.instagram;
     lista.push({ id: 'instagram', nombre: 'Instagram', url, copiar: mensaje || undefined });
   }
   if (SITIO.facebook) lista.push({ id: 'facebook', nombre: 'Facebook', url: SITIO.facebook, copiar: mensaje || undefined });
-  if (SITIO.whatsapp) lista.push({ id: 'whatsapp', nombre: 'WhatsApp', url: enlaceWhatsapp(mensaje) });
   lista.push({ id: 'correo', nombre: 'correo', url: enlaceCorreo(asunto, mensaje) });
   return lista;
 }

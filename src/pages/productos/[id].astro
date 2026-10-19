@@ -8,7 +8,7 @@ import Icono from '../../components/Icono.astro';
 import { formatearPrecio, canales, atributosCanal } from '../../utils';
 
 export async function getStaticPaths() {
-  const productos = await getCollection('productos');
+  const productos = await getCollection('productos', (p) => !p.data.oculto);
   return productos.map((producto) => ({ params: { id: producto.id }, props: { producto } }));
 }
 
@@ -16,9 +16,9 @@ const { producto } = Astro.props;
 const { nombre, resumen, fotos, modelo, precio, categoria, material, dimensiones, colores, disponible } = producto.data;
 const { Content } = await render(producto);
 const mensaje = `Hola, Prismatix. Me interesa "${nombre}" (${Astro.url.href}).\n\n¿Me pueden dar más información?`;
-// Instagram primero, luego Facebook y al final el correo
+// WhatsApp primero, luego Instagram y Facebook. Aquí no se ofrece el correo
+// (salvo que sea el único canal, y entonces es el botón principal).
 const [principal, ...otros] = canales(`Me interesa: ${nombre}`, mensaje);
-const correo = otros.find((c) => c.id === 'correo');
 const redes = otros.filter((c) => c.id !== 'correo');
 ---
 
@@ -61,16 +61,15 @@ const redes = otros.filter((c) => c.id !== 'correo');
 
       <div class="pedir">
         <a class="boton" {...atributosCanal(principal)}>
-          {(principal.id === 'instagram' || principal.id === 'facebook') && <Icono nombre={principal.id} tamano={20} />}
-          Lo quiero · Escríbenos por {principal.nombre}
+          {principal.id !== 'correo' && <Icono nombre={principal.id} tamano={20} />}
+          {principal.id === 'whatsapp' ? 'Lo quiero · WhatsApp' : `Lo quiero · Escríbenos por ${principal.nombre}`}
         </a>
         {redes.map((c) => (
           <a class="boton boton--secundario" {...atributosCanal(c)}>
-            {c.id === 'facebook' && <Icono nombre="facebook" tamano={20} />}
+            <Icono nombre={c.id} tamano={20} />
             Escríbenos por {c.nombre}
           </a>
         ))}
-        {correo && <p class="pedir__correo">¿Prefieres el correo? <a {...atributosCanal(correo)}>Escríbenos aquí</a></p>}
         <a class="pedir__personalizar" href="/#tu-idea">¿Lo quieres con tu toque? Personalízalo <span aria-hidden="true">→</span></a>
       </div>
 
@@ -152,9 +151,6 @@ const redes = otros.filter((c) => c.id !== 'correo');
 
   .pedir { display: grid; gap: 10px; width: 100%; }
   .pedir .boton { width: 100%; }
-  .pedir__correo { justify-self: center; margin: 0; color: var(--color-suave); font-size: 0.88rem; }
-  .pedir__correo a { color: inherit; font-weight: 500; text-underline-offset: 4px; }
-  .pedir__correo a:hover { color: var(--berry-magenta); }
   .pedir__personalizar {
     justify-self: center;
     margin-top: 4px;
@@ -174,6 +170,6 @@ const redes = otros.filter((c) => c.id !== 'correo');
     .producto__medios { position: sticky; top: 80px; align-self: start; }
     .pedir { justify-items: start; }
     .pedir .boton { width: auto; }
-    .pedir__personalizar, .pedir__correo { justify-self: start; }
+    .pedir__personalizar { justify-self: start; }
   }
 </style>

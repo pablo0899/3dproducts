@@ -1,18 +1,23 @@
 ---
 // Sección "Dale forma a tu idea" (#tu-idea): destino de todos los llamados a la acción.
 // No hay backend: el formulario arma el mensaje con lo que escribió la persona y lo manda
-// por el canal elegido. Prioridad: Instagram, Facebook, WhatsApp (si hay número) y el correo al final.
+// por el canal elegido. Prioridad: WhatsApp (si hay número), Instagram, Facebook y el correo al final.
 import Icono from './Icono.astro';
 import { SITIO, CATEGORIAS } from '../config';
 import { canales, atributosCanal } from '../utils';
+import { getCollection } from 'astro:content';
 
 const lista = canales('Quiero una pieza Prismatix', 'Hola, Prismatix. Tengo una idea y me gustaría hacerla realidad con ustedes.');
 const redes = lista.filter((c) => c.id !== 'correo');
 const correo = lista.find((c) => c.id === 'correo')!;
 
+// El selector solo ofrece las líneas que ya tienen productos visibles
+const productos = await getCollection('productos', (p) => !p.data.oculto);
+const lineas = CATEGORIAS.filter((c) => productos.some((p) => p.data.categoria === c.nombre));
+
 const pasos = [
   { titulo: 'Cuéntanos tu idea', texto: 'Qué te imaginas, para quién es y, si tienes, fotos de referencia.' },
-  { titulo: 'Te enviamos una propuesta', texto: 'Diseño, vista previa, precio y tiempo de entrega en uno o dos días.' },
+  { titulo: 'Te enviamos una propuesta', texto: 'Con el diseño, una vista previa, el precio y el tiempo de entrega de tu pieza.' },
   { titulo: 'La hacemos real', texto: 'Cuando la apruebas, comenzamos. Te avisamos en cuanto esté lista.' },
 ];
 ---
@@ -39,7 +44,7 @@ const pasos = [
           {redes.map((c) => (
             <li>
               <a {...atributosCanal(c)}>
-                {(c.id === 'instagram' || c.id === 'facebook') && <Icono nombre={c.id} tamano={22} />}
+                {c.id !== 'correo' && <Icono nombre={c.id} tamano={22} />}
                 {c.id === 'instagram' ? 'Mándanos un DM en Instagram' : `Escríbenos por ${c.nombre}`}
               </a>
             </li>
@@ -57,7 +62,7 @@ const pasos = [
       <label>
         <span>¿Qué te gustaría crear?</span>
         <select name="linea">
-          {CATEGORIAS.map((c) => <option>{c.nombre}</option>)}
+          {lineas.map((c) => <option>{c.nombre}</option>)}
           <option selected>Otra idea</option>
         </select>
       </label>
@@ -84,15 +89,17 @@ const pasos = [
             data-nombre={c.nombre}
             data-url={c.id === 'whatsapp' ? `https://wa.me/${SITIO.whatsapp}` : c.url}
           >
-            {(c.id === 'instagram' || c.id === 'facebook') && <Icono nombre={c.id} tamano={20} />}
+            {c.id !== 'correo' && <Icono nombre={c.id} tamano={20} />}
             {c.id === 'correo' ? 'Prefiero enviarlo por correo' : `Enviar por ${c.nombre}`}
           </button>
         ))}
       </div>
       <p class="formulario__nota">
-        {lista[0].id === 'instagram' || lista[0].id === 'facebook'
-          ? 'Copiamos tu mensaje y abrimos el chat: solo pégalo y envíalo.'
-          : 'Se abrirá tu app de correo con el mensaje listo. Solo tienes que enviarlo.'}
+        {lista[0].id === 'whatsapp'
+          ? 'Se abrirá WhatsApp con tu mensaje listo. Solo tienes que enviarlo.'
+          : lista[0].id === 'instagram' || lista[0].id === 'facebook'
+            ? 'Copiamos tu mensaje y abrimos el chat: solo pégalo y envíalo.'
+            : 'Se abrirá tu app de correo con el mensaje listo. Solo tienes que enviarlo.'}
       </p>
     </form>
   </div>

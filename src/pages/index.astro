@@ -6,12 +6,15 @@ import Icono from '../components/Icono.astro';
 import Destello from '../components/Destello.astro';
 import Llamado from '../components/Llamado.astro';
 import TuIdea from '../components/TuIdea.astro';
+import TarjetaIdea from '../components/TarjetaIdea.astro';
 import { SITIO, CATEGORIAS, ESENCIA } from '../config';
 
-const productos = (await getCollection('productos')).sort(
+const productos = (await getCollection('productos', (p) => !p.data.oculto)).sort(
   (a, b) => Number(b.data.destacado) - Number(a.data.destacado) || a.data.orden - b.data.orden,
 );
 const cuantos = (linea: string) => productos.filter((p) => p.data.categoria === linea).length;
+// Solo se muestran las líneas que ya tienen productos; con una sola, los accesos y el filtro no hacen falta.
+const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
 ---
 
 <Base>
@@ -36,14 +39,16 @@ const cuantos = (linea: string) => productos.filter((p) => p.data.categoria === 
     </div>
 
     <!-- Accesos directos: cada línea abre la colección ya filtrada -->
-    <nav class="contenedor portada__lineas" aria-label="Líneas de producto">
-      {CATEGORIAS.map((c) => (
-        <a href={`/?linea=${encodeURIComponent(c.nombre)}#catalogo`} data-ir-linea={c.nombre}>
-          <Icono nombre={c.icono} tamano={26} />
-          <span>{c.nombre}</span>
-        </a>
-      ))}
-    </nav>
+    {lineas.length > 1 && (
+      <nav class="contenedor portada__lineas" aria-label="Líneas de producto">
+        {lineas.map((c) => (
+          <a href={`/?linea=${encodeURIComponent(c.nombre)}#catalogo`} data-ir-linea={c.nombre}>
+            <Icono nombre={c.icono} tamano={26} />
+            <span>{c.nombre}</span>
+          </a>
+        ))}
+      </nav>
+    )}
   </section>
 
   <section class="esencia" aria-labelledby="titulo-esencia">
@@ -74,28 +79,31 @@ const cuantos = (linea: string) => productos.filter((p) => p.data.categoria === 
       <p class="entrada">Piezas listas para regalar o coleccionar. Todas se pueden personalizar.</p>
     </div>
 
-    <div class="lineas" role="group" aria-label="Filtrar por línea de producto">
-      <button type="button" class="linea" data-filtro="" aria-pressed="true">
-        Todo <span class="linea__cuenta">{productos.length}</span>
-      </button>
-      {CATEGORIAS.map((c) => (
-        <button type="button" class="linea" data-filtro={c.nombre} aria-pressed="false">
-          <Icono nombre={c.icono} tamano={20} />
-          {c.nombre} <span class="linea__cuenta">{cuantos(c.nombre)}</span>
+    {lineas.length > 1 && (
+      <div class="lineas" role="group" aria-label="Filtrar por línea de producto">
+        <button type="button" class="linea" data-filtro="" aria-pressed="true">
+          Todo <span class="linea__cuenta">{productos.length}</span>
         </button>
-      ))}
-    </div>
+        {lineas.map((c) => (
+          <button type="button" class="linea" data-filtro={c.nombre} aria-pressed="false">
+            <Icono nombre={c.icono} tamano={20} />
+            {c.nombre} <span class="linea__cuenta">{cuantos(c.nombre)}</span>
+          </button>
+        ))}
+      </div>
+    )}
 
     <div class="rejilla">
       {productos.map((producto) => <TarjetaProducto producto={producto} />)}
+      <TarjetaIdea />
     </div>
     <p class="vacio" hidden>
       Muy pronto tendremos piezas en esta línea. ¿Quieres una a tu medida? <a href="#tu-idea">Cuéntanos tu idea</a>.
     </p>
 
     <Llamado
-      titulo="¿No está lo que buscas? Lo creamos para ti."
-      texto="Cada pieza puede llevar tu nombre, tus colores o la historia que quieras contar."
+      titulo="Muy pronto, nuevas colecciones."
+      texto="Estamos dando forma a las siguientes piezas. Mientras tanto, lo que imagines lo podemos hacer real."
     />
   </section>
 

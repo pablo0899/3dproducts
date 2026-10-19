@@ -46,7 +46,7 @@ const { fotos, nombre } = Astro.props;
     border-radius: var(--radio);
     border: 1px solid var(--color-borde);
     background: var(--plum-night);
-    aspect-ratio: 1;
+    aspect-ratio: 4 / 5;
   }
   .galeria__carrusel::-webkit-scrollbar { display: none; }
   .galeria__carrusel img {
@@ -59,7 +59,7 @@ const { fotos, nombre } = Astro.props;
   .galeria__miniaturas { display: flex; gap: 8px; overflow-x: auto; }
   .galeria__miniaturas button {
     flex: 0 0 64px;
-    height: 64px;
+    height: 80px;
     padding: 0;
     border: 2px solid var(--color-borde);
     border-radius: 10px;

@@ -9,6 +9,7 @@ material: Acabado sedoso
 dimensiones: 5 × 4 cm
 colores: [Magenta, Terracota, Rosa, Marfil]
 orden: 4
+oculto: true  # se mostrará cuando tengamos piezas reales de esta línea
 ---
 
 El chile jalapeño, el taxi xalapeño y los rincones de la ciudad, convertidos en llaveros que sí dan ganas de traer. Ideales como recuerdo, detalle para eventos o regalo para quien se fue de Xalapa y la extraña.

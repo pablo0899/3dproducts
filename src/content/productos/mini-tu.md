@@ -11,6 +11,7 @@ dimensiones: 12 cm de alto
 colores: [Al natural, Pintada a mano]
 destacado: true
 orden: 2
+oculto: true  # se mostrará cuando tengamos piezas reales de esta línea
 ---
 
 Una figura con tu cara, tu outfit favorito y hasta tu pose característica. Perfecta para cumpleaños, graduaciones, bodas o para presumir en tu repisa.

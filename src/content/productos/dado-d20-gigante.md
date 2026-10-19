@@ -11,6 +11,7 @@ material: Acabado sedoso
 dimensiones: 10 cm de diámetro
 colores: [Magenta, Marfil, Ciruela]
 orden: 5
+oculto: true  # se mostrará cuando tengamos piezas reales de esta línea
 ---
 
 Un d20 del tamaño de tu mano para las sesiones de rol que lo merecen. Sirve como dado de verdad, contador de vidas o pieza central de tu mesa de juego.

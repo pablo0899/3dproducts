@@ -12,7 +12,7 @@ const { nombre, resumen, fotos, precio, categoria, modelo, disponible } = produc
 
 <a href={`/productos/${producto.id}/`} class="tarjeta" data-categoria={categoria}>
   <div class="tarjeta__imagen">
-    <img src={fotos[0]} alt={nombre} loading="lazy" width="600" height="600" />
+    <img src={fotos[0]} alt={nombre} loading="lazy" width="600" height="750" />
     {modelo && <span class="tarjeta__badge">360°</span>}
     {!disponible && <span class="tarjeta__agotado">Agotado</span>}
   </div>

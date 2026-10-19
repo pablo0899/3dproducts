@@ -17,10 +17,11 @@ Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, o
 
 ## Contacto y llamados a la acción
 
-- **Prioridad de contacto (decisión del usuario, 2026-10-17):** 1) Instagram, 2) Facebook, 3) WhatsApp si hay número y 4) el correo al final. Está en un solo lugar: `canales(asunto, mensaje)` en `src/utils.ts`. El primero es el botón principal en todas las secciones; los demás van como secundarios o en texto. Instagram abre el DM (`ig.me/m/<usuario>`) y Facebook la página. Como no aceptan mensaje prellenado, al hacer clic se copia el mensaje al portapapeles (`data-copiar`) y un aviso dice "Pégalo en el chat". El script y el aviso están en `Base.astro`; el formulario los usa con el evento `copiar-mensaje`.
+- **Prioridad de contacto (decisión del usuario, 2026-10-18; reemplaza la del 2026-10-17):** 1) WhatsApp, 2) Instagram, 3) Facebook y 4) el correo al final. Está en un solo lugar: `canales(asunto, mensaje)` en `src/utils.ts`. El primero es el botón principal en todas las secciones; los demás van como secundarios o en texto. Instagram abre el DM (`ig.me/m/<usuario>`) y Facebook la página. Como no aceptan mensaje prellenado, al hacer clic se copia el mensaje al portapapeles (`data-copiar`) y un aviso dice "Pégalo en el chat". El script y el aviso están en `Base.astro`; el formulario los usa con el evento `copiar-mensaje`.
 - **Correo oficial:** `hola@prismatix.mx` (`SITIO.email`). Es la última opción. Cloudflare Email Routing lo reenvía a `prismatixalapa@gmail.com`, y Gmail responde como `hola@` con "Enviar como" (SMTP de Gmail con una contraseña de aplicación).
 - **Redes:** Instagram `@prismatix.mx` (`SITIO.instagram`) y Facebook (`SITIO.facebook`, `facebook.com/profile.php?id=61595064758804`). No se pudo comprobar `m.me/<id>` sin sesión; si se confirma que abre Messenger, conviene usarlo como URL del chat. Si una URL queda vacía, su enlace no se muestra.
-- **WhatsApp:** `SITIO.whatsapp` está **vacío a propósito** y mientras lo esté sus botones no aparecen. Al poner el número (formato `521…`) aparecen solos: en el pie, en el formulario ("Enviar por WhatsApp") y en cada producto.
+- **WhatsApp:** `SITIO.whatsapp` es `5212213441015` y `SITIO.whatsappVisible` ("221 344 1015") es como se muestra; en el pie va en grande con su ícono. Abre `wa.me` con el mensaje prellenado. Si se vacía, sus botones desaparecen y Instagram pasa a ser el principal.
+- **Página de producto:** botón principal "Lo quiero · Escríbenos por WhatsApp" + Instagram y Facebook como secundarios. **No se ofrece el correo** ahí (el usuario lo pidió), salvo que sea el único canal.
 - **Nombre de la acción:** el usuario **no quiere "Agenda tu idea"**. Se usa **"Cuéntanos tu idea"** en los botones y **"Dale forma a tu idea"** como título de la sección. Otros textos de la familia: "Lo quiero · Escríbenos", "¿Lo quieres con tu toque? Personalízalo →".
 - **Patrón** (inspirado en una página de referencia que repite "agendar cita" en cada sección): un solo destino para todos los llamados, la sección `#tu-idea` (`TuIdea.astro`). Aparece en:
   1. La cabecera: botón fijo "Cuéntanos tu idea"; abajo de 360 px dice "Tu idea" y abajo de 480 px se oculta el enlace "Colección".
@@ -48,8 +49,8 @@ La fuente es la lámina "Mapa de marca Prismatix" (imagen `identidad.jpg` del us
   - Electric Pink `#FF2E93`: es el "wild card" y **solo** se usa para colecciones especiales, lanzamientos y colaboraciones. Hoy no se usa.
 - **Estructura visual:** editorial. El fondo general es ivory con tarjetas blancas. La portada y el pie son bloques oscuros "terciopelo" (`.seccion-oscura`, `--fondo-terciopelo`: ciruela con resplandores berry y naranja). Ya no hay neón ni rejilla. Solo tema claro.
 - **Tipografía** (Google Fonts en `Base.astro`):
-  - Playfair Display (serif): titulares, wordmark, frases en cursiva
-  - Montserrat (sans): textos y apoyo
+  - Playfair Display (serif): titulares y frases en cursiva
+  - Montserrat (sans): textos, apoyo y el wordmark del logo
   - Rótulos (`.titulo-seccion`, `.etiqueta`, nav, botones): mayúsculas pequeñas con mucho espaciado de letras
 - **Isotipo oficial:** una cinta satinada en forma de triángulo (tipo Möbius) en morado, berry y naranja. El original es `isotipo.jpeg` del usuario (1254 px, sobre fondo negro, no está en el repositorio). Los archivos derivados están en `public/marca/`:
   - `isotipo.webp` / `isotipo.png`: 640 px con fondo transparente
@@ -57,7 +58,7 @@ La fuente es la lámina "Mapa de marca Prismatix" (imagen `identidad.jpg` del us
   - `favicon.png` (64 px) y `apple-touch-icon.png` (180 px, sobre Plum Night)
   - `og.jpg`: imagen para compartir en redes (1200×630); es el `og:image` por defecto
   - Se generan con `python scripts/isotipo.py <isotipo.jpeg> public/marca` (PIL + numpy + scipy): recorta la cinta, vuelve transparente el negro conectado con el fondo (exterior y hueco central) y rellena las manchas oscuras internas para que las sombras moradas no queden con huecos. Si llega una versión vectorial o PNG transparente oficial, conviene reemplazar estos archivos con ella.
-- **Logotipo** (`Logo.astro`): isotipo (34 px, 28 px en móvil) + wordmark "PRISMATIX" en Playfair 400 con espaciado, con la **"A" en degradado** berry → naranja → rosa. La prop `claro` sirve para fondos oscuros.
+- **Logotipo** (`Logo.astro`): isotipo (34 px, 28 px en móvil) + wordmark "PRISMΛTIX" en **sans (Montserrat)** con espaciado: "PRISM" en grosor regular (400) y "TIX" en delgado (200). La "A" es una **lambda mayúscula (Λ)** dibujada en SVG, con la pierna izquierda regular y la derecha delgada, en degradado berry → naranja → rosa. La prop `claro` sirve para fondos oscuros.
 - **Elementos gráficos:**
   - Destello de 4 puntas (`Destello.astro`)
   - Portada (`.prisma`): el isotipo grande flotando con haces de luz (CSS) y un destello. En escritorio va a la derecha (380 px); en móvil va completo arriba del texto (128 px), sin destello.
@@ -96,12 +97,13 @@ src/components/
   Destello.astro               Estrella de 4 puntas en degradado (acento en la portada de escritorio)
   Icono.astro                  Íconos de línea fina (líneas de producto y esencia)
   TarjetaProducto.astro        Tarjeta editorial del catálogo: imagen 4:5 con marco, texto sobre el fondo (badge "360°", "Agotado")
+  TarjetaIdea.astro            Tarjeta fija al final del catálogo: "Tu idea, en tus manos" (pieza a tu medida) → #tu-idea
   Llamado.astro                Banda de llamado a la acción → /#tu-idea + correo
   TuIdea.astro                 Sección #tu-idea: pasos + formulario que arma el correo/WhatsApp
   Galeria.astro                Carrusel con scroll-snap y miniaturas
   Visor3D.astro                <model-viewer>; carga el modelo con IntersectionObserver. El visor es cuadrado como la galería; ojo: model-viewer trae height: 150px por defecto, así que necesita height: 100%
-src/pages/index.astro          Portada oscura (eslogan + isotipo + 2 botones + franja con las 5 líneas), Esencia en 2 columnas, "La colección" con pastillas que filtran la rejilla (JS en el cliente; también lee ?linea=<nombre>), Llamado y TuIdea
-src/pages/productos/[id].astro Detalle: ruta Colección / línea (enlaza a /?linea=…#catalogo), pestañas Fotos / Vista 360°, ficha en filas, "Lo quiero · Escríbenos" (mailto), WhatsApp si existe y Llamado
+src/pages/index.astro          Portada oscura (eslogan + isotipo + 2 botones + franja con las líneas que tienen productos), Esencia en 2 columnas, "La colección" con pastillas que filtran la rejilla (JS en el cliente; también lee ?linea=<nombre>), Llamado y TuIdea
+src/pages/productos/[id].astro Detalle: ruta Colección / línea (enlaza a /?linea=…#catalogo), pestañas Fotos / Vista 360°, ficha en filas, "Lo quiero · Escríbenos por WhatsApp" + Instagram/Facebook y Llamado
 src/pages/404.astro            Página "Esto no existe… todavía." (la usa not_found_handling del Worker)
 herramientas/                  Uso interno. No es parte del sitio; se publica aparte en https://herramienta.prismatix.mx con contraseña. También se abre directo desde el disco
   worker.js, wrangler.jsonc    Worker "prismatix-herramienta": página /entrar con la marca (solo contraseña = secreto CLAVE), cookie de sesión firmada con HMAC por 30 días, /salir, noindex. Sirve los archivos de esta carpeta
@@ -125,6 +127,7 @@ herramientas/                  Uso interno. No es parte del sitio; se publica ap
 | `disponible` | bool | por defecto `true`; `false` = "Agotado — bajo pedido" |
 | `destacado` | bool | por defecto `false`; los destacados van primero |
 | `orden` | number | por defecto `100`; menor = aparece antes |
+| `oculto` | bool | por defecto `false`; `true` = no aparece en el sitio (ni tarjeta ni página) |
 
 El cuerpo en Markdown es la descripción larga que se muestra en la página del producto.
 
@@ -135,7 +138,9 @@ El cuerpo en Markdown es la descripción larga que se muestra en la página del 
 - `touch-action="pan-y"` en el visor, para que el scroll vertical siga funcionando en móvil.
 - **Formato 3D**: GLB, no STL. El STL se convierte con Blender u otra herramienta (ver `README.md`).
 - Los estilos van con scope dentro de cada `.astro`. Los tokens globales solo se definen en `global.css`.
-- Los productos de ejemplo (uno por línea) usan fotos SVG de relleno con la paleta y GLB generados por script (estadio y d20). Hay que reemplazarlos por los reales.
+- **Catálogo actual (2026-10-18):** solo "Tu mascota en miniatura" (fotos reales) + `TarjetaIdea`. Los demás productos de ejemplo (SVG de relleno y GLB de script) siguen en el repo con `oculto: true` y se reactivan cuando haya piezas reales de su línea.
+- **Líneas visibles:** el filtro "Explora por línea" y el selector del formulario solo muestran las líneas con productos visibles; con una sola línea, el filtro no aparece. Debajo del catálogo, el `Llamado` dice "Muy pronto, nuevas colecciones."
+- **Fotos:** formato 4:5 (galería, tarjetas y visor 360°), WebP de 1200×1500. Las fotos del iPhone llegan en HEIC y se convierten con PIL + `pillow-heif` (recorte a 4:5 ajustando el corte de arriba para no cortar orejas).
 - En YAML, un `resumen` que contenga ": " debe ir entre comillas.
 - Para revisar en móvil sin teléfono: Edge headless no baja de ~500 px de ancho, así que se usa una página temporal con un `<iframe>` de 390 px.
 - No hay backend: los pedidos llegan por correo (`mailto:`) o por WhatsApp (`wa.me`, cuando haya número), con el mensaje prellenado.
@@ -259,6 +264,7 @@ Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplic
 
   Las dos primeras se descartaron con material real: la foto suele ser un retrato de frente, el modelo es el cuerpo completo y su forma no coincide con el perro real. A propuesta del usuario quedó solo la ruta del GLB, con contraseña en un subdominio. Detalles en "Taller".
 - **Pulido visual (2026-10-17):** con la misma marca (logo, fuentes y paleta) se hizo más editorial. Las mayúsculas espaciadas quedan solo en botones, navegación, el descriptor, el rótulo "Esencia" y la categoría del producto; los demás rótulos (formulario, filtros, valores) van en frase normal. Única animación de entrada: la portada al cargar. `[hidden]` lleva `display: none !important` en global.css para que el filtro oculte tarjetas aunque tengan `display` propio.
+- **WhatsApp y catálogo real (2026-10-18):** WhatsApp 221 344 1015 pasa a ser el canal principal (antes Instagram). El catálogo muestra solo "Tu mascota en miniatura" con fotos reales + `TarjetaIdea`; el resto queda con `oculto: true`. Logo en Montserrat con la Λ.
 - **Otros nombres considerados:** Justo Eso, Me Faltaba, Chunche, Ocurrencia, Mira Nomás.
 
 ## Pendientes
@@ -266,7 +272,6 @@ Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplic
 - Revisar la disponibilidad del @ en Instagram y TikTok.
 - Opcional: redirigir `www.prismatix.mx` → `prismatix.mx` (Redirect Rule).
 - Si existe el isotipo en vector o PNG transparente de alta resolución, reemplazar los archivos de `public/marca/`. Si existe el wordmark oficial, reemplazar el tipográfico de `Logo.astro`.
-- Poner el número de WhatsApp en `src/config.ts` (hoy está vacío, así que no se muestra).
 - Reemplazar los productos de ejemplo por los reales, con fotos en el estilo fotográfico de la marca y modelos .glb.
 - Opcional: renombrar el Worker y el repositorio a "prismatix" (`name` en `wrangler.jsonc` y la URL de workers.dev cambiarían).
 - Opcional: cambiar el correo de los commits (hoy es el de trabajo) y decidir si el repositorio pasa a privado. El código de la herramienta del taller también es visible en GitHub, aunque la página tiene contraseña.

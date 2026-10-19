@@ -36,7 +36,7 @@ const redes = otros.filter((c) => c.id !== 'correo');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap"
     />
   </head>
   <body>
@@ -66,7 +66,11 @@ const redes = otros.filter((c) => c.id !== 'correo');
           <p class="pie__texto">
             ¿Tienes una idea, un recuerdo o un personaje que quieras tener en tus manos? Cuéntanos y lo hacemos real.
           </p>
-          {usuarioInstagram ? (
+          {SITIO.whatsapp ? (
+            <a class="pie__principal" {...atributosCanal(principal)}>
+              <Icono nombre="whatsapp" tamano={30} />{SITIO.whatsappVisible}
+            </a>
+          ) : usuarioInstagram ? (
             <a class="pie__principal" href={SITIO.instagram} target="_blank" rel="noopener">
               <Icono nombre="instagram" tamano={30} />@{usuarioInstagram}
             </a>
@@ -77,7 +81,7 @@ const redes = otros.filter((c) => c.id !== 'correo');
             <a class="boton" {...atributosCanal(principal)}>Escríbenos por {principal.nombre}</a>
             {redes.map((c) => (
               <a class="pie__red" {...atributosCanal(c)}>
-                {(c.id === 'instagram' || c.id === 'facebook') && <Icono nombre={c.id} tamano={22} />}
+                {c.id !== 'correo' && <Icono nombre={c.id} tamano={22} />}
                 {c.nombre}
               </a>
             ))}
@@ -178,10 +182,13 @@ const redes = otros.filter((c) => c.id !== 'correo');
     font-family: var(--fuente-display);
     font-size: clamp(1.5rem, 6.5vw, 2.2rem);
     color: var(--soft-rose);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .pie__principal span {
     text-decoration: underline;
     text-decoration-color: rgb(244 182 194 / 0.35);
     text-underline-offset: 6px;
-    overflow-wrap: anywhere;
   }
   .pie__principal:hover { color: var(--burnt-orange); }
   .pie__enlaces { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-weight: 500; }

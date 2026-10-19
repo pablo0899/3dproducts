@@ -11,6 +11,7 @@ material: Plástico de alta resistencia
 dimensiones: 22 × 15 × 5 cm
 colores: [Los colores de tu equipo]
 orden: 3
+oculto: true  # se mostrará cuando tengamos piezas reales de esta línea
 ---
 
 Una réplica a escala del estadio de tus amores, con los colores de tu equipo. Funciona como decoración, organizador de escritorio o el regalo perfecto para el más aficionado de la familia.

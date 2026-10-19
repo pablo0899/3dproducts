@@ -1,0 +1,86 @@
+---
+// Tarjeta especial del catálogo: invita a pedir una pieza a partir de la idea
+// del cliente. Mismo formato editorial que TarjetaProducto y lleva a #tu-idea.
+import Destello from './Destello.astro';
+---
+
+<a href="#tu-idea" class="tarjeta-idea">
+  <div class="tarjeta-idea__imagen">
+    <span class="tarjeta-idea__badge">A tu medida</span>
+    <img src="/marca/isotipo.webp" alt="" width="640" height="640" loading="lazy" />
+    <Destello tamano={18} class="tarjeta-idea__destello" />
+    <p class="tarjeta-idea__frase">Si lo imaginas, <em>lo hacemos real.</em></p>
+  </div>
+  <div class="tarjeta-idea__cuerpo">
+    <span class="etiqueta">Pieza personalizada</span>
+    <h3>Tu idea, en tus manos</h3>
+    <p>Un personaje, un recuerdo o ese regalo que todavía no existe.</p>
+    <strong class="tarjeta-idea__accion">Cuéntanos tu idea <span aria-hidden="true">→</span></strong>
+  </div>
+</a>
+
+<style>
+  /* Editorial, como TarjetaProducto: la imagen lleva el marco y el texto va sobre el fondo */
+  .tarjeta-idea { display: flex; flex-direction: column; gap: 14px; color: inherit; text-decoration: none; }
+  .tarjeta-idea__imagen {
+    position: relative;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 14px;
+    aspect-ratio: 4 / 5;
+    padding: 16px;
+    overflow: hidden;
+    border-radius: var(--radio);
+    background: var(--fondo-terciopelo);
+    color: var(--ivory-dust);
+    text-align: center;
+  }
+  .tarjeta-idea__imagen img {
+    width: 48%;
+    height: auto;
+    filter: drop-shadow(0 12px 28px rgb(216 58 107 / 0.35));
+    animation: flotar 6s ease-in-out infinite;
+  }
+  :global(.tarjeta-idea__destello) { position: absolute; top: 22%; right: 18%; }
+  .tarjeta-idea__badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgb(253 251 247 / 0.92);
+    color: var(--plum-night);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .tarjeta-idea__frase {
+    margin: 0;
+    color: var(--ivory-dust);
+    font-family: var(--fuente-display);
+    font-style: italic;
+    font-size: clamp(1rem, 4.4vw, 1.5rem);
+    line-height: 1.2;
+  }
+  .tarjeta-idea__frase em { color: var(--soft-rose); }
+  .tarjeta-idea__cuerpo { display: grid; gap: 4px; justify-items: start; }
+  .etiqueta { font-size: 0.6rem; }
+  h3 { margin: 2px 0 0; font-size: 1.12rem; line-height: 1.2; }
+  .tarjeta-idea:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  .tarjeta-idea__cuerpo p { margin: 0; color: var(--color-suave); font-size: 0.82rem; line-height: 1.5; }
+  .tarjeta-idea__accion { margin-top: 4px; color: var(--berry-magenta); font-size: 0.95rem; font-weight: 600; }
+
+  @keyframes flotar {
+    50% { transform: translateY(-8px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tarjeta-idea__imagen img { animation: none; }
+  }
+  @media (min-width: 768px) {
+    h3 { font-size: 1.3rem; }
+    .tarjeta-idea__cuerpo p { font-size: 0.88rem; }
+    .etiqueta { font-size: 0.66rem; }
+  }
+</style>
