@@ -96,11 +96,11 @@ src/components/
   Logo.astro                   Isotipo + wordmark PRISMATIX con la "A" en degradado (prop claro)
   Destello.astro               Estrella de 4 puntas en degradado (acento en la portada de escritorio)
   Icono.astro                  Íconos de línea fina (líneas de producto y esencia)
-  TarjetaProducto.astro        Tarjeta editorial del catálogo: imagen 4:5 con marco, texto sobre el fondo (badge "360°", "Agotado")
+  TarjetaProducto.astro        Tarjeta editorial del catálogo: imagen 4:5 con marco, texto sobre el fondo (badge "360°", "Agotado"). Con varias fotos las va pasando con fundido cada 3.5 s mientras se ve (desfasada entre tarjetas, puntitos abajo, nada con prefers-reduced-motion)
   TarjetaIdea.astro            Tarjeta fija al final del catálogo: "Tu idea, en tus manos" (pieza a tu medida) → #tu-idea
   Llamado.astro                Banda de llamado a la acción → /#tu-idea + correo
   TuIdea.astro                 Sección #tu-idea: pasos + formulario que arma el correo/WhatsApp
-  Galeria.astro                Carrusel con scroll-snap y miniaturas
+  Galeria.astro                Carrusel con scroll-snap y miniaturas. Avanza solo cada 4.5 s (puntos con barra de progreso y botón de pausa); se detiene al tocarla, con el cursor encima, fuera de pantalla o con prefers-reduced-motion. Flechas solo con mouse
   Visor3D.astro                <model-viewer>; carga el modelo con IntersectionObserver. El visor es cuadrado como la galería; ojo: model-viewer trae height: 150px por defecto, así que necesita height: 100%
 src/pages/index.astro          Portada oscura (eslogan + isotipo + 2 botones + franja con las líneas que tienen productos), Esencia en 2 columnas, "La colección" con pastillas que filtran la rejilla (JS en el cliente; también lee ?linea=<nombre>), Llamado y TuIdea
 src/pages/productos/[id].astro Detalle: ruta Colección / línea (enlaza a /?linea=…#catalogo), pestañas Fotos / Vista 360°, ficha en filas, "Lo quiero · Escríbenos por WhatsApp" + Instagram/Facebook y Llamado

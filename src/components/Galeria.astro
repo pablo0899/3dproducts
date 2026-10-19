@@ -5,19 +5,55 @@ interface Props {
 }
 
 const { fotos, nombre } = Astro.props;
+const varias = fotos.length > 1;
+// Tiempo que se queda cada foto antes de pasar a la siguiente.
+const INTERVALO = 4500;
 ---
 
-<div class="galeria">
-  <div class="galeria__carrusel">
-    {fotos.map((foto, i) => (
-      <img id={`foto-${i}`} src={foto} alt={`${nombre} — foto ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
-    ))}
+<div class="galeria" data-intervalo={INTERVALO} style={`--intervalo: ${INTERVALO}ms`}>
+  <div class="galeria__escenario">
+    <div class="galeria__carrusel" aria-roledescription="carrusel" aria-label={`Fotos de ${nombre}`}>
+      {fotos.map((foto, i) => (
+        <img
+          src={foto}
+          alt={`${nombre} — foto ${i + 1} de ${fotos.length}`}
+          loading={i === 0 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ))}
+    </div>
+
+    {varias && (
+      <>
+        <button type="button" class="galeria__flecha galeria__flecha--anterior" data-mover="-1" aria-label="Foto anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
+        <button type="button" class="galeria__flecha galeria__flecha--siguiente" data-mover="1" aria-label="Foto siguiente">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+        </button>
+
+        <div class="galeria__barra">
+          <div class="galeria__puntos">
+            {fotos.map((_, i) => (
+              <button type="button" data-indice={i} aria-label={`Ver foto ${i + 1}`} aria-current={i === 0 ? 'true' : undefined}>
+                <span></span>
+              </button>
+            ))}
+          </div>
+          <button type="button" class="galeria__pausa" aria-label="Pausar fotos" aria-pressed="false">
+            <svg class="icono-pausa" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12" /></svg>
+            <svg class="icono-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
+          </button>
+        </div>
+      </>
+    )}
   </div>
-  {fotos.length > 1 && (
+
+  {varias && (
     <div class="galeria__miniaturas">
       {fotos.map((foto, i) => (
-        <button type="button" data-indice={i} aria-label={`Ver foto ${i + 1}`}>
-          <img src={foto} alt="" loading="lazy" />
+        <button type="button" data-indice={i} aria-label={`Ver foto ${i + 1}`} aria-current={i === 0 ? 'true' : undefined}>
+          <img src={foto} alt="" loading="lazy" decoding="async" />
         </button>
       ))}
     </div>
@@ -27,17 +63,110 @@ const { fotos, nombre } = Astro.props;
 <script>
   document.querySelectorAll<HTMLElement>('.galeria').forEach((galeria) => {
     const carrusel = galeria.querySelector<HTMLElement>('.galeria__carrusel')!;
-    galeria.querySelectorAll<HTMLButtonElement>('.galeria__miniaturas button').forEach((boton) => {
-      boton.addEventListener('click', () => {
-        const indice = Number(boton.dataset.indice);
-        carrusel.scrollTo({ left: carrusel.clientWidth * indice, behavior: 'smooth' });
+    const total = carrusel.children.length;
+    if (total < 2) return;
+
+    const intervalo = Number(galeria.dataset.intervalo);
+    const indicadores = galeria.querySelectorAll<HTMLButtonElement>('[data-indice]');
+    const botonPausa = galeria.querySelector<HTMLButtonElement>('.galeria__pausa')!;
+    const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let actual = 0;
+    let temporizador: number | undefined;
+    let visible = false;
+    let encima = false; // el cursor o el foco están en la galería
+    let pausadaPorUsuario = sinMovimiento;
+    let esperaTrasToque: number | undefined;
+
+    const marcar = (indice: number) => {
+      actual = indice;
+      indicadores.forEach((b) => {
+        if (Number(b.dataset.indice) === indice) b.setAttribute('aria-current', 'true');
+        else b.removeAttribute('aria-current');
       });
+      // Reinicia la animación de progreso del punto activo.
+      galeria.classList.remove('galeria--avanzando');
+      void galeria.offsetWidth;
+      actualizar();
+    };
+
+    const ir = (indice: number) => {
+      const destino = (indice + total) % total;
+      carrusel.scrollTo({ left: carrusel.clientWidth * destino, behavior: sinMovimiento ? 'auto' : 'smooth' });
+      marcar(destino);
+    };
+
+    // Avanza solo si nadie la está usando y se ve en pantalla.
+    const actualizar = () => {
+      window.clearTimeout(temporizador);
+      const corre = visible && !encima && !pausadaPorUsuario && esperaTrasToque === undefined && !document.hidden;
+      galeria.classList.toggle('galeria--avanzando', corre);
+      if (corre) temporizador = window.setTimeout(() => ir(actual + 1), intervalo);
+    };
+
+    // Deslizar con el dedo también cambia la foto activa.
+    let alDeslizar: number | undefined;
+    carrusel.addEventListener('scroll', () => {
+      window.clearTimeout(alDeslizar);
+      alDeslizar = window.setTimeout(() => {
+        const indice = Math.round(carrusel.scrollLeft / carrusel.clientWidth);
+        if (indice !== actual) marcar(indice);
+      }, 80);
+    }, { passive: true });
+
+    // Al tocarla, se detiene un rato para que la vean con calma.
+    const pausarUnRato = () => {
+      window.clearTimeout(esperaTrasToque);
+      esperaTrasToque = window.setTimeout(() => {
+        esperaTrasToque = undefined;
+        actualizar();
+      }, intervalo * 2);
+      actualizar();
+    };
+    carrusel.addEventListener('pointerdown', pausarUnRato);
+
+    indicadores.forEach((b) => b.addEventListener('click', () => {
+      ir(Number(b.dataset.indice));
+      pausarUnRato();
+    }));
+    galeria.querySelectorAll<HTMLButtonElement>('[data-mover]').forEach((b) => b.addEventListener('click', () => {
+      ir(actual + Number(b.dataset.mover));
+      pausarUnRato();
+    }));
+
+    botonPausa.addEventListener('click', () => {
+      pausadaPorUsuario = !pausadaPorUsuario;
+      botonPausa.setAttribute('aria-pressed', String(pausadaPorUsuario));
+      botonPausa.setAttribute('aria-label', pausadaPorUsuario ? 'Reanudar fotos' : 'Pausar fotos');
+      actualizar();
+    });
+    botonPausa.setAttribute('aria-pressed', String(pausadaPorUsuario));
+    if (pausadaPorUsuario) botonPausa.setAttribute('aria-label', 'Reanudar fotos');
+
+    // En escritorio se detiene mientras el cursor está encima.
+    if (window.matchMedia('(hover: hover)').matches) {
+      galeria.addEventListener('mouseenter', () => { encima = true; actualizar(); });
+      galeria.addEventListener('mouseleave', () => { encima = false; actualizar(); });
+    }
+    galeria.addEventListener('focusin', () => { encima = true; actualizar(); });
+    galeria.addEventListener('focusout', () => { encima = false; actualizar(); });
+
+    // No corre si la galería está fuera de pantalla, en otra pestaña o detrás de "Vista 360°".
+    new IntersectionObserver(([entrada]) => {
+      visible = entrada.isIntersecting;
+      actualizar();
+    }, { threshold: 0.5 }).observe(carrusel);
+    document.addEventListener('visibilitychange', actualizar);
+
+    window.addEventListener('resize', () => {
+      carrusel.scrollTo({ left: carrusel.clientWidth * actual });
     });
   });
 </script>
 
 <style>
   .galeria { display: grid; gap: 10px; }
+  .galeria__escenario { position: relative; }
   .galeria__carrusel {
     display: flex;
     overflow-x: auto;
@@ -56,17 +185,125 @@ const { fotos, nombre } = Astro.props;
     object-fit: cover;
     scroll-snap-align: start;
   }
-  .galeria__miniaturas { display: flex; gap: 8px; overflow-x: auto; }
+
+  /* Puntos + pausa, sobre la parte baja de la foto */
+  .galeria__barra {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 2px 2px 8px;
+    border-radius: 999px;
+    background: rgb(58 36 59 / 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .galeria__puntos { display: flex; }
+  .galeria__puntos button {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transition: width 0.3s ease;
+  }
+  .galeria__puntos span {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgb(253 251 247 / 0.5);
+    overflow: hidden;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+  .galeria__puntos button[aria-current='true'] { width: 36px; }
+  .galeria__puntos button[aria-current='true'] span { width: 24px; background: rgb(253 251 247 / 0.4); }
+  /* El punto activo se llena mientras corre el tiempo de la foto */
+  .galeria__puntos button[aria-current='true'] span::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--ivory-dust);
+    transform-origin: left;
+  }
+  .galeria--avanzando .galeria__puntos button[aria-current='true'] span::after {
+    animation: llenar var(--intervalo) linear forwards;
+  }
+  @keyframes llenar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .galeria__pausa {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--ivory-dust);
+    cursor: pointer;
+  }
+  .galeria__pausa svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .galeria__pausa .icono-play { fill: currentColor; stroke-width: 1.5; }
+  .galeria__pausa .icono-play,
+  .galeria__pausa[aria-pressed='true'] .icono-pausa { display: none; }
+  .galeria__pausa[aria-pressed='true'] .icono-play { display: block; }
+
+  /* Flechas: solo con mouse; en el celular se desliza con el dedo */
+  .galeria__flecha {
+    position: absolute;
+    top: 50%;
+    display: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(253 251 247 / 0.85);
+    color: var(--plum-night);
+    box-shadow: 0 4px 16px rgb(58 36 59 / 0.2);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+  }
+  .galeria__flecha svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .galeria__flecha--anterior { left: 12px; }
+  .galeria__flecha--siguiente { right: 12px; }
+  .galeria__flecha:hover { background: var(--ivory-dust); }
+  @media (hover: hover) {
+    .galeria__flecha { display: grid; }
+    .galeria__escenario:hover .galeria__flecha,
+    .galeria__flecha:focus-visible { opacity: 1; }
+  }
+
+  .galeria__miniaturas { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .galeria__miniaturas::-webkit-scrollbar { display: none; }
   .galeria__miniaturas button {
     flex: 0 0 64px;
     height: 80px;
     padding: 0;
-    border: 2px solid var(--color-borde);
+    border: 2px solid transparent;
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
     background: none;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, border-color 0.2s ease;
   }
-  .galeria__miniaturas button:hover { border-color: var(--berry-magenta); }
+  .galeria__miniaturas button:hover { opacity: 1; }
+  .galeria__miniaturas button[aria-current='true'] { border-color: var(--berry-magenta); opacity: 1; }
   .galeria__miniaturas img { width: 100%; height: 100%; object-fit: cover; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .galeria__puntos button, .galeria__puntos span { transition: none; }
+  }
 </style>
