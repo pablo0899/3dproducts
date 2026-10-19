@@ -5,6 +5,7 @@ import Galeria from '../../components/Galeria.astro';
 import Visor3D from '../../components/Visor3D.astro';
 import Llamado from '../../components/Llamado.astro';
 import Icono from '../../components/Icono.astro';
+import Compartir from '../../components/Compartir.astro';
 import { formatearPrecio, canales, atributosCanal } from '../../utils';
 
 export async function getStaticPaths() {
@@ -72,6 +73,8 @@ const redes = otros.filter((c) => c.id !== 'correo');
         ))}
         <a class="pedir__personalizar" href="/#tu-idea">¿Lo quieres con tu toque? Personalízalo <span aria-hidden="true">→</span></a>
       </div>
+
+      <Compartir nombre={nombre} url={Astro.url.href} />
 
       <div class="descripcion">
         <Content />

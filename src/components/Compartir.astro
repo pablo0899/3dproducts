@@ -1,0 +1,89 @@
+---
+import Icono from './Icono.astro';
+
+interface Props {
+  nombre: string;
+  url: string;
+}
+
+const { nombre, url } = Astro.props;
+const texto = `Mira esta pieza de Prismatix: ${nombre}`;
+const enlaces = [
+  { id: 'whatsapp', nombre: 'WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(`${texto} ${url}`)}` },
+  { id: 'facebook', nombre: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
+] as const;
+---
+
+<div class="compartir">
+  <span class="compartir__titulo">Compártelo</span>
+  <div class="compartir__botones">
+    {enlaces.map((e) => (
+      <a href={e.url} target="_blank" rel="noopener" aria-label={`Compartir en ${e.nombre}`} title={e.nombre}>
+        <Icono nombre={e.id} tamano={22} />
+      </a>
+    ))}
+    <!-- Instagram no tiene enlace para compartir: en el celular abre el menú del teléfono y si no, copia el enlace -->
+    <button type="button" data-compartir-instagram data-url={url} data-texto={texto} aria-label="Compartir en Instagram" title="Instagram">
+      <Icono nombre="instagram" tamano={22} />
+    </button>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-compartir-instagram]').forEach((boton) => {
+    boton.addEventListener('click', async () => {
+      const url = boton.dataset.url!;
+      const texto = boton.dataset.texto!;
+      const tactil = window.matchMedia('(pointer: coarse)').matches;
+      if (tactil && navigator.share) {
+        try {
+          await navigator.share({ title: texto, text: texto, url });
+          return;
+        } catch (error) {
+          if ((error as DOMException).name === 'AbortError') return;
+        }
+      }
+      navigator.clipboard?.writeText(url).then(() => {
+        document.dispatchEvent(new CustomEvent('avisar', {
+          detail: 'Copiamos el enlace. Pégalo en tu historia o en un mensaje de Instagram.',
+        }));
+      }, () => {});
+    });
+  });
+</script>
+
+<style>
+  .compartir {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding-block: 14px;
+    border-block: 1px solid var(--color-borde);
+  }
+  .compartir__titulo { color: var(--color-suave); font-size: 0.86rem; }
+  .compartir__botones { display: flex; gap: 8px; }
+  .compartir a,
+  .compartir button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--plum-night);
+    box-shadow: inset 0 0 0 1px var(--color-borde);
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .compartir a:hover,
+  .compartir button:hover {
+    color: var(--berry-magenta);
+    background: rgb(216 58 107 / 0.08);
+    box-shadow: inset 0 0 0 1px var(--berry-magenta);
+  }
+</style>

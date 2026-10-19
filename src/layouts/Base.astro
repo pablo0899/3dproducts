@@ -126,6 +126,9 @@ const redes = otros.filter((c) => c.id !== 'correo');
     copiarMensaje(mensaje, canal);
   });
 
+  // Otros componentes (ej. Compartir) muestran su propio aviso con este evento
+  document.addEventListener('avisar', (e) => avisar((e as CustomEvent<string>).detail));
+
   document.addEventListener('click', (e) => {
     const enlace = (e.target as Element).closest<HTMLElement>('[data-copiar]');
     if (enlace) copiarMensaje(enlace.dataset.copiar!, enlace.dataset.canal!);

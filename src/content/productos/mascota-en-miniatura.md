@@ -6,8 +6,8 @@ precio: 300
 fotos:
   - /productos/mascota-en-miniatura/foto-1.webp
   - /productos/mascota-en-miniatura/foto-2.webp
-  - /productos/mascota-en-miniatura/foto-3.webp
   - /productos/mascota-en-miniatura/foto-4.webp
+  - /productos/mascota-en-miniatura/foto-3.webp
 material: Acabado brilloso, efecto porcelana
 dimensiones: 5, 6 o 7 cm de alto
 colores: [Al natural, Pintada a mano]
