@@ -18,7 +18,8 @@ Para entrevistas en la calle, reseñas, podcasts o ese video que vas a subir hoy
 
 Nos mandas tu logo o el nombre de tu canal y lo ponemos en relieve sobre la placa. Tú eliges la forma que va con tu estilo.
 
-- Funda de mano compatible con los micrófonos inalámbricos mini de Hollyland
+- Funda de mano para micrófonos inalámbricos mini
+- Espacio para el micrófono: 33 mm de largo × 13 mm de alto × 38 mm de profundidad. Revisa que el tuyo quepa
 - Placa en cuatro formas: estrella, flor, corazón o cuadrado
 - Tu logo o tu nombre en relieve
 - Te enviamos una vista previa antes de hacerla
