@@ -1,7 +1,7 @@
 ---
 // Iconografía de la marca: trazo fino, simple, orgánico y con personalidad.
 export type NombreIcono =
-  | 'mascota' | 'figura' | 'estadio' | 'souvenir' | 'dado'
+  | 'mascota' | 'figura' | 'estadio' | 'souvenir' | 'dado' | 'microfono'
   | 'destello' | 'sol' | 'diamante' | 'montana' | 'corazon' | 'destellos'
   | 'whatsapp' | 'instagram' | 'facebook';
 
@@ -57,7 +57,15 @@ const { nombre, tamano = 40 } = Astro.props;
       <path d="M14 23L5 14M34 23l9-9M14 23l10 22 10-22M14 23L5 34M34 23l9 11" />
     </>
   )}
-  {nombre === 'destello' && <path d="M24 4c1 10 9 18 20 20-11 2-19 10-20 20-1-10-9-18-20-20 11-2 19-10 20-20z" />}
+  {nombre === 'microfono' && (
+    <>
+      <circle cx="24" cy="11" r="7" />
+      <path d="M17 11h14" />
+      <path d="M21 18v4M27 18v4M21 33v11h6V33" />
+      <rect x="15" y="22" width="18" height="11" rx="3" />
+    </>
+  )}
+  {nombre === 'destello' &&<path d="M24 4c1 10 9 18 20 20-11 2-19 10-20 20-1-10-9-18-20-20 11-2 19-10 20-20z" />}
   {nombre === 'sol' && (
     <>
       <circle cx="24" cy="24" r="8" />

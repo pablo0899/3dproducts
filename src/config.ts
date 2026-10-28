@@ -10,7 +10,7 @@ export const SITIO = {
   eslogan: 'Ideas que se vuelven reales.',
   subtitulo: 'Creemos que la imaginación también se puede tocar. Transformamos ideas en objetos únicos, personalizados y llenos de significado.',
   cierre: 'Más que objetos, son historias en forma de arte.',
-  descripcion: 'Prismatix, estudio creativo en Xalapa: tu mascota en miniatura, pintada a mano, y piezas únicas a partir de tu idea. Ideas que se vuelven reales.',
+  descripcion: 'Prismatix, estudio creativo en Xalapa: tu mascota en miniatura, fundas de micrófono con tu logo y piezas únicas a partir de tu idea. Ideas que se vuelven reales.',
   email: 'hola@prismatix.mx',
   // Número de WhatsApp con código de país, sin + ni espacios (ej. 5212281234567).
   // Es el canal principal: va primero en todos los contactos. Vacío = no se muestra.
@@ -31,6 +31,7 @@ export const CATEGORIAS = [
   { nombre: 'Fandom deportivo', icono: 'estadio' },
   { nombre: 'Souvenirs xalapeños', icono: 'souvenir' },
   { nombre: 'Juegos de mesa', icono: 'dado' },
+  { nombre: 'Para creadores', icono: 'microfono' },
 ] as const;
 
 // Esencia de marca (lámina de identidad).
