@@ -22,5 +22,6 @@ Nos mandas tu logo o el nombre de tu canal y lo ponemos en relieve sobre la plac
 - Espacio para el micrófono: 33 mm de largo × 13 mm de alto × 38 mm de profundidad. Revisa que el tuyo quepa
 - Placa en cuatro formas: estrella, flor, corazón o cuadrado
 - Tu logo o tu nombre en relieve
+- El precio de $220 es con dos colores; a partir del tercero, cada color suma $10
 - Te enviamos una vista previa antes de hacerla
 - No incluye el micrófono
