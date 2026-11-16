@@ -130,15 +130,14 @@ const { nombre, resumen, fotos, precio, categoria, modelo, disponible } = produc
     top: 10px;
     padding: 4px 10px;
     border-radius: 999px;
-    font-size: 0.66rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
   .tarjeta__badge { right: 10px; background: rgb(253 251 247 / 0.92); color: var(--plum-night); }
   .tarjeta__agotado { left: 10px; background: rgb(58 36 59 / 0.85); color: var(--soft-rose); }
   .tarjeta__cuerpo { display: grid; gap: 4px; justify-items: start; }
-  .etiqueta { font-size: 0.6rem; }
   h3 { margin: 2px 0 0; font-size: 1.12rem; line-height: 1.2; }
   .tarjeta:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
   p {
@@ -151,11 +150,10 @@ const { nombre, resumen, fotos, precio, categoria, modelo, disponible } = produc
     font-size: 0.82rem;
     line-height: 1.5;
   }
-  .tarjeta__precio { margin-top: 4px; color: var(--terracotta); font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tarjeta__precio { margin-top: 4px; color: var(--terracota-texto); font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 
   @media (min-width: 768px) {
     h3 { font-size: 1.3rem; }
     p { font-size: 0.88rem; }
-    .etiqueta { font-size: 0.66rem; }
   }
 </style>

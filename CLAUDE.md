@@ -24,7 +24,7 @@ Sitio web para mostrar un catálogo de productos. Cada producto tiene fotos y, o
 - **Página de producto:** botón principal "Lo quiero · Escríbenos por WhatsApp" + Instagram y Facebook como secundarios. **No se ofrece el correo** ahí (el usuario lo pidió), salvo que sea el único canal.
 - **Nombre de la acción:** el usuario **no quiere "Agenda tu idea"**. Se usa **"Cuéntanos tu idea"** en los botones y **"Dale forma a tu idea"** como título de la sección. Otros textos de la familia: "Lo quiero · Escríbenos", "¿Lo quieres con tu toque? Personalízalo →".
 - **Patrón** (inspirado en una página de referencia que repite "agendar cita" en cada sección): un solo destino para todos los llamados, la sección `#tu-idea` (`TuIdea.astro`). Aparece en:
-  1. La cabecera: botón fijo "Cuéntanos tu idea"; abajo de 360 px dice "Tu idea" y abajo de 480 px se oculta el enlace "Colección".
+  1. La cabecera: botón "Cuéntanos tu idea" desde 768 px. En teléfonos el botón va en una barra fija abajo (`.barra-accion` en `Base.astro`, al alcance del pulgar) y arriba solo queda el enlace "Colección". La barra se esconde cuando se ven `#tu-idea` o el pie, y la página de producto no la lleva (`<Base barra={false}>`).
   2. La portada: "Cuéntanos tu idea" (principal) + "Ver la colección" (secundario).
   3. Después de Esencia, como enlace de texto.
   4. Después del catálogo: `Llamado.astro` ("¿No está lo que buscas? Lo creamos para ti.").
@@ -41,8 +41,8 @@ La fuente es la lámina "Mapa de marca Prismatix" (imagen `identidad.jpg` del us
 - **Paleta** (variables en `src/styles/global.css`):
   - Plum Night `#3A243B`: color insignia, fondo oscuro y texto principal
   - Deep Plum `#552B61`: profundidad, íconos
-  - Berry Magenta `#D83A6B`: acento (botones, rótulos de categoría)
-  - Terracotta Warm `#C25E3B`: segundo color insignia (precios, énfasis en cursiva)
+  - Berry Magenta `#D83A6B`: acento (degradados, brillos). Para texto y botones se usa `--berry-texto` `#C22F5D` (5.27:1 sobre ivory) y `--berry-hover` `#A8264F`, porque el original da 4.29:1
+  - Terracotta Warm `#C25E3B`: segundo color insignia. Para texto (precios, énfasis en cursiva) se usa `--terracota-texto` `#AE4F2F` (5.13:1), porque el original da 4.10:1
   - Burnt Orange `#E07A5F`
   - Soft Rose `#F4B6C2`
   - Ivory Dust `#FDFBF7`: fondo general y texto sobre oscuro
@@ -51,7 +51,7 @@ La fuente es la lámina "Mapa de marca Prismatix" (imagen `identidad.jpg` del us
 - **Tipografía** (Google Fonts en `Base.astro`):
   - Playfair Display (serif): titulares y frases en cursiva
   - Montserrat (sans): textos, apoyo y el wordmark del logo
-  - Rótulos (`.titulo-seccion`, `.etiqueta`, nav, botones): mayúsculas pequeñas con mucho espaciado de letras
+  - Rótulos (`.titulo-seccion`, `.etiqueta`): mayúsculas pequeñas con espaciado de letras. Botones y navegación van en frase normal ("Cuéntanos tu idea"). Ningún texto mide menos de 11 px (la `.etiqueta` mide 12 px)
 - **Isotipo oficial:** una cinta satinada en forma de triángulo (tipo Möbius) en morado, berry y naranja. El original es `isotipo.jpeg` del usuario (1254 px, sobre fondo negro, no está en el repositorio). Los archivos derivados están en `public/marca/`:
   - `isotipo.webp` / `isotipo.png`: 640 px con fondo transparente
   - `isotipo-96.webp`: para el logo y el pie
@@ -90,7 +90,7 @@ src/content/productos/*.md     Un producto por archivo; el nombre del archivo es
 public/productos/<id>/         Fotos y modelo.glb de cada producto (se sirven tal cual)
 src/utils.ts                   formatearPrecio(), enlaceWhatsapp(), enlaceCorreo()
 src/styles/global.css          Paleta y tokens (:root), degradados, .seccion-oscura, .contenedor, .boton, .etiqueta, .titulo-seccion, .titular/.entrada, .texto-degradado
-src/layouts/Base.astro         <head> (favicon/og desde public/marca) + Google Fonts, cabecera sticky ivory con Logo, pie oscuro con isotipo, cierre de marca y contacto (#contacto)
+src/layouts/Base.astro         <head> (favicon/og desde public/marca) + Google Fonts, cabecera sticky ivory con Logo, pie oscuro con isotipo (sin repetir el logo), cierre de marca y contacto (#contacto), y la barra de acción inferior en teléfonos
 public/marca/                  Isotipo transparente (webp/png), favicon, apple-touch-icon y og.jpg
 src/components/
   Logo.astro                   Isotipo + wordmark PRISMATIX con la "A" en degradado (prop claro)
@@ -266,6 +266,7 @@ Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplic
   Las dos primeras se descartaron con material real: la foto suele ser un retrato de frente, el modelo es el cuerpo completo y su forma no coincide con el perro real. A propuesta del usuario quedó solo la ruta del GLB, con contraseña en un subdominio. Detalles en "Taller".
 - **Pulido visual (2026-10-17):** con la misma marca (logo, fuentes y paleta) se hizo más editorial. Las mayúsculas espaciadas quedan solo en botones, navegación, el descriptor, el rótulo "Esencia" y la categoría del producto; los demás rótulos (formulario, filtros, valores) van en frase normal. Única animación de entrada: la portada al cargar. `[hidden]` lleva `display: none !important` en global.css para que el filtro oculte tarjetas aunque tengan `display` propio.
 - **WhatsApp y catálogo real (2026-10-18):** WhatsApp 221 344 1015 pasa a ser el canal principal (antes Instagram). El catálogo muestra solo "Tu mascota en miniatura" con fotos reales + `TarjetaIdea`; el resto queda con `oculto: true`. Logo en Montserrat con la Λ.
+- **Revisión con la skill `apple-design` (2026-11-16):** basada en las guías de diseño de Apple (HIG). Se oscurecieron el berry y el terracota usados como texto para pasar 4.5:1, los rótulos chicos subieron a 11–12 px, los botones pasaron de mayúsculas espaciadas a frase normal, la acción principal en teléfonos bajó a una barra fija inferior, se quitó el logo repetido del pie y el isotipo de `TarjetaIdea` dejó de flotar (la única animación continua es la de la portada). Se mantuvieron a propósito la paleta, las fuentes y el tema solo claro, porque vienen de la lámina de marca.
 - **Otros nombres considerados:** Justo Eso, Me Faltaba, Chunche, Ocurrencia, Mira Nomás.
 
 ## Pendientes

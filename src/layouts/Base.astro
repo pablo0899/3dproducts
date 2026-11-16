@@ -9,9 +9,11 @@ interface Props {
   titulo?: string;
   descripcion?: string;
   imagen?: string;
+  /** Barra inferior con "Cuéntanos tu idea" en teléfonos (la página de producto tiene su propio botón) */
+  barra?: boolean;
 }
 
-const { titulo, descripcion = SITIO.descripcion, imagen = '/marca/og.jpg' } = Astro.props;
+const { titulo, descripcion = SITIO.descripcion, imagen = '/marca/og.jpg', barra = true } = Astro.props;
 const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : `${SITIO.nombre} · ${SITIO.descriptor}`;
 const anio = new Date().getFullYear();
 // Contacto del pie: el primer canal es el botón; los demás van como enlaces y el correo al final
@@ -23,7 +25,7 @@ const redes = otros.filter((c) => c.id !== 'correo');
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#3a243b" />
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
@@ -45,9 +47,7 @@ const redes = otros.filter((c) => c.id !== 'correo');
         <Logo />
         <nav>
           <a href="/#catalogo" class="nav__enlace">Colección</a>
-          <a href="/#tu-idea" class="boton boton--chico">
-            <span class="nav__largo">Cuéntanos tu idea</span><span class="nav__corto">Tu idea</span>
-          </a>
+          <a href="/#tu-idea" class="boton boton--chico nav__accion">Cuéntanos tu idea</a>
         </nav>
       </div>
     </header>
@@ -91,11 +91,16 @@ const redes = otros.filter((c) => c.id !== 'correo');
           )}
         </div>
         <div class="pie__firma">
-          <Logo claro />
           <small>{SITIO.descriptor} · © {anio}</small>
         </div>
       </div>
     </footer>
+
+    {barra && (
+      <div class="barra-accion" data-barra>
+        <a href="/#tu-idea" class="boton">Cuéntanos tu idea</a>
+      </div>
+    )}
 
     <p class="aviso" role="status" hidden></p>
   </body>
@@ -133,6 +138,18 @@ const redes = otros.filter((c) => c.id !== 'correo');
     const enlace = (e.target as Element).closest<HTMLElement>('[data-copiar]');
     if (enlace) copiarMensaje(enlace.dataset.copiar!, enlace.dataset.canal!);
   });
+
+  // Barra inferior (teléfonos): se esconde cuando ya se ve el formulario o el pie, para no repetir el llamado
+  const barraAccion = document.querySelector<HTMLElement>('[data-barra]');
+  const destinos = [document.getElementById('tu-idea'), document.getElementById('contacto')].filter(Boolean) as HTMLElement[];
+  if (barraAccion && destinos.length) {
+    const visibles = new Set<Element>();
+    const observador = new IntersectionObserver((entradas) => {
+      entradas.forEach((en) => (en.isIntersecting ? visibles.add(en.target) : visibles.delete(en.target)));
+      barraAccion.classList.toggle('barra-accion--oculta', visibles.size > 0);
+    });
+    destinos.forEach((d) => observador.observe(d));
+  }
 </script>
 
 <style>
@@ -154,15 +171,15 @@ const redes = otros.filter((c) => c.id !== 'correo');
   }
   nav { display: flex; align-items: center; gap: 20px; }
   .nav__enlace {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 0.95rem;
+    font-weight: 500;
     text-decoration: none;
     color: var(--color-suave);
   }
-  .nav__enlace:hover { color: var(--berry-magenta); }
-  .nav__corto { display: none; }
+  .nav__enlace:hover { color: var(--berry-texto); }
 
   .pie { margin-top: 0; padding-block: 72px 32px; }
   .pie__fila { display: grid; gap: 40px; }
@@ -237,11 +254,30 @@ const redes = otros.filter((c) => c.id !== 'correo');
   }
 
   /* Cabecera en teléfonos: se oculta "Colección" y el botón se acorta en pantallas muy angostas */
-  @media (max-width: 480px) {
-    .nav__enlace { display: none; }
+  /* Teléfonos: la acción principal baja al alcance del pulgar; arriba solo queda "Colección" */
+  .barra-accion {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 15;
+    display: flex;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: rgb(253 251 247 / 0.86);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--color-borde);
+    transition: translate 0.25s ease;
   }
-  @media (max-width: 360px) {
-    .nav__largo { display: none; }
-    .nav__corto { display: inline; }
+  .barra-accion .boton { flex: 1; }
+  .barra-accion--oculta { translate: 0 110%; }
+  @media (max-width: 767px) {
+    .nav__accion { display: none; }
+    body:has(.barra-accion) { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+    body:has(.barra-accion) .aviso { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  }
+  @media (min-width: 768px) {
+    .barra-accion { display: none; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .cabecera, .barra-accion { background: var(--ivory-dust); backdrop-filter: none; }
   }
 </style>

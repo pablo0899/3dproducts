@@ -10,13 +10,19 @@
   --ivory-dust: #fdfbf7;      /* textos y fondos limpios */
   --electric-pink: #ff2e93;   /* wild card: solo colecciones especiales y lanzamientos */
 
+  /* Variantes para texto y botones: la paleta original no llega a 4.5:1 sobre ivory
+     (berry 4.29:1, terracota 4.10:1). Estas sí: berry 5.27:1, terracota 5.13:1 */
+  --berry-texto: #c22f5d;
+  --berry-hover: #a8264f;     /* 6.65:1 */
+  --terracota-texto: #ae4f2f;
+
   /* Roles */
   --color-fondo: var(--ivory-dust);
   --color-superficie: #ffffff;
   --color-texto: var(--plum-night);
   --color-suave: #6e5a6f;
   --color-borde: rgb(58 36 59 / 0.12);
-  --color-acento: var(--berry-magenta);
+  --color-acento: var(--berry-texto);
   --color-acento-texto: var(--ivory-dust);
 
   /* Elementos gráficos: luz prismática y atardecer */
@@ -113,15 +119,13 @@ p { text-wrap: pretty; }
   background: var(--color-acento);
   color: var(--color-acento-texto);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
-.boton:hover { background: #c22f5d; transform: translateY(-1px); }
+.boton:hover { background: var(--berry-hover); transform: translateY(-1px); }
 
 /* Secundario: contorno; toma el color del texto (sirve en fondo claro y oscuro) */
 .boton--secundario {
@@ -131,18 +135,18 @@ p { text-wrap: pretty; }
 }
 .boton--secundario:hover { background: rgb(216 58 107 / 0.12); }
 
-.boton--chico { min-height: 40px; padding: 8px 16px; font-size: 0.68rem; letter-spacing: 0.1em; }
+.boton--chico { min-height: 44px; padding: 8px 18px; font-size: 0.9rem; }
 
 .etiqueta {
   display: inline-block;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--berry-magenta);
+  color: var(--berry-texto);
 }
 
-:focus-visible { outline: 2px solid var(--berry-magenta); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--berry-texto); outline-offset: 3px; }
 
 @media (min-width: 768px) {
   .contenedor { padding-inline: 24px; }

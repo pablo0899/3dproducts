@@ -40,7 +40,6 @@ import Destello from './Destello.astro';
     width: 48%;
     height: auto;
     filter: drop-shadow(0 12px 28px rgb(216 58 107 / 0.35));
-    animation: flotar 6s ease-in-out infinite;
   }
   :global(.tarjeta-idea__destello) { position: absolute; top: 22%; right: 18%; }
   .tarjeta-idea__badge {
@@ -51,9 +50,9 @@ import Destello from './Destello.astro';
     border-radius: 999px;
     background: rgb(253 251 247 / 0.92);
     color: var(--plum-night);
-    font-size: 0.66rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
   .tarjeta-idea__frase {
@@ -66,21 +65,13 @@ import Destello from './Destello.astro';
   }
   .tarjeta-idea__frase em { color: var(--soft-rose); }
   .tarjeta-idea__cuerpo { display: grid; gap: 4px; justify-items: start; }
-  .etiqueta { font-size: 0.6rem; }
   h3 { margin: 2px 0 0; font-size: 1.12rem; line-height: 1.2; }
   .tarjeta-idea:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
   .tarjeta-idea__cuerpo p { margin: 0; color: var(--color-suave); font-size: 0.82rem; line-height: 1.5; }
-  .tarjeta-idea__accion { margin-top: 4px; color: var(--berry-magenta); font-size: 0.95rem; font-weight: 600; }
+  .tarjeta-idea__accion { margin-top: 4px; color: var(--berry-texto); font-size: 0.95rem; font-weight: 600; }
 
-  @keyframes flotar {
-    50% { transform: translateY(-8px); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .tarjeta-idea__imagen img { animation: none; }
-  }
   @media (min-width: 768px) {
     h3 { font-size: 1.3rem; }
     .tarjeta-idea__cuerpo p { font-size: 0.88rem; }
-    .etiqueta { font-size: 0.66rem; }
   }
 </style>
