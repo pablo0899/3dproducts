@@ -1,0 +1,152 @@
+/* Estilos comunes de las herramientas del taller (inventario e ideas) */
+:root {
+  --ciruela: #3A243B;
+  --ciruela-2: #552B61;
+  --berry: #D83A6B;
+  --berry-texto: #C22F5D;     /* 5.27:1 sobre ivory */
+  --berry-hover: #A8264F;
+  --terracota-texto: #AE4F2F; /* 5.13:1 */
+  --rosa: #F4B6C2;
+  --marfil: #FDFBF7;
+  --blanco: #FFFFFF;
+  --suave: #6E5A6F;           /* 6.06:1 */
+  --borde: rgb(58 36 59 / 0.12);
+  --tinte: #FBF0EF;
+  --sombra: 0 1px 2px rgb(58 36 59 / 0.06), 0 12px 32px -12px rgb(58 36 59 / 0.2);
+  --radio: 14px;
+  --fuente: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Playfair Display', Georgia, serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  background: var(--marfil);
+  color: var(--ciruela);
+  font: 16px/1.5 var(--fuente);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--berry-texto); outline-offset: 2px; }
+.contenedor { width: 100%; max-width: 1080px; margin-inline: auto; padding-inline: 16px; }
+
+/* ── Cabecera oscura ── */
+.cabecera {
+  background:
+    radial-gradient(520px 300px at 85% 0%, rgb(216 58 107 / 0.35), transparent 65%),
+    radial-gradient(420px 300px at 0% 100%, rgb(224 122 95 / 0.22), transparent 70%),
+    linear-gradient(160deg, var(--ciruela) 0%, #2b1a2c 60%, var(--ciruela-2) 100%);
+  color: var(--marfil);
+  padding: calc(14px + env(safe-area-inset-top)) 0 24px;
+}
+.barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.marca { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+.marca img { width: 30px; height: 30px; }
+.barra__acciones { display: flex; align-items: center; gap: 4px; }
+.enlace-claro {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px;
+  border: 0; background: none; color: var(--rosa); font-size: 0.9rem; font-weight: 500;
+  text-decoration: none; cursor: pointer; border-radius: 10px;
+}
+.enlace-claro:hover { color: var(--marfil); }
+h1 { margin: 18px 0 4px; font-family: var(--display); font-weight: 400; font-style: italic; font-size: clamp(2rem, 9vw, 3rem); line-height: 1.05; }
+.estado { margin: 0; min-height: 1.5em; color: rgb(253 251 247 / 0.72); font-size: 0.85rem; }
+.estado--aviso { color: var(--rosa); }
+
+/* ── Herramientas: búsqueda, vista y filtros ── */
+.herramientas { display: grid; gap: 12px; padding-block: 20px 8px; }
+.fila-busqueda { display: flex; gap: 8px; }
+.busqueda { flex: 1; position: relative; }
+.busqueda svg { position: absolute; left: 14px; top: 50%; translate: 0 -50%; color: var(--suave); pointer-events: none; }
+.busqueda input {
+  width: 100%; min-height: 48px; padding: 0 14px 0 42px;
+  border: 1px solid var(--borde); border-radius: 12px; background: var(--blanco); font-size: 16px;
+}
+.segmentos { display: inline-flex; padding: 3px; border-radius: 12px; background: rgb(58 36 59 / 0.07); }
+.segmentos button {
+  min-height: 42px; padding: 0 14px; border: 0; border-radius: 9px; background: none;
+  color: var(--suave); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+}
+.segmentos button[aria-pressed='true'] { background: var(--blanco); color: var(--ciruela); box-shadow: 0 1px 3px rgb(58 36 59 / 0.15); }
+.filtros { display: flex; gap: 8px; overflow-x: auto; margin-inline: -16px; padding: 2px 16px 6px; scrollbar-width: none; }
+.filtros::-webkit-scrollbar { display: none; }
+.filtro {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+  border: 1px solid rgb(58 36 59 / 0.18); border-radius: 999px; background: transparent;
+  font-size: 0.9rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+}
+.filtro small { color: var(--suave); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.filtro[aria-pressed='true'] { background: var(--ciruela); border-color: var(--ciruela); color: var(--marfil); }
+.filtro[aria-pressed='true'] small { color: var(--rosa); }
+
+.vacio { margin: 40px 0; text-align: center; color: var(--suave); }
+
+details { border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); }
+summary { min-height: 52px; display: flex; align-items: center; padding: 0 16px; font-weight: 600; cursor: pointer; }
+.boton-texto { justify-self: start; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--berry-texto); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(194 47 93 / 0.35); }
+
+/* ── Botón flotante "Agregar" abajo, al alcance del pulgar ── */
+.flotante {
+  position: fixed; inset: auto 0 0; z-index: 5; display: flex; justify-content: center;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--marfil) 55%, rgb(253 251 247 / 0));
+  pointer-events: none;
+}
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 26px;
+  border: 0; border-radius: 999px; background: var(--berry-texto); color: var(--marfil);
+  font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: var(--sombra);
+}
+.boton:hover { background: var(--berry-hover); }
+.flotante .boton { pointer-events: auto; width: min(100%, 420px); }
+.boton--secundario { background: transparent; color: var(--ciruela); box-shadow: inset 0 0 0 1px rgb(58 36 59 / 0.25); }
+.boton--secundario:hover { background: rgb(58 36 59 / 0.06); }
+
+/* ── Hoja para agregar o editar (sale de abajo en el celular) ── */
+dialog {
+  width: min(100%, 520px); max-height: calc(100dvh - 24px); margin: auto auto 0; padding: 0;
+  border: 0; border-radius: 22px 22px 0 0; background: var(--marfil); color: var(--ciruela);
+  box-shadow: 0 -10px 40px rgb(0 0 0 / 0.25);
+}
+dialog::backdrop { background: rgb(43 26 44 / 0.55); }
+.hoja { display: grid; gap: 14px; padding: 8px 20px calc(20px + env(safe-area-inset-bottom)); }
+.hoja__asa { justify-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgb(58 36 59 / 0.2); }
+.hoja__cabeza { display: flex; align-items: center; gap: 14px; }
+.hoja__cabeza h2 { flex: 1; margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.4rem; line-height: 1.15; }
+.cerrar { width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(58 36 59 / 0.07); font-size: 1.3rem; cursor: pointer; }
+.campos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.campo { display: grid; gap: 4px; }
+.campo--ancho { grid-column: 1 / -1; }
+.campo > span { font-size: 0.85rem; font-weight: 600; }
+.campo small { color: var(--suave); font-weight: 400; }
+.campo input, .campo select, .campo textarea {
+  width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid rgb(58 36 59 / 0.2);
+  border-radius: 10px; background: var(--blanco); font-size: 16px;
+}
+.campo textarea { min-height: 72px; resize: vertical; }
+.campo input[type='color'] { padding: 4px; cursor: pointer; }
+.hoja__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 4px; }
+.hoja__acciones .boton { flex: 1; }
+.borrar { min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--berry-texto); font-weight: 600; cursor: pointer; }
+
+@media (min-width: 640px) {
+  dialog { margin: auto; border-radius: 22px; }
+  .hoja__asa { display: none; }
+  .hoja { padding-top: 20px; padding-bottom: 24px; }
+}
+@media (min-width: 900px) {
+  .flotante { justify-content: flex-end; background: none; padding-inline: 32px; }
+  .flotante .boton { width: auto; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Pestañas de secciones del taller (Filamentos | Ideas), en la cabecera oscura */
+.pestanas { display: flex; gap: 4px; width: fit-content; margin-top: 16px; padding: 3px; border-radius: 12px; background: rgb(253 251 247 / 0.09); }
+.pestanas a {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 9px;
+  color: rgb(253 251 247 / 0.82); font-size: 0.9rem; font-weight: 600; text-decoration: none;
+}
+.pestanas a:hover { color: var(--marfil); }
+.pestanas a[aria-current='page'] { background: var(--marfil); color: var(--ciruela); }

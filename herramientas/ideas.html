@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#3A243B">
+<title>Ideas · Prismatix</title>
+<link rel="icon" href="https://prismatix.mx/marca/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="taller.css">
+<style>
+  /* ── Pegar un link ── */
+  .pegar { display: grid; gap: 8px; margin-top: 20px; padding: 14px; border-radius: 16px; background: rgb(253 251 247 / 0.08); }
+  .pegar label { font-size: 0.9rem; font-weight: 600; }
+  .pegar__fila { display: flex; gap: 8px; }
+  .pegar input {
+    flex: 1; min-width: 0; min-height: 48px; padding: 0 14px; border: 0; border-radius: 12px;
+    background: var(--marfil); color: var(--ciruela); font-size: 16px;
+  }
+  .pegar .boton { flex: none; min-height: 48px; padding: 0 20px; box-shadow: none; }
+  .pegar__ayuda { margin: 0; color: rgb(253 251 247 / 0.72); font-size: 0.8rem; }
+
+  /* ── Biblioteca ── */
+  .biblioteca { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px 12px; margin-top: 16px; }
+  .idea {
+    display: grid; gap: 8px; align-content: start; padding: 0; border: 0; background: none;
+    text-align: left; cursor: pointer;
+  }
+  .idea__foto {
+    position: relative; aspect-ratio: 1; overflow: hidden; border-radius: var(--radio);
+    background: var(--tinte); box-shadow: var(--sombra);
+  }
+  .idea__foto img { width: 100%; height: 100%; object-fit: cover; transition: scale 0.4s ease; }
+  .idea:hover .idea__foto img { scale: 1.04; }
+  .idea--descartada .idea__foto { opacity: 0.45; }
+  .sin-foto {
+    position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; padding: 12px; text-align: center;
+    background:
+      radial-gradient(160px 120px at 80% 10%, rgb(216 58 107 / 0.25), transparent 70%),
+      linear-gradient(160deg, var(--ciruela), var(--ciruela-2));
+    color: var(--rosa); font-size: 0.8rem; font-weight: 500;
+  }
+  .sin-foto strong { color: var(--marfil); font-family: var(--display); font-weight: 400; font-size: 1.6rem; }
+  .idea__estado {
+    position: absolute; top: 8px; left: 8px; padding: 3px 10px; border-radius: 999px;
+    background: rgb(253 251 247 / 0.94); color: var(--ciruela); font-size: 0.75rem; font-weight: 600;
+  }
+  .idea__estado--impresa { background: var(--ciruela); color: var(--marfil); }
+  .idea__nombre {
+    display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    font-weight: 600; line-height: 1.3;
+  }
+  .idea__sitio { margin-top: -4px; color: var(--suave); font-size: 0.8rem; }
+
+  /* ── Hoja de la idea ── */
+  .foto-hoja {
+    position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; overflow: hidden;
+    border: 2px dashed rgb(58 36 59 / 0.2); border-radius: var(--radio); background: var(--blanco);
+  }
+  .foto-hoja--con { border-style: solid; border-color: transparent; }
+  .foto-hoja img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--blanco); }
+  .foto-hoja__vacia { display: grid; justify-items: center; gap: 4px; padding: 16px; text-align: center; color: var(--suave); font-size: 0.9rem; }
+  .foto-hoja__vacia strong { color: var(--ciruela); }
+  .foto-hoja__acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+  .foto-hoja__acciones .boton { min-height: 44px; padding: 0 16px; font-size: 0.9rem; }
+  .cargando { color: var(--suave); font-size: 0.9rem; }
+  .estados { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .estados button { min-height: 44px; padding: 0 6px; }
+  .aviso-hoja { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--tinte); color: var(--berry-texto); font-size: 0.85rem; font-weight: 500; }
+  .abrir-modelo { color: var(--berry-texto); font-weight: 600; overflow-wrap: anywhere; }
+
+  @media (min-width: 640px) {
+    .biblioteca { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 28px 18px; }
+  }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="contenedor">
+    <div class="barra">
+      <span class="marca"><img src="https://prismatix.mx/marca/isotipo-96.webp" alt="" width="30" height="30">Prismatix · Taller</span>
+      <div class="barra__acciones">
+        <a class="enlace-claro" href="/salir" data-solo-nube>Salir</a>
+      </div>
+    </div>
+    <nav class="pestanas" aria-label="Secciones del taller">
+      <a href="inventario.html">Filamentos</a>
+      <a href="ideas.html" aria-current="page">Ideas</a>
+    </nav>
+    <h1>Mis ideas</h1>
+    <p class="estado" role="status" aria-live="polite" id="estado">Cargando…</p>
+    <form class="pegar" id="pegar">
+      <label for="link">Pega el link de un modelo</label>
+      <div class="pegar__fila">
+        <input id="link" type="url" inputmode="url" placeholder="https://makerworld.com/…" autocomplete="off" required>
+        <button type="submit" class="boton">Agregar</button>
+      </div>
+      <p class="pegar__ayuda">MakerWorld, Printables, Thingiverse, Cults3D… Si el sitio no deja leer la foto, agrega una captura.</p>
+    </form>
+  </div>
+</header>
+
+<main class="contenedor">
+  <div class="herramientas">
+    <label class="busqueda">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="buscar" type="search" placeholder="Buscar por nombre, sitio o nota" autocomplete="off" aria-label="Buscar ideas">
+    </label>
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar ideas"></div>
+  </div>
+  <div id="contenido"></div>
+</main>
+
+<dialog id="hoja" aria-labelledby="hoja-titulo">
+  <form class="hoja" id="formulario">
+    <span class="hoja__asa" aria-hidden="true"></span>
+    <div class="hoja__cabeza">
+      <h2 id="hoja-titulo">Nueva idea</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </div>
+    <p class="aviso-hoja" id="aviso-hoja" hidden></p>
+    <div class="foto-hoja" id="foto-hoja">
+      <img id="foto-img" alt="" hidden>
+      <div class="foto-hoja__vacia" id="foto-vacia">
+        <strong>Sin foto todavía</strong>
+        <span id="foto-ayuda">Elige una captura del modelo o pégala aquí.</span>
+      </div>
+    </div>
+    <div class="foto-hoja__acciones">
+      <button type="button" class="boton boton--secundario" id="elegir-foto">Elegir foto</button>
+      <button type="button" class="boton boton--secundario" id="quitar-foto" hidden>Quitar foto</button>
+      <input type="file" id="archivo" accept="image/*" hidden>
+    </div>
+    <div class="campos">
+      <label class="campo campo--ancho">
+        <span>Nombre</span>
+        <input name="titulo" required placeholder="Ej. F40 Colgador de llaves">
+      </label>
+      <div class="campo campo--ancho">
+        <span id="estado-titulo">Estado</span>
+        <div class="segmentos estados" role="group" aria-labelledby="estado-titulo">
+          <button type="button" data-estado="pendiente">Por probar</button>
+          <button type="button" data-estado="impresa">Impresa</button>
+          <button type="button" data-estado="descartada">Descartada</button>
+        </div>
+      </div>
+      <label class="campo campo--ancho">
+        <span>Nota <small>(opcional)</small></span>
+        <textarea name="nota" rows="2" placeholder="Ej. Para la línea Para creadores; probar en PLA Silk"></textarea>
+      </label>
+      <p class="campo--ancho" style="margin:0"><a class="abrir-modelo" id="abrir-modelo" target="_blank" rel="noopener"></a></p>
+    </div>
+    <div class="hoja__acciones">
+      <button type="button" class="borrar" id="borrar" hidden>Eliminar</button>
+      <button type="button" class="boton boton--secundario" data-cerrar>Cancelar</button>
+      <button type="submit" class="boton" id="guardar">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+// Biblioteca de ideas: links de modelos (MakerWorld, Printables, Thingiverse…) para probar después.
+// Al pegar un link se pide al Worker que lea el nombre y la foto de la página (/api/vista-previa).
+// Muchos sitios bloquean a los servidores: entonces el nombre sale del link y la foto es una captura
+// que se elige o se pega. Las fotos se reducen aquí a 900 px y se guardan en el Worker (/api/imagen/<id>).
+// Los datos se sincronizan igual que el inventario: acciones chicas, copia local y 409 → reaplicar.
+
+const LOCAL = 'prismatix-ideas-v1';
+const ESTADOS = { pendiente: 'Por probar', impresa: 'Impresa', descartada: 'Descartada' };
+const SITIOS = {
+  'makerworld.com': 'MakerWorld', 'printables.com': 'Printables', 'thingiverse.com': 'Thingiverse',
+  'cults3d.com': 'Cults3D', 'thangs.com': 'Thangs', 'myminifactory.com': 'MyMiniFactory',
+  'grabcad.com': 'GrabCAD', 'sketchfab.com': 'Sketchfab', 'tinkercad.com': 'Tinkercad',
+};
+const $ = (s) => document.querySelector(s);
+
+let doc = null;
+let base = null;
+let pendientes = [];
+let modo = 'nube';
+let filtro = '';
+let temporizador;
+
+const copia = (o) => JSON.parse(JSON.stringify(o));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const nuevoId = () => 'i-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ── Links ──
+function normalizar(texto) {
+  try {
+    const u = new URL(texto.trim());
+    if (!/^https?:$/.test(u.protocol)) return null;
+    return u.origin.toLowerCase() + u.pathname.replace(/\/+$/, '');
+  } catch {
+    return null;
+  }
+}
+function sitioDe(url) {
+  const host = new URL(url).hostname.replace(/^www\./, '');
+  const conocido = Object.keys(SITIOS).find((d) => host === d || host.endsWith('.' + d));
+  return conocido ? SITIOS[conocido] : host;
+}
+// "…/models/1271284-f40-key-hanger" → "F40 key hanger"
+function tituloDesdeUrl(url) {
+  const partes = new URL(url).pathname.split('/').filter(Boolean).map((p) => decodeURIComponent(p));
+  for (let i = partes.length - 1; i >= 0; i--) {
+    const limpio = partes[i].replace(/^\d+[-_]?/, '').replace(/\.(html?|php)$/, '').replace(/[-_]+/g, ' ').trim();
+    if (limpio.length > 2 && !/^(es|en|models?|thing:\d+|modelo-3d)$/i.test(limpio) && /[a-z]/i.test(limpio)) {
+      return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+    }
+  }
+  return '';
+}
+// "F40 Colgador de llaves - Modelo de impresión 3D gratuito - MakerWorld" → "F40 Colgador de llaves"
+function limpiarTitulo(titulo, sitio) {
+  const partes = titulo.split(/\s+[-|–—]\s+/);
+  const sobra = (p) => p.toLowerCase().includes(sitio.toLowerCase()) || /\b(3d|stl|3mf|modelo|model|impresi|print|descarga|download|gratis|free)/i.test(p);
+  while (partes.length > 1 && sobra(partes[partes.length - 1])) partes.pop();
+  return partes.join(' - ').trim();
+}
+function srcFoto(idea) {
+  if (idea.foto === 'kv') return `/api/imagen/${idea.id}?v=${idea.fotoV || 1}`;
+  return idea.fotoUrl || '';
+}
+
+// ── Acciones y guardado (mismo esquema que el inventario) ──
+function aplicar(a, d) {
+  const i = d.ideas.findIndex((x) => x.id === a.id);
+  if (a.t === 'guardar') {
+    if (i >= 0) Object.assign(d.ideas[i], a.item);
+    else d.ideas.unshift({ ...a.item });
+  } else if (a.t === 'borrar' && i >= 0) {
+    d.ideas.splice(i, 1);
+  }
+}
+function hacer(accion) {
+  aplicar(accion, doc);
+  pendientes.push(accion);
+  guardarLocal();
+  pintar();
+  clearTimeout(temporizador);
+  if (modo === 'nube') { mostrarEstado('Guardando…'); temporizador = setTimeout(guardar, 500); }
+}
+function guardarLocal() {
+  try { localStorage.setItem(LOCAL, JSON.stringify({ doc, base, pendientes: modo === 'nube' ? pendientes : [] })); } catch {}
+}
+function leerLocal() {
+  try { return JSON.parse(localStorage.getItem(LOCAL)); } catch { return null; }
+}
+let guardando = false;
+async function guardar() {
+  if (modo !== 'nube' || guardando || !pendientes.length) return;
+  guardando = true;
+  const enviadas = pendientes.length;
+  try {
+    const r = await fetch('/api/ideas', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base, datos: doc }),
+    });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    if (r.status === 409) {
+      const actual = await r.json();
+      doc = actual;
+      base = actual.actualizado;
+      pendientes.forEach((a) => aplicar(a, doc));
+      guardando = false;
+      pintar();
+      return guardar();
+    }
+    if (!r.ok) throw new Error(r.status);
+    const { actualizado } = await r.json();
+    base = doc.actualizado = actualizado;
+    pendientes = pendientes.slice(enviadas);
+    guardarLocal();
+    mostrarEstado(pendientes.length ? 'Guardando…' : resumenTexto());
+    guardando = false;
+    if (pendientes.length) guardar();
+  } catch {
+    guardando = false;
+    guardarLocal();
+    mostrarEstado('Sin conexión: tus cambios están en este dispositivo y se guardarán al volver.', true);
+    clearTimeout(temporizador);
+    temporizador = setTimeout(guardar, 15000);
+  }
+}
+window.addEventListener('online', guardar);
+
+function mostrarEstado(texto, aviso = false) {
+  const e = $('#estado');
+  e.textContent = texto;
+  e.classList.toggle('estado--aviso', aviso);
+}
+function resumenTexto() {
+  const n = doc.ideas.length;
+  const porProbar = doc.ideas.filter((i) => i.estado === 'pendiente').length;
+  if (!n) return 'Tu biblioteca está vacía.';
+  return `${n} ${n === 1 ? 'idea' : 'ideas'} · ${porProbar} por probar`;
+}
+
+async function cargar() {
+  const local = leerLocal();
+  const vacio = { version: 1, actualizado: null, ideas: [] };
+  try {
+    if (location.protocol === 'file:') throw new Error('disco');
+    const r = await fetch('/api/ideas', { cache: 'no-store' });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    if (!r.ok) throw new Error(r.status);
+    const datos = await r.json();
+    doc = datos.vacio ? copia(vacio) : datos;
+    base = datos.vacio ? null : datos.actualizado;
+    pendientes = local?.pendientes || [];
+    pendientes.forEach((a) => aplicar(a, doc));
+    mostrarEstado(resumenTexto());
+    if (pendientes.length) guardar();
+  } catch {
+    modo = 'local';
+    doc = local?.doc || copia(vacio);
+    document.querySelectorAll('[data-solo-nube]').forEach((el) => (el.hidden = true));
+    mostrarEstado('Modo sin conexión: las ideas se guardan solo en este navegador.', true);
+  }
+  guardarLocal();
+  pintar();
+}
+
+// ── Pintar ──
+function pintar() {
+  if (!doc) return;
+  const cuenta = (e) => doc.ideas.filter((i) => i.estado === e).length;
+  $('#filtros').innerHTML =
+    `<button type="button" class="filtro" data-filtro="" aria-pressed="${!filtro}">Todas <small>${doc.ideas.length}</small></button>` +
+    Object.entries(ESTADOS).map(([k, v]) => `<button type="button" class="filtro" data-filtro="${k}" aria-pressed="${filtro === k}">${v} <small>${cuenta(k)}</small></button>`).join('');
+
+  const q = $('#buscar').value.trim().toLowerCase();
+  const lista = doc.ideas.filter((i) => (!filtro || i.estado === filtro) && (!q || [i.titulo, i.sitio, i.nota, i.url].join(' ').toLowerCase().includes(q)));
+  const contenido = $('#contenido');
+  if (!lista.length) {
+    contenido.innerHTML = `<p class="vacio">${doc.ideas.length ? 'No hay ideas con ese filtro.' : 'Pega arriba el link de un modelo que quieras probar.'}</p>`;
+    return;
+  }
+  contenido.innerHTML = `<div class="biblioteca">${lista.map((i) => {
+    const src = srcFoto(i);
+    return `<button type="button" class="idea${i.estado === 'descartada' ? ' idea--descartada' : ''}" data-abrir="${esc(i.id)}">
+      <span class="idea__foto">
+        ${src ? `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="sin-foto"><strong>${esc((i.titulo || '?').charAt(0))}</strong>Sin foto</span>`}
+        ${i.estado !== 'pendiente' ? `<span class="idea__estado idea__estado--${esc(i.estado)}">${esc(ESTADOS[i.estado])}</span>` : ''}
+      </span>
+      <span class="idea__nombre">${esc(i.titulo)}</span>
+      <span class="idea__sitio">${esc(i.sitio)}</span>
+    </button>`;
+  }).join('')}</div>`;
+}
+
+// ── Hoja de la idea ──
+const hoja = $('#hoja');
+const form = $('#formulario');
+let editando = null;   // idea existente, o null si es nueva
+let borrador = null;   // { id, url, sitio, estado, foto: { tipo: 'archivo'|'url'|'kv'|null, blob, url } }
+let consulta = 0;      // para ignorar vistas previas que llegan tarde
+
+function abrirHoja(idea, aviso = '') {
+  editando = idea;
+  form.reset();
+  $('#hoja-titulo').textContent = idea ? 'Idea' : 'Nueva idea';
+  $('#borrar').hidden = !idea;
+  $('#aviso-hoja').hidden = !aviso;
+  $('#aviso-hoja').textContent = aviso;
+  borrador = idea
+    ? { id: idea.id, url: idea.url, sitio: idea.sitio, estado: idea.estado, foto: idea.foto === 'kv' ? { tipo: 'kv', url: srcFoto(idea) } : idea.fotoUrl ? { tipo: 'url', url: idea.fotoUrl } : null }
+    : borrador;
+  form.elements.titulo.value = idea?.titulo || borrador.titulo || '';
+  form.elements.nota.value = idea?.nota || '';
+  pintarHoja();
+  if (!hoja.open) hoja.showModal();
+}
+function pintarHoja() {
+  document.querySelectorAll('[data-estado]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.estado === borrador.estado)));
+  const a = $('#abrir-modelo');
+  a.href = borrador.url;
+  a.textContent = `Abrir en ${borrador.sitio} ↗`;
+  const img = $('#foto-img');
+  const src = borrador.foto?.tipo === 'archivo' ? borrador.foto.vista : borrador.foto?.url;
+  img.hidden = !src;
+  if (src) img.src = src; else img.removeAttribute('src');
+  img.referrerPolicy = 'no-referrer';
+  $('#foto-vacia').hidden = !!src;
+  $('#foto-hoja').classList.toggle('foto-hoja--con', !!src);
+  $('#quitar-foto').hidden = !src;
+  $('#elegir-foto').textContent = src ? 'Cambiar foto' : 'Elegir foto';
+}
+function ponerAviso(texto) {
+  $('#aviso-hoja').hidden = !texto;
+  $('#aviso-hoja').textContent = texto;
+}
+
+async function agregarLink(texto) {
+  const url = normalizar(texto);
+  if (!url) { mostrarEstado('Ese texto no parece un link.', true); return; }
+  $('#link').value = '';
+  const existente = doc.ideas.find((i) => normalizar(i.url) === url);
+  if (existente) { abrirHoja(existente, 'Esta idea ya está en tu biblioteca.'); return; }
+  const original = texto.trim().split('#')[0];
+  borrador = { id: nuevoId(), url: original, sitio: sitioDe(original), estado: 'pendiente', titulo: tituloDesdeUrl(original), foto: null };
+  abrirHoja(null);
+  if (modo !== 'nube') return;
+  const mia = ++consulta;
+  $('#foto-ayuda').textContent = 'Buscando la foto y el nombre…';
+  try {
+    const r = await fetch('/api/vista-previa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: original }) });
+    const datos = await r.json();
+    if (mia !== consulta || !hoja.open) return;
+    if (datos.bloqueado) {
+      ponerAviso(`${borrador.sitio} no deja leer su página. Revisa el nombre y agrega una captura del modelo.`);
+    } else {
+      // Solo se llena lo que la persona no haya cambiado ya
+      if (datos.titulo && (!form.elements.titulo.value || form.elements.titulo.value === borrador.titulo)) form.elements.titulo.value = limpiarTitulo(datos.titulo, borrador.sitio);
+      if (datos.imagen && !borrador.foto) borrador.foto = { tipo: 'url', url: datos.imagen, remota: true };
+      pintarHoja();
+    }
+  } catch {
+    if (mia === consulta) ponerAviso('No se pudo consultar el link. Revisa el nombre y agrega una captura.');
+  } finally {
+    if (mia === consulta) $('#foto-ayuda').textContent = 'Elige una captura del modelo o pégala aquí.';
+  }
+}
+
+// Reduce la imagen a 900 px como máximo (WebP, o JPEG si el navegador no sabe hacer WebP)
+async function reducir(archivo) {
+  const imagen = await createImageBitmap(archivo);
+  const escala = Math.min(1, 900 / Math.max(imagen.width, imagen.height));
+  const lienzo = document.createElement('canvas');
+  lienzo.width = Math.round(imagen.width * escala);
+  lienzo.height = Math.round(imagen.height * escala);
+  lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+  const como = (tipo, calidad) => new Promise((r) => lienzo.toBlob(r, tipo, calidad));
+  let blob = await como('image/webp', 0.82);
+  if (!blob || blob.type !== 'image/webp') blob = await como('image/jpeg', 0.85);
+  return blob;
+}
+async function usarArchivo(archivo) {
+  if (!archivo || !archivo.type.startsWith('image/')) return;
+  try {
+    const blob = await reducir(archivo);
+    if (borrador.foto?.vista) URL.revokeObjectURL(borrador.foto.vista);
+    borrador.foto = { tipo: 'archivo', blob, vista: URL.createObjectURL(blob) };
+    ponerAviso('');
+    pintarHoja();
+  } catch {
+    ponerAviso('No se pudo leer esa imagen. Prueba con otra captura.');
+  }
+}
+const aDataUrl = (blob) => new Promise((r) => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); });
+
+$('#elegir-foto').addEventListener('click', () => $('#archivo').click());
+$('#archivo').addEventListener('change', (e) => { usarArchivo(e.target.files[0]); e.target.value = ''; });
+$('#quitar-foto').addEventListener('click', () => { borrador.foto = null; pintarHoja(); });
+document.querySelectorAll('[data-estado]').forEach((b) => b.addEventListener('click', () => { borrador.estado = b.dataset.estado; pintarHoja(); }));
+hoja.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => hoja.close()));
+hoja.addEventListener('click', (e) => { if (e.target === hoja) hoja.close(); });
+hoja.addEventListener('close', () => { consulta++; });
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#guardar');
+  boton.disabled = true;
+  boton.textContent = 'Guardando…';
+  try {
+    const anterior = editando;
+    const item = {
+      id: borrador.id,
+      url: borrador.url,
+      sitio: borrador.sitio,
+      titulo: form.elements.titulo.value.trim(),
+      nota: form.elements.nota.value.trim(),
+      estado: borrador.estado,
+      creado: anterior?.creado || new Date().toISOString(),
+      foto: anterior?.foto || null,
+      fotoUrl: anterior?.fotoUrl || '',
+      fotoV: anterior?.fotoV || 0,
+    };
+    const f = borrador.foto;
+    if (!f) {
+      if (item.foto === 'kv' && modo === 'nube') fetch(`/api/imagen/${item.id}`, { method: 'DELETE' }).catch(() => {});
+      Object.assign(item, { foto: null, fotoUrl: '' });
+    } else if (f.tipo === 'archivo') {
+      if (modo === 'nube') {
+        const r = await fetch(`/api/imagen/${item.id}`, { method: 'POST', headers: { 'Content-Type': f.blob.type }, body: f.blob });
+        if (r.status === 401) { location.href = '/entrar'; return; }
+        if (!r.ok) throw new Error('foto');
+        Object.assign(item, { foto: 'kv', fotoUrl: '', fotoV: Date.now() });
+      } else {
+        Object.assign(item, { foto: null, fotoUrl: await aDataUrl(f.blob) });
+      }
+    } else if (f.remota) {
+      // Foto que dio el sitio: se guarda una copia; si no se puede, queda el link a la original
+      const r = modo === 'nube'
+        ? await fetch(`/api/imagen/${item.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ desde: f.url }) }).catch(() => null)
+        : null;
+      Object.assign(item, r?.ok ? { foto: 'kv', fotoUrl: '', fotoV: Date.now() } : { foto: null, fotoUrl: f.url });
+    }
+    hacer({ t: 'guardar', id: item.id, item });
+    hoja.close();
+  } catch {
+    ponerAviso('No se pudo subir la foto. Revisa tu conexión e intenta de nuevo.');
+  } finally {
+    boton.disabled = false;
+    boton.textContent = 'Guardar';
+  }
+});
+$('#borrar').addEventListener('click', () => {
+  if (!editando || !confirm(`¿Eliminar "${editando.titulo}" de tu biblioteca?`)) return;
+  if (editando.foto === 'kv' && modo === 'nube') fetch(`/api/imagen/${editando.id}`, { method: 'DELETE' }).catch(() => {});
+  hacer({ t: 'borrar', id: editando.id });
+  hoja.close();
+});
+
+// ── Eventos de la página ──
+$('#pegar').addEventListener('submit', (e) => { e.preventDefault(); agregarLink($('#link').value); });
+// Al pegar en el campo del link, se agrega solo
+$('#link').addEventListener('paste', (e) => {
+  const texto = e.clipboardData?.getData('text');
+  if (texto && normalizar(texto)) { e.preventDefault(); agregarLink(texto); }
+});
+// Ctrl+V en cualquier parte: con la hoja abierta pega una imagen como foto; si no, un link agrega una idea
+document.addEventListener('paste', (e) => {
+  if (e.target.closest?.('input, textarea')) return;
+  const imagen = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith('image/'));
+  if (hoja.open) {
+    if (imagen) { e.preventDefault(); usarArchivo(imagen.getAsFile()); }
+    return;
+  }
+  const texto = e.clipboardData?.getData('text');
+  if (texto && normalizar(texto)) { e.preventDefault(); agregarLink(texto); }
+});
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button');
+  if (!el) return;
+  if ('filtro' in el.dataset) { filtro = el.dataset.filtro; pintar(); }
+  else if (el.dataset.abrir) abrirHoja(doc.ideas.find((i) => i.id === el.dataset.abrir));
+});
+$('#buscar').addEventListener('input', pintar);
+
+// Para pruebas automáticas
+window.ideas = { get doc() { return doc; }, get pendientes() { return pendientes; }, get modo() { return modo; }, tituloDesdeUrl, normalizar, limpiarTitulo };
+
+cargar();
+</script>
+</body>
+</html>

@@ -1,10 +1,12 @@
-// Worker de herramienta.prismatix.mx: el inventario de filamentos del taller, solo con sesión.
+// Worker de herramienta.prismatix.mx: el taller (inventario de filamentos e ideas), solo con sesión.
 // Habla de filamentos e impresión, que el sitio público no menciona, así que no debe quedar
 // abierto ni indexado. La contraseña es el secreto CLAVE del Worker.
 //
-// Datos: /api/inventario guarda el inventario completo (un JSON) en el KV INVENTARIO, para verlo
-// igual desde el celular y la compu. Si dos dispositivos guardan a la vez, gana el primero y el
-// segundo recibe 409 con la versión nueva para volver a aplicar sus cambios encima.
+// Datos: /api/inventario y /api/ideas guardan cada uno un JSON completo en el KV INVENTARIO, para
+// verlo igual desde el celular y la compu. Si dos dispositivos guardan a la vez, gana el primero y
+// el segundo recibe 409 con la versión nueva para volver a aplicar sus cambios encima.
+// Las fotos de las ideas van en el mismo KV (/api/imagen/<id>) y /api/vista-previa lee el nombre
+// y la foto de la página de un modelo cuando el sitio lo permite.
 //
 // Entrada: /entrar muestra un formulario con un solo campo (contraseña). Si es correcta se deja
 // una cookie de sesión firmada con HMAC (usando CLAVE como llave) que dura 30 días. Al cambiar
@@ -55,7 +57,11 @@ export default {
       return new Response('Se necesita iniciar sesión.', { status: 401, headers: { 'X-Robots-Tag': 'noindex' } });
     }
 
-    if (url.pathname === '/api/inventario') return inventario(request, env);
+    if (url.pathname === '/api/inventario') return documento(request, env, 'inventario', 'filamentos');
+    if (url.pathname === '/api/ideas') return documento(request, env, 'ideas', 'ideas');
+    if (url.pathname === '/api/vista-previa') return vistaPrevia(request);
+    const foto = url.pathname.match(/^\/api\/imagen\/([a-z0-9-]{4,40})$/);
+    if (foto) return imagen(request, env, foto[1]);
 
     if (url.pathname === '/') url.pathname = '/inventario.html';
     const respuesta = await env.ASSETS.fetch(new Request(url, request));
@@ -66,17 +72,18 @@ export default {
   },
 };
 
-const LLAVE_KV = 'inventario';
+const json = (datos, status = 200) =>
+  new Response(JSON.stringify(datos), {
+    status,
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
+  });
 
-async function inventario(request, env) {
-  const json = (datos, status = 200) =>
-    new Response(JSON.stringify(datos), {
-      status,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
-    });
+// Un documento JSON completo por llave del KV: 'inventario' (filamentos) e 'ideas' (biblioteca de modelos).
+// El KV se llama INVENTARIO porque nació con el inventario; las ideas y sus fotos viven en el mismo.
+async function documento(request, env, llave, campo) {
   if (!env.INVENTARIO) return json({ error: 'sin-kv' }, 503);
 
-  const guardado = await env.INVENTARIO.get(LLAVE_KV, 'json');
+  const guardado = await env.INVENTARIO.get(llave, 'json');
   if (request.method === 'GET') return json(guardado ?? { vacio: true });
 
   if (request.method === 'PUT') {
@@ -87,16 +94,114 @@ async function inventario(request, env) {
       return json({ error: 'json' }, 400);
     }
     const { base = null, datos } = cuerpo || {};
-    if (!datos || !Array.isArray(datos.filamentos)) return json({ error: 'formato' }, 400);
+    if (!datos || !Array.isArray(datos[campo])) return json({ error: 'formato' }, 400);
     // Alguien guardó desde otro dispositivo después de que este cargó: se le manda lo nuevo
     if ((guardado?.actualizado ?? null) !== base) return json(guardado, 409);
     datos.actualizado = new Date().toISOString();
     const texto = JSON.stringify(datos);
     if (texto.length > 1_000_000) return json({ error: 'muy-grande' }, 413);
-    await env.INVENTARIO.put(LLAVE_KV, texto);
+    await env.INVENTARIO.put(llave, texto);
     return json({ actualizado: datos.actualizado });
   }
   return json({ error: 'metodo' }, 405);
+}
+
+// Fotos de las ideas: se guardan en el KV como "img:<id>" (la página las reduce a ~900 px antes de subirlas).
+// POST con la imagen en el cuerpo, o con JSON { desde: url } para que el Worker la descargue.
+const MAX_IMAGEN = 3_000_000;
+async function imagen(request, env, id) {
+  if (!env.INVENTARIO) return json({ error: 'sin-kv' }, 503);
+  const llave = 'img:' + id;
+  if (request.method === 'GET') {
+    const { value, metadata } = await env.INVENTARIO.getWithMetadata(llave, 'arrayBuffer');
+    if (!value) return new Response('No existe', { status: 404 });
+    return new Response(value, {
+      headers: {
+        'Content-Type': metadata?.tipo || 'image/webp',
+        'Cache-Control': 'private, max-age=31536000, immutable',
+        'X-Robots-Tag': 'noindex',
+      },
+    });
+  }
+  if (request.method === 'DELETE') {
+    await env.INVENTARIO.delete(llave);
+    return json({ ok: true });
+  }
+  if (request.method === 'POST') {
+    let datos;
+    let tipo;
+    if ((request.headers.get('Content-Type') || '').startsWith('application/json')) {
+      const { desde } = await request.json().catch(() => ({}));
+      if (!/^https?:\/\//i.test(desde || '')) return json({ error: 'url' }, 400);
+      const r = await fetch(desde, { headers: { 'User-Agent': AGENTE }, signal: AbortSignal.timeout(10000) }).catch(() => null);
+      tipo = r?.headers.get('Content-Type') || '';
+      if (!r?.ok || !tipo.startsWith('image/')) return json({ error: 'no-se-pudo' }, 502);
+      datos = await r.arrayBuffer();
+    } else {
+      tipo = request.headers.get('Content-Type') || '';
+      if (!tipo.startsWith('image/')) return json({ error: 'tipo' }, 415);
+      datos = await request.arrayBuffer();
+    }
+    if (!datos.byteLength || datos.byteLength > MAX_IMAGEN) return json({ error: 'tamano' }, 413);
+    await env.INVENTARIO.put(llave, datos, { metadata: { tipo: tipo.split(';')[0] } });
+    return json({ ok: true });
+  }
+  return json({ error: 'metodo' }, 405);
+}
+
+// Lee el nombre y la foto de la página de un modelo (Open Graph). Se identifica tal cual es:
+// sitios como MakerWorld, Printables o Cults bloquean a los servidores y aquí se responde
+// "bloqueado"; entonces la página toma el nombre del link y pide una captura.
+const AGENTE = 'PrismatixTaller/1.0 (+https://herramienta.prismatix.mx)';
+async function vistaPrevia(request) {
+  if (request.method !== 'POST') return json({ error: 'metodo' }, 405);
+  const { url } = await request.json().catch(() => ({}));
+  let destino;
+  try {
+    destino = new URL(url);
+    if (!/^https?:$/.test(destino.protocol)) throw new Error('protocolo');
+  } catch {
+    return json({ error: 'url' }, 400);
+  }
+  const r = await fetch(destino, {
+    headers: { 'User-Agent': AGENTE, Accept: 'text/html', 'Accept-Language': 'es-MX,es;q=0.9,en;q=0.5' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => null);
+  if (!r) return json({ bloqueado: true, motivo: 'sin-respuesta' });
+  if (!r.ok || !(r.headers.get('Content-Type') || '').includes('html')) return json({ bloqueado: true, motivo: r.status });
+  const html = (await r.text()).slice(0, 600_000);
+  if (/<title>\s*Just a moment|cf-chl|challenge-platform/i.test(html)) return json({ bloqueado: true, motivo: 'verificacion' });
+
+  const metas = {};
+  for (const etiqueta of html.match(/<meta\b[^>]*>/gi) || []) {
+    const nombre = (etiqueta.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i) || [])[1];
+    const valor = etiqueta.match(/\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
+    const contenido = valor ? (valor[1] ?? valor[2]) : '';
+    const clave = nombre?.toLowerCase();
+    if (clave && contenido && !(clave in metas)) metas[clave] = entidades(contenido.trim());
+  }
+  const etiquetaTitulo = html.match(/<title[^>]*>([^<]*)/i);
+  const titulo = metas['og:title'] || metas['twitter:title'] || entidades(etiquetaTitulo ? etiquetaTitulo[1].trim() : '');
+  let foto = metas['og:image'] || metas['og:image:url'] || metas['twitter:image'] || '';
+  try {
+    foto = foto ? new URL(foto, r.url).href : '';
+  } catch {
+    foto = '';
+  }
+  return json({ titulo, imagen: foto, sitio: metas['og:site_name'] || '' });
+}
+
+function entidades(texto) {
+  return texto
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
 }
 
 async function sesionValida(request, clave) {
