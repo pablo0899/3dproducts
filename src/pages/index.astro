@@ -329,7 +329,8 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
   @media (min-width: 900px) {
     .portada { padding-top: 112px; }
     .portada__texto:last-child { padding-bottom: 112px; }
-    .portada__lineas { justify-content: space-between; margin-top: 104px; overflow: visible; }
+    /* A la izquierda con separación fija: con pocas líneas, space-between las mandaba a las orillas */
+    .portada__lineas { flex-wrap: wrap; gap: 8px 40px; margin-top: 104px; overflow: visible; }
     .portada__lineas a { background: none; padding-inline: 4px; }
     .portada__lineas a:hover { background: none; color: var(--soft-rose); }
     .prisma { position: absolute; top: 44%; right: 7%; width: 400px; height: 400px; margin: 0; transform: translateY(-50%); }
