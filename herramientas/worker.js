@@ -1,6 +1,10 @@
-// Worker de herramienta.prismatix.mx: sirve pintar.html y sus scripts solo con sesión.
-// La herramienta habla de impresión, boquillas y slicers, que el sitio público no menciona,
-// así que no debe quedar abierta ni indexada. La contraseña es el secreto CLAVE del Worker.
+// Worker de herramienta.prismatix.mx: el inventario de filamentos del taller, solo con sesión.
+// Habla de filamentos e impresión, que el sitio público no menciona, así que no debe quedar
+// abierto ni indexado. La contraseña es el secreto CLAVE del Worker.
+//
+// Datos: /api/inventario guarda el inventario completo (un JSON) en el KV INVENTARIO, para verlo
+// igual desde el celular y la compu. Si dos dispositivos guardan a la vez, gana el primero y el
+// segundo recibe 409 con la versión nueva para volver a aplicar sus cambios encima.
 //
 // Entrada: /entrar muestra un formulario con un solo campo (contraseña). Si es correcta se deja
 // una cookie de sesión firmada con HMAC (usando CLAVE como llave) que dura 30 días. Al cambiar
@@ -51,7 +55,9 @@ export default {
       return new Response('Se necesita iniciar sesión.', { status: 401, headers: { 'X-Robots-Tag': 'noindex' } });
     }
 
-    if (url.pathname === '/') url.pathname = '/pintar.html';
+    if (url.pathname === '/api/inventario') return inventario(request, env);
+
+    if (url.pathname === '/') url.pathname = '/inventario.html';
     const respuesta = await env.ASSETS.fetch(new Request(url, request));
     const final = new Response(respuesta.body, respuesta);
     final.headers.set('X-Robots-Tag', 'noindex, nofollow');
@@ -59,6 +65,39 @@ export default {
     return final;
   },
 };
+
+const LLAVE_KV = 'inventario';
+
+async function inventario(request, env) {
+  const json = (datos, status = 200) =>
+    new Response(JSON.stringify(datos), {
+      status,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
+    });
+  if (!env.INVENTARIO) return json({ error: 'sin-kv' }, 503);
+
+  const guardado = await env.INVENTARIO.get(LLAVE_KV, 'json');
+  if (request.method === 'GET') return json(guardado ?? { vacio: true });
+
+  if (request.method === 'PUT') {
+    let cuerpo;
+    try {
+      cuerpo = await request.json();
+    } catch {
+      return json({ error: 'json' }, 400);
+    }
+    const { base = null, datos } = cuerpo || {};
+    if (!datos || !Array.isArray(datos.filamentos)) return json({ error: 'formato' }, 400);
+    // Alguien guardó desde otro dispositivo después de que este cargó: se le manda lo nuevo
+    if ((guardado?.actualizado ?? null) !== base) return json(guardado, 409);
+    datos.actualizado = new Date().toISOString();
+    const texto = JSON.stringify(datos);
+    if (texto.length > 1_000_000) return json({ error: 'muy-grande' }, 413);
+    await env.INVENTARIO.put(LLAVE_KV, texto);
+    return json({ actualizado: datos.actualizado });
+  }
+  return json({ error: 'metodo' }, 405);
+}
 
 async function sesionValida(request, clave) {
   const cookie = (request.headers.get('Cookie') || '').split(/;\s*/).find((c) => c.startsWith(COOKIE + '='));
@@ -129,7 +168,7 @@ function paginaEntrar(error, estado) {
 <form method="post" action="/entrar">
   <img src="https://prismatix.mx/marca/isotipo-96.webp" alt="">
   <h1>PRISMATIX</h1>
-  <p>Herramientas del taller</p>
+  <p>Inventario del taller</p>
   <label for="clave">Contraseña</label>
   <input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus>
   <button type="submit">Entrar</button>

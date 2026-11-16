@@ -13,6 +13,10 @@
     "run_worker_first": true,
     "html_handling": "none"
   },
+  // Inventario de filamentos. Sin "id": wrangler crea el KV la primera vez que se despliega
+  "kv_namespaces": [
+    { "binding": "INVENTARIO" }
+  ],
   "workers_dev": false,
   "preview_urls": false,
   "routes": [

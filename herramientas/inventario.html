@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#3A243B">
+<title>Inventario · Prismatix</title>
+<link rel="icon" href="https://prismatix.mx/marca/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  /* Tokens de la marca (mismos que el sitio), con las variantes de texto que pasan 4.5:1 sobre ivory */
+  :root {
+    --ciruela: #3A243B;
+    --ciruela-2: #552B61;
+    --berry: #D83A6B;
+    --berry-texto: #C22F5D;     /* 5.27:1 sobre ivory */
+    --berry-hover: #A8264F;
+    --terracota-texto: #AE4F2F; /* 5.13:1 */
+    --rosa: #F4B6C2;
+    --marfil: #FDFBF7;
+    --blanco: #FFFFFF;
+    --suave: #6E5A6F;           /* 6.06:1 */
+    --borde: rgb(58 36 59 / 0.12);
+    --tinte: #FBF0EF;
+    --sombra: 0 1px 2px rgb(58 36 59 / 0.06), 0 12px 32px -12px rgb(58 36 59 / 0.2);
+    --radio: 14px;
+    --fuente: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --display: 'Playfair Display', Georgia, serif;
+    color-scheme: light;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    background: var(--marfil);
+    color: var(--ciruela);
+    font: 16px/1.5 var(--fuente);
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--berry-texto); outline-offset: 2px; }
+  .contenedor { width: 100%; max-width: 1080px; margin-inline: auto; padding-inline: 16px; }
+
+  /* ── Cabecera oscura con el resumen ── */
+  .cabecera {
+    background:
+      radial-gradient(520px 300px at 85% 0%, rgb(216 58 107 / 0.35), transparent 65%),
+      radial-gradient(420px 300px at 0% 100%, rgb(224 122 95 / 0.22), transparent 70%),
+      linear-gradient(160deg, var(--ciruela) 0%, #2b1a2c 60%, var(--ciruela-2) 100%);
+    color: var(--marfil);
+    padding: calc(14px + env(safe-area-inset-top)) 0 24px;
+  }
+  .barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+  .marca { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+  .marca img { width: 30px; height: 30px; }
+  .barra__acciones { display: flex; align-items: center; gap: 4px; }
+  .enlace-claro {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px;
+    border: 0; background: none; color: var(--rosa); font-size: 0.9rem; font-weight: 500;
+    text-decoration: none; cursor: pointer; border-radius: 10px;
+  }
+  .enlace-claro:hover { color: var(--marfil); }
+  h1 { margin: 18px 0 4px; font-family: var(--display); font-weight: 400; font-style: italic; font-size: clamp(2rem, 9vw, 3rem); line-height: 1.05; }
+  .estado { margin: 0; min-height: 1.5em; color: rgb(253 251 247 / 0.72); font-size: 0.85rem; }
+  .estado--aviso { color: var(--rosa); }
+
+  .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0 0; padding: 0; list-style: none; }
+  .resumen li { padding: 12px; border-radius: 12px; background: rgb(253 251 247 / 0.07); }
+  .resumen strong { display: block; font-family: var(--display); font-size: 1.6rem; font-weight: 400; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .resumen span { color: rgb(253 251 247 / 0.75); font-size: 0.8rem; }
+  .resumen .resumen__alerta { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgb(216 58 107 / 0.22); }
+  .resumen__alerta button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--marfil); color: var(--ciruela); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+
+  /* ── Herramientas: búsqueda, vista y filtros ── */
+  .herramientas { display: grid; gap: 12px; padding-block: 20px 8px; }
+  .fila-busqueda { display: flex; gap: 8px; }
+  .busqueda { flex: 1; position: relative; }
+  .busqueda svg { position: absolute; left: 14px; top: 50%; translate: 0 -50%; color: var(--suave); pointer-events: none; }
+  .busqueda input {
+    width: 100%; min-height: 48px; padding: 0 14px 0 42px;
+    border: 1px solid var(--borde); border-radius: 12px; background: var(--blanco); font-size: 16px;
+  }
+  .segmentos { display: inline-flex; padding: 3px; border-radius: 12px; background: rgb(58 36 59 / 0.07); }
+  .segmentos button {
+    min-height: 42px; padding: 0 14px; border: 0; border-radius: 9px; background: none;
+    color: var(--suave); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .segmentos button[aria-pressed='true'] { background: var(--blanco); color: var(--ciruela); box-shadow: 0 1px 3px rgb(58 36 59 / 0.15); }
+  .filtros { display: flex; gap: 8px; overflow-x: auto; margin-inline: -16px; padding: 2px 16px 6px; scrollbar-width: none; }
+  .filtros::-webkit-scrollbar { display: none; }
+  .filtro {
+    flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+    border: 1px solid rgb(58 36 59 / 0.18); border-radius: 999px; background: transparent;
+    font-size: 0.9rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+  }
+  .filtro small { color: var(--suave); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  .filtro[aria-pressed='true'] { background: var(--ciruela); border-color: var(--ciruela); color: var(--marfil); }
+  .filtro[aria-pressed='true'] small { color: var(--rosa); }
+
+  /* ── Carrete: la muestra de color dibujada como un carrete visto de frente ── */
+  .carrete {
+    --c: #ccc;
+    position: relative; flex: none; width: 48px; height: 48px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.35), transparent 42%), var(--c);
+    box-shadow: inset 0 0 0 4px rgb(58 36 59 / 0.18), 0 1px 2px rgb(58 36 59 / 0.2);
+  }
+  .carrete::after { /* hueco central */
+    content: ''; position: absolute; inset: 34%; border-radius: 50%;
+    background: var(--marfil); box-shadow: inset 0 1px 2px rgb(58 36 59 / 0.35);
+  }
+  .carrete[data-acabado='mate'] { background: var(--c); }
+  .carrete[data-acabado='seda'] {
+    background: conic-gradient(from 200deg, var(--c), color-mix(in srgb, var(--c), white 55%), var(--c) 30%, color-mix(in srgb, var(--c), black 20%) 55%, color-mix(in srgb, var(--c), white 45%) 75%, var(--c));
+  }
+  .carrete[data-acabado='galaxia'] {
+    background:
+      radial-gradient(circle at 22% 30%, #fff 0 1px, transparent 1.5px),
+      radial-gradient(circle at 70% 22%, #fff 0 1px, transparent 1.5px),
+      radial-gradient(circle at 78% 66%, #e9d9ff 0 1px, transparent 1.5px),
+      radial-gradient(circle at 30% 76%, #fff 0 0.8px, transparent 1.3px),
+      radial-gradient(circle at 55% 88%, #ffd9ec 0 0.8px, transparent 1.3px),
+      var(--c);
+  }
+  .carrete[data-acabado='marmol'] {
+    background:
+      radial-gradient(circle at 25% 35%, rgb(58 36 59 / 0.35) 0 1px, transparent 1.6px),
+      radial-gradient(circle at 68% 25%, rgb(58 36 59 / 0.3) 0 1.2px, transparent 1.8px),
+      radial-gradient(circle at 75% 70%, rgb(58 36 59 / 0.35) 0 1px, transparent 1.6px),
+      radial-gradient(circle at 35% 80%, rgb(58 36 59 / 0.25) 0 1.4px, transparent 2px),
+      var(--c);
+  }
+  .carrete[data-acabado='madera'] {
+    background: repeating-radial-gradient(circle at 50% 50%, var(--c) 0 3px, color-mix(in srgb, var(--c), black 14%) 3px 4px);
+  }
+  .carrete--agotado { opacity: 0.35; filter: grayscale(0.4); }
+
+  /* ── Vista de lista, agrupada por tipo ── */
+  .grupo { margin-top: 20px; }
+  .grupo h2 {
+    display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 8px;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--suave);
+  }
+  .grupo h2 small { letter-spacing: 0; text-transform: none; font-size: 0.8rem; font-weight: 500; }
+  .lista { margin: 0; padding: 0; list-style: none; border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); overflow: hidden; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px; }
+  .item + .item { border-top: 1px solid var(--borde); }
+  .item__info {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 52px;
+    padding: 0; border: 0; background: none; text-align: left; cursor: pointer;
+  }
+  .item__texto { min-width: 0; display: grid; }
+  .item__nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item__detalle { color: var(--suave); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .marca-estado { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; vertical-align: 1px; }
+  .marca-estado--agotado { background: var(--ciruela); color: var(--marfil); }
+  .marca-estado--pocos { background: var(--tinte); color: var(--berry-texto); }
+
+  .contador { flex: none; display: flex; align-items: center; border-radius: 999px; background: rgb(58 36 59 / 0.06); }
+  .contador button {
+    width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%;
+    background: none; font-size: 1.35rem; line-height: 1; cursor: pointer;
+  }
+  .contador button:hover:not(:disabled) { background: rgb(58 36 59 / 0.08); }
+  .contador button:disabled { color: rgb(58 36 59 / 0.25); cursor: default; }
+  .contador output { min-width: 1.6em; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── Vista "Colores": todos los carretes juntos, ordenados por tono ── */
+  .muro { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 18px 10px; margin-top: 20px; }
+  .muestra {
+    display: grid; justify-items: center; gap: 6px; padding: 6px 2px; border: 0; border-radius: 12px;
+    background: none; text-align: center; cursor: pointer;
+  }
+  .muestra:hover { background: rgb(58 36 59 / 0.05); }
+  .muestra .carrete { width: 68px; height: 68px; }
+  .muestra__nombre { font-size: 0.85rem; font-weight: 600; line-height: 1.25; }
+  .muestra__detalle { color: var(--suave); font-size: 0.75rem; line-height: 1.3; }
+  .muestra__unidades {
+    position: absolute; right: -4px; bottom: -2px; z-index: 1; min-width: 24px; height: 24px; padding: 0 6px;
+    border-radius: 999px; background: var(--ciruela); color: var(--marfil);
+    font-size: 0.75rem; font-weight: 600; line-height: 24px; text-align: center;
+  }
+
+  .vacio { margin: 40px 0; text-align: center; color: var(--suave); }
+
+  /* ── Movimientos y exportar ── */
+  .extra { margin-top: 32px; display: grid; gap: 12px; }
+  details { border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); }
+  summary { min-height: 52px; display: flex; align-items: center; padding: 0 16px; font-weight: 600; cursor: pointer; }
+  .movimientos { margin: 0; padding: 0 16px 12px; list-style: none; font-size: 0.9rem; }
+  .movimientos li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--borde); }
+  .movimientos time { flex: none; color: var(--suave); font-size: 0.8rem; }
+  .boton-texto { justify-self: start; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--berry-texto); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(194 47 93 / 0.35); }
+
+  /* ── Botón flotante "Agregar" abajo, al alcance del pulgar ── */
+  .flotante {
+    position: fixed; inset: auto 0 0; z-index: 5; display: flex; justify-content: center;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--marfil) 55%, rgb(253 251 247 / 0));
+    pointer-events: none;
+  }
+  .boton {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 26px;
+    border: 0; border-radius: 999px; background: var(--berry-texto); color: var(--marfil);
+    font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: var(--sombra);
+  }
+  .boton:hover { background: var(--berry-hover); }
+  .flotante .boton { pointer-events: auto; width: min(100%, 420px); }
+  .boton--secundario { background: transparent; color: var(--ciruela); box-shadow: inset 0 0 0 1px rgb(58 36 59 / 0.25); }
+  .boton--secundario:hover { background: rgb(58 36 59 / 0.06); }
+
+  /* ── Hoja para agregar o editar (sale de abajo en el celular) ── */
+  dialog {
+    width: min(100%, 520px); max-height: calc(100dvh - 24px); margin: auto auto 0; padding: 0;
+    border: 0; border-radius: 22px 22px 0 0; background: var(--marfil); color: var(--ciruela);
+    box-shadow: 0 -10px 40px rgb(0 0 0 / 0.25);
+  }
+  dialog::backdrop { background: rgb(43 26 44 / 0.55); }
+  .hoja { display: grid; gap: 14px; padding: 8px 20px calc(20px + env(safe-area-inset-bottom)); }
+  .hoja__asa { justify-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgb(58 36 59 / 0.2); }
+  .hoja__cabeza { display: flex; align-items: center; gap: 14px; }
+  .hoja__cabeza h2 { flex: 1; margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.4rem; line-height: 1.15; }
+  .cerrar { width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(58 36 59 / 0.07); font-size: 1.3rem; cursor: pointer; }
+  .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .campo { display: grid; gap: 4px; }
+  .campo--ancho { grid-column: 1 / -1; }
+  .campo > span { font-size: 0.85rem; font-weight: 600; }
+  .campo small { color: var(--suave); font-weight: 400; }
+  .campo input, .campo select, .campo textarea {
+    width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid rgb(58 36 59 / 0.2);
+    border-radius: 10px; background: var(--blanco); font-size: 16px;
+  }
+  .campo textarea { min-height: 72px; resize: vertical; }
+  .campo input[type='color'] { padding: 4px; cursor: pointer; }
+  .hoja__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 4px; }
+  .hoja__acciones .boton { flex: 1; }
+  .borrar { min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--berry-texto); font-weight: 600; cursor: pointer; }
+
+  @media (min-width: 640px) {
+    dialog { margin: auto; border-radius: 22px; }
+    .hoja__asa { display: none; }
+    .hoja { padding-top: 20px; padding-bottom: 24px; }
+    .resumen { grid-template-columns: repeat(3, 1fr) 1.6fr; }
+    .resumen .resumen__alerta { grid-column: auto; }
+  }
+  @media (min-width: 900px) {
+    .grupos { columns: 2; column-gap: 24px; }
+    .grupo { break-inside: avoid; }
+    .grupo:first-child { margin-top: 20px; }
+    .flotante { justify-content: flex-end; background: none; padding-inline: 32px; }
+    .flotante .boton { width: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="contenedor">
+    <div class="barra">
+      <span class="marca"><img src="https://prismatix.mx/marca/isotipo-96.webp" alt="" width="30" height="30">Prismatix · Taller</span>
+      <div class="barra__acciones">
+        <a class="enlace-claro" href="/salir" data-solo-nube>Salir</a>
+      </div>
+    </div>
+    <h1>Mis filamentos</h1>
+    <p class="estado" role="status" aria-live="polite" id="estado">Cargando…</p>
+    <ul class="resumen" id="resumen" aria-label="Resumen del inventario"></ul>
+  </div>
+</header>
+
+<main class="contenedor">
+  <div class="herramientas">
+    <div class="fila-busqueda">
+      <label class="busqueda">
+        <span hidden>Buscar</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="buscar" type="search" placeholder="Buscar color, tipo o nota" autocomplete="off" aria-label="Buscar en el inventario">
+      </label>
+      <div class="segmentos" role="group" aria-label="Vista">
+        <button type="button" data-vista="lista" aria-pressed="true">Lista</button>
+        <button type="button" data-vista="colores" aria-pressed="false">Colores</button>
+      </div>
+    </div>
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar por tipo"></div>
+  </div>
+
+  <div id="contenido"></div>
+
+  <div class="extra">
+    <details>
+      <summary>Últimos movimientos</summary>
+      <ul class="movimientos" id="movimientos"></ul>
+    </details>
+    <button type="button" class="boton-texto" id="exportar">Descargar inventario para Excel (.csv)</button>
+  </div>
+</main>
+
+<div class="flotante">
+  <button type="button" class="boton" id="agregar"><span aria-hidden="true">＋</span> Agregar filamento</button>
+</div>
+
+<dialog id="hoja" aria-labelledby="hoja-titulo">
+  <form class="hoja" id="formulario" method="dialog">
+    <span class="hoja__asa" aria-hidden="true"></span>
+    <div class="hoja__cabeza">
+      <span class="carrete" id="hoja-carrete" aria-hidden="true"></span>
+      <h2 id="hoja-titulo">Agregar filamento</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </div>
+    <div class="campos">
+      <label class="campo">
+        <span>Color</span>
+        <input name="color" required placeholder="Ej. Azul cielo">
+      </label>
+      <label class="campo">
+        <span>En la etiqueta</span>
+        <input name="etiqueta" placeholder="Ej. Sky Blue">
+      </label>
+      <label class="campo">
+        <span>Tipo</span>
+        <input name="tipo" required list="tipos" placeholder="PLA+">
+        <datalist id="tipos"></datalist>
+      </label>
+      <label class="campo">
+        <span>Marca</span>
+        <input name="marca" list="marcas" placeholder="ELEGOO">
+        <datalist id="marcas"></datalist>
+      </label>
+      <label class="campo">
+        <span>Tono en pantalla</span>
+        <input name="hex" type="color" value="#cccccc">
+      </label>
+      <label class="campo">
+        <span>Acabado</span>
+        <select name="acabado">
+            <option value="liso">Brillante</option>
+            <option value="mate">Mate</option>
+            <option value="seda">Seda</option>
+            <option value="galaxia">Galaxia (brillos)</option>
+            <option value="marmol">Mármol</option>
+            <option value="madera">Madera</option>
+        </select>
+      </label>
+      <label class="campo">
+        <span>Peso del carrete</span>
+        <select name="peso">
+          <option value="250">250 g</option>
+          <option value="500">500 g</option>
+          <option value="750">750 g</option>
+          <option value="1000" selected>1 kg</option>
+          <option value="2000">2 kg</option>
+          <option value="3000">3 kg</option>
+        </select>
+      </label>
+      <label class="campo">
+        <span>Carretes</span>
+        <input name="unidades" type="number" inputmode="numeric" min="0" step="1" value="1" required>
+      </label>
+      <label class="campo">
+        <span>Avisar si quedan</span>
+        <input name="aviso" type="number" inputmode="numeric" min="0" step="1" value="0">
+      </label>
+      <label class="campo campo--ancho">
+        <span>Nota <small>(opcional)</small></span>
+        <textarea name="nota" rows="2" placeholder="Ej. Ideal para pelaje blanco; temperatura 215 °C"></textarea>
+      </label>
+    </div>
+    <div class="hoja__acciones">
+      <button type="button" class="borrar" id="borrar" hidden>Eliminar</button>
+      <button type="button" class="boton boton--secundario" data-cerrar>Cancelar</button>
+      <button type="submit" class="boton" id="guardar">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="inventario-inicial.js"></script>
+<script>
+'use strict';
+// Inventario de filamentos del taller.
+// Los datos viven en el Worker (/api/inventario → KV) para verlos igual en el celular y en la compu.
+// Cada cambio es una "acción" chica (sumar/restar carretes, guardar o borrar un filamento): se aplica
+// al momento, se guarda una copia en este navegador y se manda al Worker. Si otro dispositivo guardó
+// antes, el Worker responde 409 con su versión y aquí se vuelven a aplicar las acciones pendientes.
+// Si se abre desde el disco (sin Worker), funciona solo con la copia de este navegador.
+
+const LOCAL = 'prismatix-inventario-v1';
+const ACABADOS = { liso: 'Brillante', mate: 'Mate', seda: 'Seda', galaxia: 'Galaxia', marmol: 'Mármol', madera: 'Madera' };
+const $ = (s) => document.querySelector(s);
+
+let doc = null;          // inventario actual
+let base = null;         // "actualizado" de la última versión del Worker que conocemos
+let pendientes = [];     // acciones aún no guardadas en el Worker
+let modo = 'nube';       // 'nube' o 'local'
+let vista = 'lista';
+let filtro = '';         // tipo, '' = todos, '__pocos' = por comprar
+let temporizador;
+
+// ── Utilidades ──
+const copia = (o) => JSON.parse(JSON.stringify(o));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const pesoTexto = (g) => (g >= 1000 ? `${String(g / 1000).replace('.', ',')} kg` : `${g} g`);
+const kgTexto = (g) => (g / 1000).toLocaleString('es-MX', { maximumFractionDigits: 2 });
+const estadoDe = (f) => (f.unidades <= 0 ? 'agotado' : f.unidades <= (f.aviso || 0) ? 'pocos' : 'ok');
+const porComprar = (f) => estadoDe(f) !== 'ok';
+const nuevoId = () => 'f-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function hexAHsl(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [(h * 60 + 360) % 360, s, l];
+}
+// Orden del muro: primero los neutros de claro a oscuro, luego los colores por tono
+function ordenColor(a, b) {
+  const [ha, sa, la] = hexAHsl(a.hex), [hb, sb, lb] = hexAHsl(b.hex);
+  const na = sa < 0.18, nb = sb < 0.18;
+  if (na !== nb) return na ? -1 : 1;
+  if (na) return lb - la;
+  return ha - hb || lb - la;
+}
+
+// ── Acciones ──
+function aplicar(a, d) {
+  const f = d.filamentos.find((x) => x.id === a.id);
+  let texto = '';
+  if (a.t === 'unidades' && f) {
+    const antes = f.unidades;
+    f.unidades = Math.max(0, f.unidades + a.delta);
+    if (f.unidades === antes) return;
+    texto = `${f.color} · ${f.tipo}: ${antes} → ${f.unidades}`;
+  } else if (a.t === 'guardar') {
+    if (f) {
+      texto = `Editado: ${a.item.color} · ${a.item.tipo}` + (f.unidades !== a.item.unidades ? ` (${f.unidades} → ${a.item.unidades})` : '');
+      Object.assign(f, a.item);
+    } else {
+      d.filamentos.push({ ...a.item });
+      texto = `Nuevo: ${a.item.color} · ${a.item.tipo} (${a.item.unidades})`;
+    }
+  } else if (a.t === 'borrar' && f) {
+    d.filamentos = d.filamentos.filter((x) => x.id !== a.id);
+    texto = `Eliminado: ${f.color} · ${f.tipo}`;
+  } else return;
+  d.movimientos = [{ fecha: a.fecha, texto }, ...(d.movimientos || [])].slice(0, 100);
+}
+
+function hacer(accion) {
+  accion.fecha = new Date().toISOString();
+  aplicar(accion, doc);
+  pendientes.push(accion);
+  guardarLocal();
+  pintar();
+  clearTimeout(temporizador);
+  // Espera un momento: varios toques seguidos en + o − se guardan juntos
+  if (modo === 'nube') { mostrarEstado('Guardando…'); temporizador = setTimeout(guardar, 700); }
+}
+
+// ── Guardado ──
+function guardarLocal() {
+  try { localStorage.setItem(LOCAL, JSON.stringify({ doc, base, pendientes: modo === 'nube' ? pendientes : [] })); } catch {}
+}
+function leerLocal() {
+  try { return JSON.parse(localStorage.getItem(LOCAL)); } catch { return null; }
+}
+
+let guardando = false;
+async function guardar() {
+  if (modo !== 'nube' || guardando || !pendientes.length) return;
+  guardando = true;
+  const enviadas = pendientes.length;
+  try {
+    const r = await fetch('/api/inventario', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base, datos: doc }),
+    });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    if (r.status === 409) {
+      // Otro dispositivo guardó antes: se toma su versión y se le aplican encima los cambios de aquí
+      const actual = await r.json();
+      doc = actual;
+      base = actual.actualizado;
+      pendientes.forEach((a) => aplicar(a, doc));
+      guardando = false;
+      pintar();
+      return guardar();
+    }
+    if (!r.ok) throw new Error(r.status);
+    const { actualizado } = await r.json();
+    base = doc.actualizado = actualizado;
+    pendientes = pendientes.slice(enviadas);
+    guardarLocal();
+    mostrarEstado(pendientes.length ? 'Guardando…' : `Guardado · ${horaTexto(actualizado)}`);
+    guardando = false;
+    if (pendientes.length) guardar();
+  } catch {
+    guardando = false;
+    guardarLocal();
+    mostrarEstado('Sin conexión: tus cambios están en este dispositivo y se guardarán al volver.', true);
+    clearTimeout(temporizador);
+    temporizador = setTimeout(guardar, 15000);
+  }
+}
+window.addEventListener('online', guardar);
+
+function horaTexto(iso) {
+  const f = new Date(iso);
+  const hoy = new Date().toDateString() === f.toDateString();
+  return hoy
+    ? 'hoy ' + f.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' })
+    : f.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) + ' ' + f.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
+}
+function mostrarEstado(texto, aviso = false) {
+  const e = $('#estado');
+  e.textContent = texto;
+  e.classList.toggle('estado--aviso', aviso);
+}
+
+// ── Carga ──
+async function cargar() {
+  const local = leerLocal();
+  const inicial = copia(window.INVENTARIO_INICIAL || { version: 1, actualizado: null, filamentos: [], movimientos: [] });
+  try {
+    if (location.protocol === 'file:') throw new Error('disco');
+    const r = await fetch('/api/inventario', { cache: 'no-store' });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    if (!r.ok) throw new Error(r.status);
+    const datos = await r.json();
+    doc = datos.vacio ? inicial : datos;
+    base = datos.vacio ? null : datos.actualizado;
+    // Cambios que quedaron sin guardar la última vez (por ejemplo, sin señal en el taller)
+    pendientes = local?.pendientes || [];
+    pendientes.forEach((a) => aplicar(a, doc));
+    mostrarEstado(datos.vacio ? 'Inventario de partida: tu Excel del 16 de noviembre.' : `Guardado · ${horaTexto(datos.actualizado)}`);
+    if (pendientes.length) guardar();
+  } catch {
+    modo = 'local';
+    doc = local?.doc || inicial;
+    document.querySelectorAll('[data-solo-nube]').forEach((el) => (el.hidden = true));
+    mostrarEstado('Modo sin conexión: los cambios se guardan solo en este navegador.', true);
+  }
+  guardarLocal();
+  pintar();
+}
+
+// ── Pintar ──
+function carreteHtml(f, extra = '') {
+  return `<span class="carrete${f.unidades <= 0 ? ' carrete--agotado' : ''}" data-acabado="${esc(f.acabado || 'liso')}" style="--c:${esc(f.hex)}" aria-hidden="true">${extra}</span>`;
+}
+function marcaEstado(f) {
+  const e = estadoDe(f);
+  if (e === 'agotado') return '<span class="marca-estado marca-estado--agotado">Agotado</span>';
+  if (e === 'pocos') return '<span class="marca-estado marca-estado--pocos">Quedan pocos</span>';
+  return '';
+}
+function visibles() {
+  const q = $('#buscar').value.trim().toLowerCase();
+  return doc.filamentos.filter((f) => {
+    if (filtro === '__pocos' ? !porComprar(f) : filtro && f.tipo !== filtro) return false;
+    if (!q) return true;
+    return [f.color, f.etiqueta, f.tipo, f.marca, f.nota, ACABADOS[f.acabado]].join(' ').toLowerCase().includes(q);
+  });
+}
+
+function pintar() {
+  if (!doc) return;
+  const fs = doc.filamentos;
+  const carretes = fs.reduce((s, f) => s + f.unidades, 0);
+  const gramos = fs.reduce((s, f) => s + f.unidades * f.peso, 0);
+  const colores = fs.filter((f) => f.unidades > 0).length;
+  const faltan = fs.filter(porComprar);
+  $('#resumen').innerHTML = `
+    <li><strong>${carretes}</strong><span>carretes</span></li>
+    <li><strong>${kgTexto(gramos)}</strong><span>kg en total</span></li>
+    <li><strong>${colores}</strong><span>colores con stock</span></li>
+    ${faltan.length ? `<li class="resumen__alerta"><span>${faltan.length === 1 ? '1 filamento por comprar' : `${faltan.length} filamentos por comprar`}</span><button type="button" data-ver-pocos>Ver</button></li>` : ''}`;
+
+  // Filtros por tipo, en el orden en que aparecen más
+  const tipos = {};
+  fs.forEach((f) => (tipos[f.tipo] = (tipos[f.tipo] || 0) + 1));
+  const ordenTipos = Object.keys(tipos).sort((a, b) => tipos[b] - tipos[a] || a.localeCompare(b));
+  if (filtro && filtro !== '__pocos' && !tipos[filtro]) filtro = '';
+  $('#filtros').innerHTML =
+    `<button type="button" class="filtro" data-filtro="" aria-pressed="${!filtro}">Todos <small>${fs.length}</small></button>` +
+    ordenTipos.map((t) => `<button type="button" class="filtro" data-filtro="${esc(t)}" aria-pressed="${filtro === t}">${esc(t)} <small>${tipos[t]}</small></button>`).join('') +
+    (faltan.length ? `<button type="button" class="filtro" data-filtro="__pocos" aria-pressed="${filtro === '__pocos'}">Por comprar <small>${faltan.length}</small></button>` : '');
+  $('#tipos').innerHTML = ordenTipos.map((t) => `<option value="${esc(t)}">`).join('');
+  $('#marcas').innerHTML = [...new Set(fs.map((f) => f.marca).filter(Boolean))].map((m) => `<option value="${esc(m)}">`).join('');
+
+  const lista = visibles();
+  const contenido = $('#contenido');
+  if (!lista.length) {
+    contenido.innerHTML = `<p class="vacio">${fs.length ? 'No hay filamentos con ese filtro.' : 'Todavía no hay filamentos. Agrega el primero.'}</p>`;
+  } else if (vista === 'colores') {
+    contenido.innerHTML = `<div class="muro">${[...lista].sort(ordenColor).map((f) => `
+      <button type="button" class="muestra" data-editar="${esc(f.id)}" aria-label="${esc(`${f.color}, ${f.tipo}, ${f.unidades} carretes. Editar`)}">
+        ${carreteHtml(f, `<span class="muestra__unidades">${f.unidades}</span>`)}
+        <span class="muestra__nombre">${esc(f.color)}</span>
+        <span class="muestra__detalle">${esc(f.tipo)} · ${pesoTexto(f.peso)}</span>
+      </button>`).join('')}</div>`;
+  } else {
+    const grupos = {};
+    lista.forEach((f) => (grupos[f.tipo] ||= []).push(f));
+    contenido.innerHTML = `<div class="grupos">${ordenTipos.filter((t) => grupos[t]).map((t) => {
+      const items = grupos[t].sort((a, b) => a.color.localeCompare(b.color, 'es'));
+      const total = items.reduce((s, f) => s + f.unidades, 0);
+      return `<section class="grupo"><h2>${esc(t)} <small>${total} ${total === 1 ? 'carrete' : 'carretes'}</small></h2>
+        <ul class="lista">${items.map((f) => `
+          <li class="item">
+            <button type="button" class="item__info" data-editar="${esc(f.id)}" aria-label="${esc(`Editar ${f.color}, ${f.tipo}`)}">
+              ${carreteHtml(f)}
+              <span class="item__texto">
+                <span class="item__nombre">${esc(f.color)}${marcaEstado(f)}</span>
+                <span class="item__detalle">${esc([f.etiqueta && f.etiqueta !== f.color ? f.etiqueta : '', pesoTexto(f.peso), f.acabado !== 'liso' ? ACABADOS[f.acabado] : '', f.nota].filter(Boolean).join(' · '))}</span>
+              </span>
+            </button>
+            <div class="contador">
+              <button type="button" data-delta="-1" data-id="${esc(f.id)}" aria-label="${esc(`Quitar un carrete de ${f.color} ${f.tipo}`)}" ${f.unidades <= 0 ? 'disabled' : ''}>−</button>
+              <output aria-label="Carretes">${f.unidades}</output>
+              <button type="button" data-delta="1" data-id="${esc(f.id)}" aria-label="${esc(`Agregar un carrete de ${f.color} ${f.tipo}`)}">+</button>
+            </div>
+          </li>`).join('')}</ul></section>`;
+    }).join('')}</div>`;
+  }
+
+  const movs = doc.movimientos || [];
+  $('#movimientos').innerHTML = movs.length
+    ? movs.slice(0, 30).map((m) => `<li><span>${esc(m.texto)}</span><time datetime="${esc(m.fecha)}">${horaTexto(m.fecha)}</time></li>`).join('')
+    : '<li><span>Aún no hay movimientos.</span></li>';
+}
+
+// ── Eventos ──
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button');
+  if (!el) return;
+  if (el.dataset.delta) hacer({ t: 'unidades', id: el.dataset.id, delta: +el.dataset.delta });
+  else if (el.dataset.editar) abrir(doc.filamentos.find((f) => f.id === el.dataset.editar));
+  else if ('filtro' in el.dataset) { filtro = el.dataset.filtro; pintar(); }
+  else if ('verPocos' in el.dataset) { filtro = '__pocos'; pintar(); $('#filtros').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  else if (el.dataset.vista) {
+    vista = el.dataset.vista;
+    document.querySelectorAll('[data-vista]').forEach((b) => b.setAttribute('aria-pressed', String(b === el)));
+    try { localStorage.setItem(LOCAL + '-vista', vista); } catch {}
+    pintar();
+  }
+});
+$('#buscar').addEventListener('input', pintar);
+$('#agregar').addEventListener('click', () => abrir(null));
+$('#exportar').addEventListener('click', exportar);
+
+// ── Hoja de agregar / editar ──
+const hoja = $('#hoja');
+const form = $('#formulario');
+let editando = null;
+
+function abrir(f) {
+  editando = f;
+  form.reset();
+  $('#hoja-titulo').textContent = f ? 'Editar filamento' : 'Agregar filamento';
+  $('#borrar').hidden = !f;
+  const v = f || { marca: 'ELEGOO', tipo: filtro && filtro !== '__pocos' ? filtro : 'PLA+', hex: '#cccccc', acabado: 'liso', peso: 1000, unidades: 1, aviso: 0 };
+  for (const campo of ['color', 'etiqueta', 'tipo', 'marca', 'hex', 'acabado', 'peso', 'unidades', 'aviso', 'nota']) {
+    if (v[campo] !== undefined) form.elements[campo].value = v[campo];
+  }
+  // Pesos que no están en la lista (ej. 1.75 kg) se agregan como opción
+  if (f && form.elements.peso.value !== String(f.peso)) {
+    form.elements.peso.add(new Option(pesoTexto(f.peso), f.peso, true, true));
+  }
+  muestraHoja();
+  hoja.showModal();
+  if (!f) form.elements.color.focus();
+}
+function muestraHoja() {
+  const c = $('#hoja-carrete');
+  c.style.setProperty('--c', form.elements.hex.value);
+  c.dataset.acabado = form.elements.acabado.value;
+}
+form.elements.hex.addEventListener('input', muestraHoja);
+form.elements.acabado.addEventListener('change', muestraHoja);
+hoja.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => hoja.close()));
+hoja.addEventListener('click', (e) => { if (e.target === hoja) hoja.close(); }); // tocar fuera cierra
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = Object.fromEntries(new FormData(form));
+  const item = {
+    id: editando?.id || nuevoId(),
+    marca: v.marca.trim() || 'ELEGOO',
+    tipo: v.tipo.trim(),
+    color: v.color.trim(),
+    etiqueta: v.etiqueta.trim(),
+    hex: v.hex,
+    acabado: v.acabado,
+    peso: +v.peso,
+    unidades: Math.max(0, Math.round(+v.unidades || 0)),
+    aviso: Math.max(0, Math.round(+v.aviso || 0)),
+    nota: v.nota.trim(),
+  };
+  hacer({ t: 'guardar', id: item.id, item });
+  hoja.close();
+});
+$('#borrar').addEventListener('click', () => {
+  if (!editando) return;
+  if (!confirm(`¿Eliminar ${editando.color} (${editando.tipo}) del inventario? Si solo se acabó, mejor déjalo en 0 carretes.`)) return;
+  hacer({ t: 'borrar', id: editando.id });
+  hoja.close();
+});
+
+// ── Exportar a CSV (lo abre Excel), con las columnas del Excel original primero ──
+function exportar() {
+  const filas = [['MARCA', 'TIPO', 'CANTIDAD', 'COLOR', 'UNIDADES', 'COLOR (ES)', 'ACABADO', 'HEX', 'AVISAR SI QUEDAN', 'NOTA']];
+  [...doc.filamentos]
+    .sort((a, b) => a.tipo.localeCompare(b.tipo) || a.color.localeCompare(b.color, 'es'))
+    .forEach((f) => filas.push([f.marca, f.tipo, pesoTexto(f.peso).toUpperCase(), (f.etiqueta || f.color).toUpperCase(), f.unidades, f.color, ACABADOS[f.acabado] || '', f.hex, f.aviso || 0, f.nota]));
+  const csv = filas.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `inventario-filamentos-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Vista recordada en este navegador
+try {
+  const v = localStorage.getItem(LOCAL + '-vista');
+  if (v === 'colores') document.querySelector('[data-vista="colores"]').click();
+} catch {}
+
+// Para pruebas automáticas
+window.inventario = { get doc() { return doc; }, get pendientes() { return pendientes; }, get modo() { return modo; } };
+
+cargar();
+</script>
+</body>
+</html>

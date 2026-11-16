@@ -106,12 +106,10 @@ src/components/
 src/pages/index.astro          Portada oscura (eslogan + isotipo + 2 botones + franja con las líneas que tienen productos), Esencia en 2 columnas, "La colección" con pastillas que filtran la rejilla (JS en el cliente; también lee ?linea=<nombre>), Llamado y TuIdea
 src/pages/productos/[id].astro Detalle: ruta Colección / línea (enlaza a /?linea=…#catalogo), pestañas Fotos / Vista 360°, ficha en filas, "Lo quiero · Escríbenos por WhatsApp" + Instagram/Facebook y Llamado
 src/pages/404.astro            Página "Esto no existe… todavía." (la usa not_found_handling del Worker)
-herramientas/                  Uso interno. No es parte del sitio; se publica aparte en https://herramienta.prismatix.mx con contraseña. También se abre directo desde el disco
-  worker.js, wrangler.jsonc    Worker "prismatix-herramienta": página /entrar con la marca (solo contraseña = secreto CLAVE), cookie de sesión firmada con HMAC por 30 días, /salir, noindex. Sirve los archivos de esta carpeta
-  pintar.html                  GLB a color de Tripo → .3mf pintado para ElegooSlicer. El color de cada triángulo sale de la textura, se agrupa (k-means), las familias de color van a un filamento, se quitan los detalles que la boquilla no traza y se exporta. Incluye la lista "Mis filamentos" (localStorage, exportable a JSON) y la vista con capas de impresión
-  color.js                     Filamentos del usuario, Lab, ΔE2000, k-means y sugerencia por familias
-  malla.js                     Vecinos, áreas, limpieza de zonas (suavizar, abrirZonas, quitarIslas) y escritura del 3MF con paint_color
-```
+herramientas/                  Uso interno. No es parte del sitio; se publica aparte en https://herramienta.prismatix.mx con contraseña
+  worker.js, wrangler.jsonc    Worker "prismatix-herramienta": página /entrar con la marca (solo contraseña = secreto CLAVE), cookie de sesión firmada con HMAC por 30 días, /salir, noindex. Sirve los archivos de esta carpeta y la API /api/inventario (GET/PUT del inventario completo en el KV INVENTARIO; 409 si otro dispositivo guardó antes)
+  inventario.html              Inventario de filamentos: resumen (carretes, kg, colores, por comprar), búsqueda, filtros por tipo, vista Lista (por tipo, con − / + por carrete) y vista Colores (muro de carretes por tono), hoja para agregar/editar/eliminar, últimos movimientos y descarga en CSV para Excel
+  inventario-inicial.js        Inventario de partida tomado de inventario_prismatix.xlsx (2026-11-16); solo se usa mientras el KV está vacío
 
 ## Esquema de producto (frontmatter)
 
@@ -166,7 +164,8 @@ npm run preview         # sirve el build
   - **Por qué va aparte:** si estuviera en el mismo Worker, cada visita al sitio pasaría por código y contaría contra el límite gratuito de solicitudes.
   - **Despliegue:** el `git push` no la despliega. Se despliega a mano desde la raíz con `npx wrangler deploy -c herramientas/wrangler.jsonc`, y eso requiere `npx wrangler login` en la PC.
   - **Contraseña:** es el secreto `CLAVE`. Se cambia con `npx wrangler secret put CLAVE -c herramientas/wrangler.jsonc` o en el panel (Worker → Settings → Variables and Secrets). Se entra en `/entrar`, que solo pide contraseña; no hay usuario. La sesión dura 30 días en ese navegador, y cambiar `CLAVE` cierra todas las sesiones abiertas.
-  - **Prueba local:** `npx wrangler dev -c herramientas/wrangler.jsonc --var CLAVE:prueba`.
+  - **Datos:** el inventario vive en el KV `INVENTARIO` (llave `inventario`, un JSON con `filamentos` y `movimientos`). En `wrangler.jsonc` va sin `id` para que wrangler lo cree en el primer despliegue. Cada cambio en la página es una acción chica (sumar/restar, guardar, borrar) que se guarda al momento en el navegador y se manda al Worker unos 0.7 s después; si responde 409, se toma la versión del Worker y se vuelven a aplicar las acciones pendientes. Sin conexión, los cambios esperan en el navegador. Abierta desde el disco, funciona solo con localStorage.
+  - **Prueba local:** `npx wrangler dev -c herramientas/wrangler.jsonc --var CLAVE:prueba` (usa un KV local; se vacía con `npx wrangler kv key delete inventario --binding INVENTARIO --local -c herramientas/wrangler.jsonc`). `window.inventario` expone el estado para pruebas automáticas.
 
 ## Dominio
 
@@ -183,71 +182,19 @@ Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplic
 
 ### Equipo
 
-- **Impresora:** Elegoo Centauri Carbon 2 Combo con el CANVAS (hasta **4 filamentos** por pieza) y la **boquilla de 0.4 mm** de fábrica. El proyecto `ATOM COLOR.3mf` del usuario decía 0.2 mm, pero era un ajuste suelto de ese archivo.
+- **Impresora:** Elegoo Centauri Carbon 2 Combo con el CANVAS (hasta **4 filamentos** por pieza) y la **boquilla de 0.4 mm** de fábrica.
 - **Slicer:** ElegooSlicer 1.5, basado en OrcaSlicer, instalado en `C:\Program Files\ElegooSlicer`. Los perfiles del usuario están en `%APPDATA%\ElegooSlicer\user\default`.
-- **Filamentos:** todos ELEGOO. Son la lista de fábrica de la herramienta (`FILAMENTOS_BASE` en `herramientas/color.js`, clave de localStorage `prismatix-filamentos-v2`):
-  - PLA: Negro, Marrón, Beige, Mármol y Nogal.
-  - PLA+: Blanco, Madera, Naranja, Amarillo, Verde y Azul.
-  - PLA Mate: Rosa, Amarillo, Azul hielo y Morado.
-
-  Los hex son **estimados** de fotos de producto, porque ELEGOO no publica códigos de color. Se dejaron fuera dos: el **ABS Rosa**, que no se combina con PLA en una misma pieza (temperaturas distintas), y un **PLA Silk** de 4 bobinas cuyos colores no están confirmados.
+- **Filamentos:** casi todos ELEGOO. El inventario real está en https://herramienta.prismatix.mx; el de partida salió de `C:\Users\idipl\OneDrive\Documentos\inventario_prismatix.xlsx` (23 filamentos, 25 carretes). Los hex son **estimados**, porque ELEGOO no publica códigos de color. El ABS Rosa no se combina con PLA en una misma pieza (temperaturas distintas).
 
 ### Flujo de trabajo
 
 1. El cliente manda la foto de su mascota.
 2. El usuario genera el modelo en **Tripo** (tripo3d.ai) y lo descarga en **GLB**, que es el formato que trae la textura (los colores). El STL y el 3MF de Tripo salen en blanco.
-3. El GLB pasa por `herramientas/pintar.html` en https://herramienta.prismatix.mx. A veces el usuario lo manda a Claude, que lo procesa y revisa las vistas antes de entregarlo.
-4. Se descarga el `.3mf` pintado, se abre en ElegooSlicer y se cargan los filamentos **en el orden de las ranuras que indica la herramienta**. El archivo guarda el número de ranura, no el color.
+3. Se pinta y se rebana en ElegooSlicer.
 
-### Cómo funciona `pintar.html`
+### Herramienta anterior: GLB de Tripo → 3MF pintado (retirada)
 
-1. **Lectura (`leerGLB`):**
-   - Une las partes del GLB en una sola malla. Tripo entrega unas 40 partes y unos 2 M de triángulos.
-   - Une los vértices repetidos de las costuras de la textura, para que los triángulos queden conectados.
-   - Toma el color de cada triángulo en el centro de su UV.
-   - Pasa de Y arriba a Z arriba, con el frente hacia −Y, y escala a la altura elegida (80 mm por defecto).
-2. **Grupos de color:**
-   - Hace un k-means en Lab (8 grupos) con muestras repartidas según el área.
-   - Lo que queda lejos de todos los grupos forma grupos aparte, así no se pierden colores chicos como la lengua.
-3. **Sugerencia (`sugerirPorFamilias` en `color.js`).** Las texturas de Tripo traen la luz "horneada": salen más oscuras que el animal (el blanco se ve gris y el leonado café), y el negro de la máscara puede salir más claro que el pelaje en sombra. Por eso:
-   - se estira la claridad de los grupos (el más claro cuenta como blanco y el más oscuro como negro);
-   - los grupos neutros (saturación C/L < 0.25) se parten en oscuro y claro donde está el salto de claridad más grande. Lo oscuro va al filamento neutro más oscuro y lo claro al más claro;
-   - los grupos de color se juntan por tono (±35°), y cada familia va al filamento más parecido a su parte bien iluminada (percentil 75 de claridad).
-4. **Tabla "Colores del modelo → filamento":** se puede cambiar cualquier grupo, y "Ver" lo marca en rosa sobre el modelo.
-5. **Limpieza para que sea imprimible:**
-   - Suavizado por mayoría.
-   - Apertura geodésica (`abrirZonas` en `malla.js`). Funde las zonas más angostas que el **detalle mínimo** (boquilla × 1.5 / 2 / 3; con 0.4 mm y "Normal" son 0.8 mm).
-   - Se quitan las manchas de menos de detalle² mm².
-6. **Base de un solo color:** detecta la tapa plana más grande cerca del piso. Por defecto usa el color que más tiene, sin contar la cara de abajo, que en la textura viene oscura.
-7. **Vista "Cómo quedaría":** colores de los filamentos, acabado de PLA y líneas de capa (boquilla / 2) que se ven al acercar.
-8. **Exportación:** escribe un 3MF de un solo objeto, centrado en la cama de 256 × 256 mm. El XML va por bloques porque pesa unos 180 MB y el ZIP unos 22 MB.
-
-### Formato de la pintura en el 3MF
-
-- **Atributo:** cada triángulo lleva `paint_color`, que es el formato de Orca/Bambu y el que lee ElegooSlicer.
-- **Códigos:** para un triángulo entero, los filamentos 1, 2, 3 y 4 son `4`, `8`, `0C` y `1C` (`codigoPintura` en `malla.js`).
-- **Verificación:** se comprobó con `elegoo-slicer.exe --outputdir dir --export-3mf salida.3mf entrada.3mf`. Reabre el archivo y conserva la pintura triángulo por triángulo, incluso con 2 M de triángulos (unos 9 s).
-- **Rebanado por línea de comandos:** `--slice` falló con los perfiles del usuario y no se usa.
-
-### Límites conocidos
-
-- **La sugerencia automática no siempre acierta.**
-  - **Boxer** (`boxer dog 3d model.glb`): salió solo, Marrón para el pelaje, Blanco para el pecho, las patas y la base, y Negro para la máscara.
-  - **Chihuahua** (`chihuahua 3d model.glb`): el pelaje casi negro sale como cuatro grises por la luz horneada y la sugerencia propone Mármol y Marrón. Se decidió a ojo con la tabla: pelaje Negro, blancos Blanco, lengua Rosa mate y base Blanco.
-  - **Antes de entregar un 3MF**, revisar las vistas de frente, lado y espalda contra "Modelo de Tripo".
-- **"Compensar la luz de arriba"** está apagado por defecto: ayudó con el chihuahua pero arruinó al boxer.
-- Lo geométrico (orejas muy delgadas, piezas que no se sostienen) no se revisa. Eso queda para la vista previa del slicer.
-
-### Probar la herramienta
-
-- **Lógica en Node:**
-  - `malla.js` exporta sus funciones con `module.exports` si existe, pero `package.json` tiene `"type": "module"`: hay que cargarlo con `new Function('module', código)`.
-  - fflate está en `node_modules/three/examples/jsm/libs/fflate.module.js`.
-- **Navegador:**
-  - Edge headless no abre `file://` desde CDP: hay que servir la carpeta con `python -m http.server`.
-  - WebGL necesita `--enable-unsafe-swiftshader --use-angle=swiftshader`.
-  - `window.pintarModelo` expone el estado y las funciones para pruebas automáticas.
-- **Archivos de prueba del usuario:** los GLB de boxer y chihuahua, `foto.jpeg` y `ATOM COLOR.3mf` (pintado a mano por el usuario, 475 mil triángulos). Están en `C:\Users\idipl\OneDrive\Escritorio`.
+Hasta el 2026-11-16 el subdominio servía `pintar.html` (con `color.js` y `malla.js`): convertía el GLB a color de Tripo en un `.3mf` pintado por triángulo (`paint_color`, códigos `4`, `8`, `0C` y `1C` para los filamentos 1–4) para ElegooSlicer. El usuario la sustituyó por el inventario. El código y su documentación completa siguen en el historial de git: `git show 6c8456d:herramientas/pintar.html` y `git show 6c8456d:CLAUDE.md` (sección "Taller").
 
 ## Historial de decisiones
 
@@ -267,6 +214,7 @@ Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplic
 - **Pulido visual (2026-10-17):** con la misma marca (logo, fuentes y paleta) se hizo más editorial. Las mayúsculas espaciadas quedan solo en botones, navegación, el descriptor, el rótulo "Esencia" y la categoría del producto; los demás rótulos (formulario, filtros, valores) van en frase normal. Única animación de entrada: la portada al cargar. `[hidden]` lleva `display: none !important` en global.css para que el filtro oculte tarjetas aunque tengan `display` propio.
 - **WhatsApp y catálogo real (2026-10-18):** WhatsApp 221 344 1015 pasa a ser el canal principal (antes Instagram). El catálogo muestra solo "Tu mascota en miniatura" con fotos reales + `TarjetaIdea`; el resto queda con `oculto: true`. Logo en Montserrat con la Λ.
 - **Revisión con la skill `apple-design` (2026-11-16):** basada en las guías de diseño de Apple (HIG). Se oscurecieron el berry y el terracota usados como texto para pasar 4.5:1, los rótulos chicos subieron a 11–12 px, los botones pasaron de mayúsculas espaciadas a frase normal, la acción principal en teléfonos bajó a una barra fija inferior, se quitó el logo repetido del pie y el isotipo de `TarjetaIdea` dejó de flotar (la única animación continua es la de la portada). Se mantuvieron a propósito la paleta, las fuentes y el tema solo claro, porque vienen de la lámina de marca.
+- **Inventario de filamentos (2026-11-16):** a pedido del usuario, la herramienta del subdominio pasó de "GLB → 3MF pintado" a un inventario de filamentos y colores, con los datos en Cloudflare KV para verlo igual en el celular y la compu. El inventario de partida es su Excel.
 - **Otros nombres considerados:** Justo Eso, Me Faltaba, Chunche, Ocurrencia, Mira Nomás.
 
 ## Pendientes
@@ -277,6 +225,5 @@ Es la parte interna del negocio. La regla de no mencionar la impresión 3D aplic
 - Reemplazar los productos de ejemplo por los reales, con fotos en el estilo fotográfico de la marca y modelos .glb.
 - Opcional: renombrar el Worker y el repositorio a "prismatix" (`name` en `wrangler.jsonc` y la URL de workers.dev cambiarían).
 - Opcional: cambiar el correo de los commits (hoy es el de trabajo) y decidir si el repositorio pasa a privado. El código de la herramienta del taller también es visible en GitHub, aunque la página tiene contraseña.
-- Taller: afinar los hex de los filamentos con piezas impresas reales, sobre todo el Marrón, el Madera y el Nogal.
-- Taller: confirmar los colores del PLA Silk para agregarlos a la lista.
+- Taller: afinar los hex de los filamentos en el inventario con fotos de los carretes reales.
 - Taller, opcional: que el `git push` también despliegue la herramienta. Habría que cambiar el comando de deploy del build de Cloudflare a `npx wrangler deploy && npx wrangler deploy -c herramientas/wrangler.jsonc`. Hoy se despliega a mano.
