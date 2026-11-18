@@ -1,8 +1,8 @@
-// Worker de herramienta.prismatix.mx: el taller (inventario de filamentos e ideas), solo con sesión.
+// Worker de herramienta.prismatix.mx: el taller (filamentos, ideas y pedidos), solo con sesión.
 // Habla de filamentos e impresión, que el sitio público no menciona, así que no debe quedar
 // abierto ni indexado. La contraseña es el secreto CLAVE del Worker.
 //
-// Datos: /api/inventario y /api/ideas guardan cada uno un JSON completo en el KV INVENTARIO, para
+// Datos: /api/inventario, /api/ideas y /api/pedidos guardan cada uno un JSON completo en el KV INVENTARIO, para
 // verlo igual desde el celular y la compu. Si dos dispositivos guardan a la vez, gana el primero y
 // el segundo recibe 409 con la versión nueva para volver a aplicar sus cambios encima.
 // Las fotos de las ideas van en el mismo KV (/api/imagen/<id>) y /api/vista-previa lee el nombre
@@ -59,6 +59,7 @@ export default {
 
     if (url.pathname === '/api/inventario') return documento(request, env, 'inventario', 'filamentos');
     if (url.pathname === '/api/ideas') return documento(request, env, 'ideas', 'ideas');
+    if (url.pathname === '/api/pedidos') return documento(request, env, 'pedidos', 'pedidos');
     if (url.pathname === '/api/vista-previa') return vistaPrevia(request);
     const foto = url.pathname.match(/^\/api\/imagen\/([a-z0-9-]{4,40})$/);
     if (foto) return imagen(request, env, foto[1]);
@@ -78,7 +79,8 @@ const json = (datos, status = 200) =>
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
   });
 
-// Un documento JSON completo por llave del KV: 'inventario' (filamentos) e 'ideas' (biblioteca de modelos).
+// Un documento JSON completo por llave del KV: 'inventario' (filamentos), 'ideas' (biblioteca de modelos)
+// y 'pedidos' (seguimiento de pedidos de clientes).
 // El KV se llama INVENTARIO porque nació con el inventario; las ideas y sus fotos viven en el mismo.
 async function documento(request, env, llave, campo) {
   if (!env.INVENTARIO) return json({ error: 'sin-kv' }, 503);
@@ -273,7 +275,7 @@ function paginaEntrar(error, estado) {
 <form method="post" action="/entrar">
   <img src="https://prismatix.mx/marca/isotipo-96.webp" alt="">
   <h1>PRISMATIX</h1>
-  <p>Inventario del taller</p>
+  <p>Taller</p>
   <label for="clave">Contraseña</label>
   <input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus>
   <button type="submit">Entrar</button>

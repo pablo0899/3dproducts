@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#3A243B">
+<title>Pedidos · Prismatix</title>
+<link rel="icon" href="https://prismatix.mx/marca/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="taller.css">
+<style>
+  /* ── Resumen en la cabecera ── */
+  .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0 0; padding: 0; list-style: none; }
+  .resumen li { padding: 12px; border-radius: 12px; background: rgb(253 251 247 / 0.07); }
+  .resumen strong { display: block; font-family: var(--display); font-size: 1.5rem; font-weight: 400; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .resumen span { color: rgb(253 251 247 / 0.75); font-size: 0.8rem; }
+  .resumen .resumen__alerta { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgb(216 58 107 / 0.22); }
+  .resumen__alerta button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--marfil); color: var(--ciruela); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+
+  /* ── Lista de pedidos ── */
+  .pedidos { display: grid; gap: 12px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .pedido {
+    display: grid; gap: 8px; width: 100%; padding: 16px; border: 0; border-radius: var(--radio);
+    background: var(--blanco); box-shadow: var(--sombra); text-align: left; cursor: pointer;
+  }
+  .pedido:hover { box-shadow: 0 0 0 1px rgb(58 36 59 / 0.12), var(--sombra); }
+  .pedido--apagado { opacity: 0.62; }
+  .pedido__cabeza { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .pedido__cliente { font-weight: 600; font-size: 1.05rem; line-height: 1.3; }
+  .pedido__folio { color: var(--suave); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .pedido__productos { color: var(--suave); font-size: 0.9rem; line-height: 1.4; }
+  .pedido__entrega { font-size: 0.85rem; font-weight: 500; }
+  .pedido__entrega--tarde { color: var(--berry-texto); font-weight: 600; }
+  .pedido__entrega--pronto { color: var(--terracota-texto); font-weight: 600; }
+  .etiqueta-estado {
+    flex: none; padding: 3px 10px; border-radius: 999px; background: rgb(58 36 59 / 0.07);
+    font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  }
+  .etiqueta-estado--proceso { background: #F6E3DC; color: var(--terracota-texto); }
+  .etiqueta-estado--listo { background: var(--ciruela); color: var(--marfil); }
+  .etiqueta-estado--cancelado { background: none; box-shadow: inset 0 0 0 1px rgb(58 36 59 / 0.25); color: var(--suave); }
+  .dinero { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
+  .dinero b { color: var(--ciruela); font-weight: 600; }
+  .dinero .resta { margin-left: auto; color: var(--terracota-texto); font-size: 1rem; font-weight: 600; }
+  .dinero .liquidado { margin-left: auto; color: var(--ciruela); font-weight: 600; }
+  .avance { height: 4px; border-radius: 2px; background: rgb(58 36 59 / 0.08); overflow: hidden; }
+  .avance span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--berry), #E07A5F); }
+  .extra { margin-top: 32px; display: grid; gap: 12px; }
+
+  /* ── Hoja del pedido ── */
+  .seccion-hoja { display: grid; gap: 10px; }
+  /* Los campos de fecha traen un ancho mínimo propio que los saca de la hoja en teléfonos */
+  .hoja .campo, .hoja .campo input { min-width: 0; }
+  .hoja input[type='date'] { -webkit-appearance: none; appearance: none; display: block; }
+  .seccion-hoja__titulo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 0; font-size: 0.85rem; font-weight: 600; }
+  .renglon {
+    position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: end;
+    padding: 12px; border-radius: 12px; background: var(--blanco); box-shadow: 0 0 0 1px var(--borde);
+  }
+  .renglon .campo--ancho, .renglon .campo--metodo, .renglon__nombre { grid-column: 1 / -1; }
+  .renglon .campo > span { font-size: 0.75rem; color: var(--suave); }
+  .renglon__nombre { font-size: 0.8rem; font-weight: 600; color: var(--berry-texto); }
+  .renglon__subtotal { grid-column: 1 / -1; margin: -2px 0 0; color: var(--suave); font-size: 0.8rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .renglon__subtotal:empty { display: none; }
+  .quitar { position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--berry-texto); font-size: 1.4rem; cursor: pointer; }
+  .quitar:hover { background: var(--tinte); }
+  .agregar-renglon { justify-self: start; min-height: 44px; padding: 0 16px; border: 1px dashed rgb(58 36 59 / 0.3); border-radius: 999px; background: none; color: var(--berry-texto); font-weight: 600; cursor: pointer; }
+  .botones-fila { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px;
+    border: 1px solid rgb(58 36 59 / 0.2); border-radius: 999px; background: var(--blanco);
+    font-size: 0.9rem; font-weight: 500; cursor: pointer;
+  }
+  .chip[aria-pressed='true'] { background: var(--ciruela); border-color: var(--ciruela); color: var(--marfil); }
+  .totales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; padding: 12px; border-radius: 12px; background: var(--tinte); text-align: center; }
+  .totales dt { font-size: 0.75rem; color: var(--suave); }
+  .totales dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .totales .totales__resta { color: var(--terracota-texto); font-size: 1.15rem; }
+  .whatsapp {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px;
+    border-radius: 999px; background: #1F7A4D; color: #fff; font-weight: 600; text-decoration: none;
+  }
+  .whatsapp:hover { background: #17603C; }
+  .whatsapp--instagram { background: linear-gradient(135deg, var(--ciruela-2), var(--berry-texto)); }
+  .whatsapp--instagram:hover { background: linear-gradient(135deg, var(--ciruela), var(--berry-hover)); }
+  .whatsapp--correo { background: var(--ciruela); }
+  .whatsapp--correo:hover { background: var(--ciruela-2); }
+  .contacto-ayuda { margin: -6px 0 0; color: var(--suave); font-size: 0.8rem; text-align: center; }
+  .aviso-hoja { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--tinte); color: var(--berry-texto); font-size: 0.85rem; font-weight: 500; }
+
+  @media (min-width: 480px) {
+    .renglon--pago { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .renglon .campo--metodo { grid-column: auto; }
+  }
+  @media (min-width: 768px) {
+    .pedidos { grid-template-columns: repeat(2, 1fr); }
+    .resumen { grid-template-columns: repeat(3, 1fr) 1.6fr; }
+    .resumen .resumen__alerta { grid-column: auto; }
+  }
+  @media (min-width: 1000px) { .pedidos { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="contenedor">
+    <div class="barra">
+      <span class="marca"><img src="https://prismatix.mx/marca/isotipo-96.webp" alt="" width="30" height="30">Prismatix · Taller</span>
+      <div class="barra__acciones">
+        <a class="enlace-claro" href="/salir" data-solo-nube>Salir</a>
+      </div>
+    </div>
+    <nav class="pestanas" aria-label="Secciones del taller">
+      <a href="inventario.html">Filamentos</a>
+      <a href="ideas.html">Ideas</a>
+      <a href="pedidos.html" aria-current="page">Pedidos</a>
+    </nav>
+    <h1>Mis pedidos</h1>
+    <p class="estado" role="status" aria-live="polite" id="estado">Cargando…</p>
+    <ul class="resumen" id="resumen" aria-label="Resumen de pedidos"></ul>
+  </div>
+</header>
+
+<main class="contenedor">
+  <div class="herramientas">
+    <label class="busqueda">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="buscar" type="search" placeholder="Buscar cliente, producto o folio" autocomplete="off" aria-label="Buscar pedidos">
+    </label>
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar pedidos"></div>
+  </div>
+  <div id="contenido"></div>
+  <div class="extra">
+    <button type="button" class="boton-texto" id="exportar">Descargar pedidos para Excel (.csv)</button>
+  </div>
+</main>
+
+<div class="flotante">
+  <button type="button" class="boton" id="agregar"><span aria-hidden="true">＋</span> Nuevo pedido</button>
+</div>
+
+<datalist id="productos-conocidos"></datalist>
+
+<dialog id="hoja" aria-labelledby="hoja-titulo">
+  <form class="hoja" id="formulario" novalidate>
+    <span class="hoja__asa" aria-hidden="true"></span>
+    <div class="hoja__cabeza">
+      <h2 id="hoja-titulo">Nuevo pedido</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </div>
+    <p class="aviso-hoja" id="aviso-hoja" role="alert" hidden></p>
+
+    <div class="campos">
+      <label class="campo campo--ancho">
+        <span>Cliente</span>
+        <input name="cliente" autocomplete="off" placeholder="Nombre de quien encarga">
+      </label>
+      <div class="campo campo--ancho">
+        <span id="via-titulo">Cómo lo contactamos</span>
+        <div class="chips" id="chips-via" role="group" aria-labelledby="via-titulo"></div>
+      </div>
+      <label class="campo campo--ancho">
+        <span id="contacto-etiqueta">Celular</span>
+        <input name="contacto" autocomplete="off">
+      </label>
+    </div>
+
+    <div class="seccion-hoja">
+      <p class="seccion-hoja__titulo">Productos</p>
+      <div id="items" class="seccion-hoja"></div>
+      <button type="button" class="agregar-renglon" id="agregar-item">+ Agregar producto</button>
+    </div>
+
+    <div class="campos">
+      <label class="campo">
+        <span>Fecha del pedido</span>
+        <input name="fecha" type="date">
+      </label>
+      <label class="campo">
+        <span>Entrega <small>(opcional)</small></span>
+        <input name="entrega" type="date">
+      </label>
+      <div class="campo campo--ancho">
+        <span id="estado-titulo">Estado</span>
+        <div class="chips" id="chips-estado" role="group" aria-labelledby="estado-titulo"></div>
+      </div>
+    </div>
+
+    <div class="seccion-hoja">
+      <p class="seccion-hoja__titulo">Pagos</p>
+      <div id="pagos" class="seccion-hoja"></div>
+      <div class="botones-fila">
+        <button type="button" class="agregar-renglon" id="agregar-pago">+ Registrar pago</button>
+        <button type="button" class="agregar-renglon" id="liquidar" hidden></button>
+      </div>
+    </div>
+
+    <dl class="totales" aria-live="polite">
+      <div><dt>Total</dt><dd id="t-total">$0</dd></div>
+      <div><dt>Pagado</dt><dd id="t-pagado">$0</dd></div>
+      <div><dt>Resta</dt><dd id="t-resta" class="totales__resta">$0</dd></div>
+    </dl>
+
+    <label class="campo">
+      <span>Nota <small>(opcional)</small></span>
+      <textarea name="nota" rows="2" placeholder="Ej. Colores: café y blanco. Lo recoge en el centro."></textarea>
+    </label>
+
+    <a class="whatsapp" id="whatsapp" target="_blank" rel="noopener" hidden>
+      <svg id="icono-whatsapp" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+      <span id="whatsapp-texto">Escribirle por WhatsApp</span>
+    </a>
+    <p class="contacto-ayuda" id="contacto-ayuda" hidden>Al abrir el chat se copia el mensaje: pégalo ahí.</p>
+
+    <div class="hoja__acciones">
+      <button type="button" class="borrar" id="borrar" hidden>Eliminar</button>
+      <button type="button" class="boton boton--secundario" data-cerrar>Cancelar</button>
+      <button type="submit" class="boton">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+// Seguimiento de pedidos: cliente, contacto (celular, Instagram o correo), productos con cantidad y precio, pagos (el primero es el
+// anticipo), cuánto resta, estado y fecha de entrega. Se sincroniza igual que el inventario y las
+// ideas: cada cambio es una acción chica que se guarda al momento en el navegador y se manda al
+// Worker (/api/pedidos); si otro dispositivo guardó antes (409), se toma lo nuevo y se reaplica.
+// El folio se asigna al aplicar la acción, así que dos pedidos nuevos en dos celulares no chocan.
+
+const LOCAL = 'prismatix-pedidos-v1';
+const ESTADOS = { nuevo: 'Por empezar', proceso: 'En proceso', listo: 'Listo', entregado: 'Entregado', cancelado: 'Cancelado' };
+const METODOS = { efectivo: 'Efectivo', transferencia: 'Transferencia', tarjeta: 'Tarjeta', otro: 'Otro' };
+// Productos del catálogo (src/content/productos) para sugerir nombre y precio
+const CATALOGO = [
+  { producto: 'Tu mascota en miniatura', precio: 300 },
+  { producto: 'Funda de micrófono con tu logo', precio: 220 },
+];
+const $ = (s) => document.querySelector(s);
+
+let doc = null;
+let base = null;
+let pendientes = [];
+let modo = 'nube';
+let filtro = 'activos';
+let temporizador;
+
+const copia = (o) => JSON.parse(JSON.stringify(o));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const nuevoId = (p = 'p') => p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const num = (v) => { const n = parseFloat(String(v ?? '').replace(/[$,\s]/g, '')); return Number.isFinite(n) ? n : 0; };
+const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const dinero = (n) => moneda.format(Math.round(n * 100) / 100);
+
+// ── Fechas (siempre "AAAA-MM-DD" en hora local) ──
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const aFecha = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d); };
+const diasHasta = (iso) => Math.round((aFecha(iso) - aFecha(hoyISO())) / 86400000);
+const fechaCorta = (iso) => aFecha(iso).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+
+// ── Cuentas de un pedido ──
+const total = (p) => (p.items || []).reduce((s, i) => s + num(i.cantidad) * num(i.precio), 0);
+const pagado = (p) => (p.pagos || []).reduce((s, x) => s + num(x.monto), 0);
+const resta = (p) => Math.round((total(p) - pagado(p)) * 100) / 100;
+const activo = (p) => p.estado !== 'entregado' && p.estado !== 'cancelado';
+const atrasado = (p) => activo(p) && p.entrega && diasHasta(p.entrega) < 0;
+const porCobrar = (p) => p.estado !== 'cancelado' && resta(p) > 0;
+const piezas = (p) => (p.items || []).reduce((s, i) => s + num(i.cantidad), 0);
+const productosTexto = (p) => (p.items || []).map((i) => `${num(i.cantidad) || 1}× ${i.producto}`).join(', ');
+
+// "2281234567" → "522281234567" (wa.me pide la lada del país)
+function celularWa(texto) {
+  let d = String(texto || '').replace(/\D/g, '');
+  if (d.length === 10) d = '52' + d;
+  else if (d.length === 13 && d.startsWith('521')) d = '52' + d.slice(3);
+  return d.length >= 11 ? d : '';
+}
+const celularVisible = (texto) => {
+  const d = String(texto || '').replace(/\D/g, '');
+  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : String(texto || '');
+};
+// "@usuario", "usuario" o "instagram.com/usuario/" → "usuario"
+function usuarioIg(texto) {
+  const t = String(texto || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').split(/[/?#\s]/)[0];
+  return /^[a-z0-9._]{1,30}$/i.test(t) ? t.toLowerCase() : '';
+}
+const correoValido = (t) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(t || '').trim());
+const VIAS = {
+  celular: { nombre: 'Celular', etiqueta: 'Celular <small>(10 dígitos)</small>', tipo: 'tel', teclado: 'tel', ejemplo: '228 123 4567', boton: 'Escribirle por WhatsApp' },
+  instagram: { nombre: 'Instagram', etiqueta: 'Usuario de Instagram', tipo: 'text', teclado: 'text', ejemplo: '@usuario', boton: 'Escribirle por Instagram' },
+  correo: { nombre: 'Correo', etiqueta: 'Correo', tipo: 'email', teclado: 'email', ejemplo: 'nombre@correo.com', boton: 'Escribirle por correo' },
+};
+// Los pedidos guardados antes de poder elegir el medio solo traen "celular"
+const viaDe = (p) => p.via || 'celular';
+const contactoDe = (p) => p.contacto ?? p.celular ?? '';
+function contactoVisible(p) {
+  const c = contactoDe(p);
+  if (!c) return '';
+  if (viaDe(p) === 'celular') return celularVisible(c);
+  if (viaDe(p) === 'instagram') return '@' + c;
+  return c;
+}
+
+// ── Acciones y guardado (mismo esquema que el inventario y las ideas) ──
+function aplicar(a, d) {
+  const i = d.pedidos.findIndex((x) => x.id === a.id);
+  if (a.t === 'guardar') {
+    if (i >= 0) Object.assign(d.pedidos[i], a.item);
+    else d.pedidos.unshift({ ...a.item, folio: d.pedidos.reduce((m, p) => Math.max(m, p.folio || 0), 0) + 1 });
+  } else if (a.t === 'borrar' && i >= 0) {
+    d.pedidos.splice(i, 1);
+  }
+}
+function hacer(accion) {
+  aplicar(accion, doc);
+  pendientes.push(accion);
+  guardarLocal();
+  pintar();
+  clearTimeout(temporizador);
+  if (modo === 'nube') { mostrarEstado('Guardando…'); temporizador = setTimeout(guardar, 500); }
+}
+function guardarLocal() {
+  try { localStorage.setItem(LOCAL, JSON.stringify({ doc, base, pendientes: modo === 'nube' ? pendientes : [] })); } catch {}
+}
+function leerLocal() {
+  try { return JSON.parse(localStorage.getItem(LOCAL)); } catch { return null; }
+}
+let guardando = false;
+async function guardar() {
+  if (modo !== 'nube' || guardando || !pendientes.length) return;
+  guardando = true;
+  const enviadas = pendientes.length;
+  try {
+    const r = await fetch('/api/pedidos', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base, datos: doc }),
+    });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    if (r.status === 409) {
+      const actual = await r.json();
+      doc = actual;
+      base = actual.actualizado;
+      pendientes.forEach((a) => aplicar(a, doc));
+      guardando = false;
+      pintar();
+      return guardar();
+    }
+    if (!r.ok) throw new Error(r.status);
+    const { actualizado } = await r.json();
+    base = doc.actualizado = actualizado;
+    pendientes = pendientes.slice(enviadas);
+    guardarLocal();
+    mostrarEstado(pendientes.length ? 'Guardando…' : resumenTexto());
+    guardando = false;
+    if (pendientes.length) guardar();
+  } catch {
+    guardando = false;
+    guardarLocal();
+    mostrarEstado('Sin conexión: tus cambios están en este dispositivo y se guardarán al volver.', true);
+    clearTimeout(temporizador);
+    temporizador = setTimeout(guardar, 15000);
+  }
+}
+window.addEventListener('online', guardar);
+
+function mostrarEstado(texto, aviso = false) {
+  const e = $('#estado');
+  e.textContent = texto;
+  e.classList.toggle('estado--aviso', aviso);
+}
+function resumenTexto() {
+  const n = doc.pedidos.filter(activo).length;
+  if (!doc.pedidos.length) return 'Todavía no hay pedidos.';
+  return n ? `${n} ${n === 1 ? 'pedido activo' : 'pedidos activos'}` : 'Sin pedidos pendientes.';
+}
+
+async function cargar() {
+  const local = leerLocal();
+  const vacio = { version: 1, actualizado: null, pedidos: [] };
+  try {
+    if (location.protocol === 'file:') throw new Error('disco');
+    const r = await fetch('/api/pedidos', { cache: 'no-store' });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    if (!r.ok) throw new Error(r.status);
+    const datos = await r.json();
+    doc = datos.vacio ? copia(vacio) : datos;
+    base = datos.vacio ? null : datos.actualizado;
+    pendientes = local?.pendientes || [];
+    pendientes.forEach((a) => aplicar(a, doc));
+    mostrarEstado(resumenTexto());
+    if (pendientes.length) guardar();
+  } catch {
+    modo = 'local';
+    doc = local?.doc || copia(vacio);
+    document.querySelectorAll('[data-solo-nube]').forEach((el) => (el.hidden = true));
+    mostrarEstado('Modo sin conexión: los pedidos se guardan solo en este navegador.', true);
+  }
+  guardarLocal();
+  pintar();
+}
+
+// ── Pintar ──
+const FILTROS = {
+  activos: ['Activos', activo],
+  nuevo: ['Por empezar', (p) => p.estado === 'nuevo'],
+  proceso: ['En proceso', (p) => p.estado === 'proceso'],
+  listo: ['Listos', (p) => p.estado === 'listo'],
+  atrasados: ['Atrasados', atrasado],
+  cobrar: ['Por cobrar', porCobrar],
+  entregado: ['Entregados', (p) => p.estado === 'entregado'],
+  cancelado: ['Cancelados', (p) => p.estado === 'cancelado'],
+  todos: ['Todos', () => true],
+};
+
+function entregaHtml(p) {
+  if (!p.entrega) return '';
+  const fecha = fechaCorta(p.entrega);
+  if (!activo(p)) return `<span class="pedido__entrega">Entrega: ${esc(fecha)}</span>`;
+  const d = diasHasta(p.entrega);
+  if (d < 0) return `<span class="pedido__entrega pedido__entrega--tarde">Atrasado ${-d === 1 ? '1 día' : `${-d} días`} · era el ${esc(fecha)}</span>`;
+  if (d === 0) return `<span class="pedido__entrega pedido__entrega--pronto">Se entrega hoy</span>`;
+  if (d === 1) return `<span class="pedido__entrega pedido__entrega--pronto">Se entrega mañana · ${esc(fecha)}</span>`;
+  return `<span class="pedido__entrega${d <= 3 ? ' pedido__entrega--pronto' : ''}">Entrega: ${esc(fecha)} · en ${d} días</span>`;
+}
+
+function pintar() {
+  if (!doc) return;
+  const ps = doc.pedidos;
+  const act = ps.filter(activo);
+  const deuda = ps.filter(porCobrar).reduce((s, p) => s + resta(p), 0);
+  const semana = act.filter((p) => p.entrega && diasHasta(p.entrega) >= 0 && diasHasta(p.entrega) <= 7).length;
+  const tarde = ps.filter(atrasado).length;
+  $('#resumen').innerHTML = `
+    <li><strong>${act.length}</strong><span>${act.length === 1 ? 'activo' : 'activos'}</span></li>
+    <li><strong>${dinero(deuda)}</strong><span>por cobrar</span></li>
+    <li><strong>${semana}</strong><span>para esta semana</span></li>
+    ${tarde ? `<li class="resumen__alerta"><span>${tarde === 1 ? '1 pedido atrasado' : `${tarde} pedidos atrasados`}</span><button type="button" data-filtro="atrasados">Ver</button></li>` : ''}`;
+
+  $('#filtros').innerHTML = Object.entries(FILTROS)
+    .filter(([k, [, f]]) => k === 'activos' || k === 'todos' || k === filtro || ps.some(f))
+    .map(([k, [nombre, f]]) => `<button type="button" class="filtro" data-filtro="${k}" aria-pressed="${filtro === k}">${nombre} <small>${ps.filter(f).length}</small></button>`)
+    .join('');
+
+  const q = $('#buscar').value.trim().toLowerCase().replace(/^#/, '');
+  const qNum = q.replace(/\D/g, '');
+  const coincide = (p) => !q
+    || String(p.folio) === q
+    || [p.cliente, productosTexto(p), p.nota].join(' ').toLowerCase().includes(q)
+    || (viaDe(p) !== 'celular' && contactoDe(p).toLowerCase().includes(q))
+    || (viaDe(p) === 'celular' && qNum.length >= 3 && contactoDe(p).replace(/\D/g, '').includes(qNum));
+  // Con búsqueda se busca en todos los pedidos, no solo en el filtro elegido
+  const lista = ps.filter((p) => (q || FILTROS[filtro][1](p)) && coincide(p));
+  const porFecha = activo;
+  lista.sort((a, b) => {
+    if (porFecha(a) && porFecha(b) && !['todos', 'entregado', 'cancelado'].includes(filtro)) {
+      if (a.entrega && b.entrega && a.entrega !== b.entrega) return a.entrega < b.entrega ? -1 : 1;
+      if (!!a.entrega !== !!b.entrega) return a.entrega ? -1 : 1;
+    }
+    return (b.folio || 0) - (a.folio || 0);
+  });
+
+  const contenido = $('#contenido');
+  if (!lista.length) {
+    contenido.innerHTML = `<p class="vacio">${!ps.length ? 'Registra tu primer pedido con el botón de abajo.' : q ? 'Ningún pedido coincide con la búsqueda.' : 'No hay pedidos en esta vista.'}</p>`;
+    return;
+  }
+  contenido.innerHTML = `<ul class="pedidos">${lista.map((p) => {
+    const t = total(p);
+    const pg = pagado(p);
+    const r = resta(p);
+    const avance = t > 0 ? Math.min(100, Math.round((pg / t) * 100)) : 0;
+    return `<li><button type="button" class="pedido${activo(p) ? '' : ' pedido--apagado'}" data-abrir="${esc(p.id)}">
+      <span class="pedido__cabeza">
+        <span class="pedido__cliente"><span class="pedido__folio">#${p.folio}</span> ${esc(p.cliente || 'Sin nombre')}</span>
+        <span class="etiqueta-estado etiqueta-estado--${esc(p.estado)}">${esc(ESTADOS[p.estado] || p.estado)}</span>
+      </span>
+      <span class="pedido__productos">${esc(productosTexto(p) || 'Sin productos')}</span>
+      ${entregaHtml(p)}
+      ${p.estado === 'cancelado' ? '' : `<span class="dinero">
+        <span>Total <b>${dinero(t)}</b></span>
+        <span>Pagado <b>${dinero(pg)}</b></span>
+        ${r > 0 ? `<span class="resta">Resta ${dinero(r)}</span>` : t > 0 ? `<span class="liquidado">${r < 0 ? `Saldo a favor ${dinero(-r)}` : 'Pagado ✓'}</span>` : ''}
+      </span>
+      ${t > 0 ? `<span class="avance" aria-hidden="true"><span style="width:${avance}%"></span></span>` : ''}`}
+    </button></li>`;
+  }).join('')}</ul>`;
+}
+
+// ── Hoja del pedido ──
+const hoja = $('#hoja');
+const form = $('#formulario');
+let editando = null;   // pedido existente, o null si es nuevo
+let borrador = null;   // { estado, items: [{ id, producto, cantidad, precio }], pagos: [{ id, fecha, monto, metodo }] }
+
+function conocidos() {
+  // Catálogo + lo que ya se ha vendido (con el último precio usado)
+  const mapa = new Map(CATALOGO.map((c) => [c.producto.toLowerCase(), c]));
+  [...doc.pedidos].sort((a, b) => (a.folio || 0) - (b.folio || 0)).forEach((p) => (p.items || []).forEach((i) => {
+    if (i.producto) mapa.set(i.producto.toLowerCase(), { producto: i.producto, precio: num(i.precio) });
+  }));
+  return mapa;
+}
+
+function abrirHoja(pedido) {
+  editando = pedido;
+  form.reset();
+  $('#aviso-hoja').hidden = true;
+  $('#hoja-titulo').textContent = pedido ? `Pedido #${pedido.folio}` : 'Nuevo pedido';
+  $('#borrar').hidden = !pedido;
+  form.elements.cliente.value = pedido?.cliente || '';
+  form.elements.contacto.value = pedido ? contactoVisible(pedido) : '';
+  form.elements.fecha.value = pedido?.fecha || hoyISO();
+  form.elements.entrega.value = pedido?.entrega || '';
+  form.elements.nota.value = pedido?.nota || '';
+  borrador = pedido
+    ? { estado: pedido.estado, via: viaDe(pedido), items: copia(pedido.items || []), pagos: copia(pedido.pagos || []) }
+    : { estado: 'nuevo', via: 'celular', items: [{ id: nuevoId('i'), producto: '', cantidad: 1, precio: '' }], pagos: [] };
+  $('#productos-conocidos').innerHTML = [...conocidos().values()].map((c) => `<option value="${esc(c.producto)}"></option>`).join('');
+  pintarEstados();
+  pintarVia();
+  pintarItems();
+  pintarPagos();
+  hoja.showModal();
+  if (!pedido) form.elements.cliente.focus();
+}
+
+function pintarEstados() {
+  $('#chips-estado').innerHTML = Object.entries(ESTADOS)
+    .map(([k, v]) => `<button type="button" class="chip" data-estado="${k}" aria-pressed="${borrador.estado === k}">${v}</button>`).join('');
+}
+function pintarVia() {
+  const v = VIAS[borrador.via];
+  $('#chips-via').innerHTML = Object.entries(VIAS)
+    .map(([k, x]) => `<button type="button" class="chip" data-via="${k}" aria-pressed="${borrador.via === k}">${x.nombre}</button>`).join('');
+  $('#contacto-etiqueta').innerHTML = v.etiqueta;
+  const input = form.elements.contacto;
+  input.type = v.tipo;
+  input.inputMode = v.teclado;
+  input.placeholder = v.ejemplo;
+}
+function pintarItems() {
+  $('#items').innerHTML = borrador.items.map((i, n) => `
+    <div class="renglon" data-item="${esc(i.id)}">
+      <label class="campo campo--ancho"><span style="padding-right:40px">Producto${borrador.items.length > 1 ? ` ${n + 1}` : ''}</span>
+        <input data-campo="producto" value="${esc(i.producto)}" list="productos-conocidos" autocomplete="off" placeholder="Ej. Tu mascota en miniatura"></label>
+      <button type="button" class="quitar" data-quitar-item="${esc(i.id)}" aria-label="Quitar producto"${borrador.items.length < 2 ? ' hidden' : ''}>×</button>
+      <label class="campo"><span>Cantidad</span>
+        <input data-campo="cantidad" type="number" inputmode="numeric" min="1" step="1" value="${esc(i.cantidad)}"></label>
+      <label class="campo"><span>Precio c/u</span>
+        <input data-campo="precio" type="number" inputmode="decimal" min="0" step="any" value="${esc(i.precio)}" placeholder="$"></label>
+      <p class="renglon__subtotal" data-subtotal></p>
+    </div>`).join('');
+  pintarTotales();
+}
+function pintarPagos() {
+  $('#pagos').innerHTML = borrador.pagos.map((x, n) => `
+    <div class="renglon renglon--pago" data-pago="${esc(x.id)}">
+      <span class="renglon__nombre">${n === 0 ? 'Anticipo' : `Pago ${n + 1}`}</span>
+      <button type="button" class="quitar" data-quitar-pago="${esc(x.id)}" aria-label="Quitar ${n === 0 ? 'anticipo' : 'pago'}">×</button>
+      <label class="campo"><span>Monto</span>
+        <input data-campo="monto" type="number" inputmode="decimal" min="0" step="any" value="${esc(x.monto)}" placeholder="$"></label>
+      <label class="campo"><span>Fecha</span>
+        <input data-campo="fecha" type="date" value="${esc(x.fecha)}"></label>
+      <label class="campo campo--metodo"><span>Forma de pago</span>
+        <select data-campo="metodo">${Object.entries(METODOS).map(([k, v]) => `<option value="${k}"${x.metodo === k ? ' selected' : ''}>${v}</option>`).join('')}</select></label>
+    </div>`).join('');
+  pintarTotales();
+}
+function pintarTotales() {
+  const t = total(borrador);
+  const pg = pagado(borrador);
+  const r = resta(borrador);
+  $('#t-total').textContent = dinero(t);
+  $('#t-pagado').textContent = dinero(pg);
+  $('#t-resta').textContent = r < 0 ? `A favor ${dinero(-r)}` : dinero(r);
+  document.querySelectorAll('[data-item]').forEach((el) => {
+    const i = borrador.items.find((x) => x.id === el.dataset.item);
+    const sub = num(i.cantidad) * num(i.precio);
+    el.querySelector('[data-subtotal]').textContent = num(i.cantidad) > 1 && sub ? `Subtotal ${dinero(sub)}` : '';
+  });
+  const liquidar = $('#liquidar');
+  liquidar.hidden = !(r > 0 && pg > 0);
+  liquidar.textContent = `Liquidar ${dinero(r)}`;
+  pintarWhatsapp();
+}
+
+// Mensaje para el cliente: lo que encargó, lo pagado y lo que resta. Por WhatsApp y correo va
+// prellenado; Instagram no acepta texto en el enlace, así que se copia para pegarlo en el chat.
+function mensajeCliente() {
+  const nombre = form.elements.cliente.value.trim().split(/\s+/)[0] || '';
+  const items = borrador.items.filter((i) => i.producto.trim());
+  const t = total(borrador);
+  const pg = pagado(borrador);
+  const r = resta(borrador);
+  const lineas = [`¡Hola${nombre ? ' ' + nombre : ''}! Te escribimos de Prismatix sobre tu pedido${editando ? ` #${editando.folio}` : ''}:`];
+  items.forEach((i) => lineas.push(`• ${num(i.cantidad) || 1}× ${i.producto.trim()}`));
+  if (borrador.estado === 'listo') lineas.push('', '¡Ya está listo para entregarse! ✨');
+  else if (form.elements.entrega.value && activo(borrador)) lineas.push('', `Entrega: ${fechaCorta(form.elements.entrega.value)}`);
+  if (t > 0) {
+    lineas.push('', `Total: ${dinero(t)}`);
+    if (pg > 0) lineas.push(`${borrador.pagos.length === 1 ? 'Anticipo' : 'Pagado'}: ${dinero(pg)}`);
+    lineas.push(r > 0 ? `Resta: ${dinero(r)}` : '¡Pagado por completo, gracias!');
+  }
+  return lineas.join('\n');
+}
+function pintarWhatsapp() {
+  const a = $('#whatsapp');
+  const valor = form.elements.contacto.value;
+  const via = borrador.via;
+  let href = '';
+  if (via === 'celular') {
+    const tel = celularWa(valor);
+    if (tel) href = `https://wa.me/${tel}?text=${encodeURIComponent(mensajeCliente())}`;
+  } else if (via === 'instagram') {
+    const u = usuarioIg(valor);
+    if (u) href = `https://ig.me/m/${u}`;
+  } else if (correoValido(valor)) {
+    const asunto = `Tu pedido${editando ? ` #${editando.folio}` : ''} · Prismatix`;
+    href = `mailto:${valor.trim()}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensajeCliente())}`;
+  }
+  a.hidden = !href;
+  $('#contacto-ayuda').hidden = !href || via !== 'instagram';
+  if (!href) return;
+  a.href = href;
+  a.className = 'whatsapp' + (via === 'celular' ? '' : ` whatsapp--${via}`);
+  a.target = via === 'correo' ? '_self' : '_blank';
+  $('#icono-whatsapp').style.display = via === 'celular' ? '' : 'none';
+  $('#whatsapp-texto').textContent = VIAS[via].boton;
+}
+// Instagram: al abrir el chat se copia el mensaje
+$('#whatsapp').addEventListener('click', () => {
+  if (borrador?.via !== 'instagram') return;
+  navigator.clipboard?.writeText(mensajeCliente()).then(
+    () => { $('#contacto-ayuda').textContent = 'Mensaje copiado: pégalo en el chat.'; },
+    () => { $('#contacto-ayuda').textContent = 'No se pudo copiar el mensaje.'; },
+  );
+});
+
+$('#items').addEventListener('input', (e) => {
+  const el = e.target.closest('[data-item]');
+  const campo = e.target.dataset.campo;
+  if (!el || !campo) return;
+  const i = borrador.items.find((x) => x.id === el.dataset.item);
+  i[campo] = e.target.value;
+  // Al elegir un producto conocido, se sugiere su precio si aún no hay uno
+  if (campo === 'producto' && !String(i.precio).trim()) {
+    const c = conocidos().get(e.target.value.trim().toLowerCase());
+    if (c?.precio) { i.precio = c.precio; el.querySelector('[data-campo="precio"]').value = c.precio; }
+  }
+  pintarTotales();
+});
+$('#pagos').addEventListener('input', (e) => {
+  const el = e.target.closest('[data-pago]');
+  const campo = e.target.dataset.campo;
+  if (!el || !campo) return;
+  borrador.pagos.find((x) => x.id === el.dataset.pago)[campo] = e.target.value;
+  pintarTotales();
+});
+$('#items').addEventListener('click', (e) => {
+  const id = e.target.closest('[data-quitar-item]')?.dataset.quitarItem;
+  if (!id) return;
+  borrador.items = borrador.items.filter((x) => x.id !== id);
+  pintarItems();
+});
+$('#pagos').addEventListener('click', (e) => {
+  const id = e.target.closest('[data-quitar-pago]')?.dataset.quitarPago;
+  if (!id) return;
+  borrador.pagos = borrador.pagos.filter((x) => x.id !== id);
+  pintarPagos();
+});
+$('#agregar-item').addEventListener('click', () => {
+  borrador.items.push({ id: nuevoId('i'), producto: '', cantidad: 1, precio: '' });
+  pintarItems();
+  $('#items').lastElementChild.querySelector('input').focus();
+});
+function agregarPago(monto = '') {
+  borrador.pagos.push({ id: nuevoId('g'), fecha: hoyISO(), monto, metodo: borrador.pagos.at(-1)?.metodo || 'efectivo' });
+  pintarPagos();
+}
+$('#agregar-pago').addEventListener('click', () => {
+  agregarPago();
+  $('#pagos').lastElementChild.querySelector('[data-campo="monto"]').focus();
+});
+$('#liquidar').addEventListener('click', () => agregarPago(resta(borrador)));
+$('#chips-estado').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-estado]');
+  if (!b) return;
+  borrador.estado = b.dataset.estado;
+  pintarEstados();
+  pintarWhatsapp();
+});
+$('#chips-via').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-via]');
+  if (!b || b.dataset.via === borrador.via) return;
+  borrador.via = b.dataset.via;
+  form.elements.contacto.value = '';
+  pintarVia();
+  pintarWhatsapp();
+  form.elements.contacto.focus();
+});
+['cliente', 'contacto', 'entrega'].forEach((n) => form.elements[n].addEventListener('input', pintarWhatsapp));
+hoja.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => hoja.close()));
+hoja.addEventListener('click', (e) => { if (e.target === hoja) hoja.close(); });
+
+function avisar(texto) {
+  $('#aviso-hoja').hidden = !texto;
+  $('#aviso-hoja').textContent = texto;
+  if (texto) $('#aviso-hoja').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const cliente = form.elements.cliente.value.trim().replace(/\s+/g, ' ');
+  const items = borrador.items
+    .map((i) => ({ id: i.id, producto: i.producto.trim(), cantidad: Math.max(1, Math.round(num(i.cantidad)) || 1), precio: num(i.precio) }))
+    .filter((i) => i.producto);
+  const pagos = borrador.pagos
+    .map((x) => ({ id: x.id, fecha: x.fecha || hoyISO(), monto: num(x.monto), metodo: x.metodo || 'efectivo' }))
+    .filter((x) => x.monto > 0)
+    .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
+  if (!cliente) { avisar('Falta el nombre del cliente.'); form.elements.cliente.focus(); return; }
+  if (!items.length) { avisar('Agrega al menos un producto.'); return; }
+  const valor = form.elements.contacto.value.trim();
+  if (valor && borrador.via === 'correo' && !correoValido(valor)) { avisar('Revisa el correo: no parece válido.'); form.elements.contacto.focus(); return; }
+  if (valor && borrador.via === 'instagram' && !usuarioIg(valor)) { avisar('Revisa el usuario de Instagram: solo letras, números, puntos y guiones bajos.'); form.elements.contacto.focus(); return; }
+  const item = {
+    id: editando?.id || nuevoId(),
+    cliente,
+    via: borrador.via,
+    contacto: borrador.via === 'celular' ? String(form.elements.contacto.value).replace(/[^\d+]/g, '')
+      : borrador.via === 'instagram' ? usuarioIg(form.elements.contacto.value)
+      : form.elements.contacto.value.trim(),
+    items,
+    pagos,
+    estado: borrador.estado,
+    fecha: form.elements.fecha.value || hoyISO(),
+    entrega: form.elements.entrega.value || '',
+    nota: form.elements.nota.value.trim(),
+    creado: editando?.creado || new Date().toISOString(),
+    modificado: new Date().toISOString(),
+  };
+  // Al marcarlo como entregado se guarda el día (si no se había guardado antes)
+  // El campo "celular" de los pedidos viejos queda reemplazado por via/contacto
+  if (editando && 'celular' in editando) item.celular = undefined;
+  if (item.estado === 'entregado') item.entregadoEl = editando?.entregadoEl || hoyISO();
+  hacer({ t: 'guardar', id: item.id, item });
+  hoja.close();
+});
+$('#borrar').addEventListener('click', () => {
+  if (!editando || !confirm(`¿Eliminar el pedido #${editando.folio} de ${editando.cliente}? Si no se hizo, mejor márcalo como Cancelado.`)) return;
+  hacer({ t: 'borrar', id: editando.id });
+  hoja.close();
+});
+
+// ── Exportar a CSV (lo abre Excel) ──
+function exportar() {
+  const filas = [['FOLIO', 'FECHA', 'CLIENTE', 'CONTACTO POR', 'CONTACTO', 'PRODUCTOS', 'PIEZAS', 'TOTAL', 'PAGADO', 'RESTA', 'ESTADO', 'ENTREGA', 'NOTA']];
+  [...doc.pedidos]
+    .sort((a, b) => (a.folio || 0) - (b.folio || 0))
+    .forEach((p) => filas.push([p.folio, p.fecha, p.cliente, contactoDe(p) ? VIAS[viaDe(p)].nombre : '', contactoVisible(p), productosTexto(p), piezas(p), total(p), pagado(p), resta(p), ESTADOS[p.estado] || p.estado, p.entrega, p.nota]));
+  const csv = filas.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `pedidos-${hoyISO()}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ── Eventos de la página ──
+$('#agregar').addEventListener('click', () => abrirHoja(null));
+$('#exportar').addEventListener('click', exportar);
+$('#buscar').addEventListener('input', pintar);
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button');
+  if (!el || hoja.contains(el)) return;
+  if (el.dataset.filtro) { filtro = el.dataset.filtro; $('#buscar').value = ''; pintar(); }
+  else if (el.dataset.abrir) abrirHoja(doc.pedidos.find((p) => p.id === el.dataset.abrir));
+});
+
+// Para pruebas automáticas
+window.pedidos = { get doc() { return doc; }, get pendientes() { return pendientes; }, get modo() { return modo; }, total, pagado, resta, celularWa, usuarioIg };
+
+cargar();
+</script>
+</body>
+</html>
