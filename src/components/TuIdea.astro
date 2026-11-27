@@ -4,7 +4,7 @@
 // por el canal elegido. Prioridad: WhatsApp (si hay número), Instagram, Facebook y el correo al final.
 import Icono from './Icono.astro';
 import { SITIO, CATEGORIAS } from '../config';
-import { canales, atributosCanal } from '../utils';
+import { canales, atributosCanal, esVisible } from '../utils';
 import { getCollection } from 'astro:content';
 
 const lista = canales('Quiero una pieza Prismatix', 'Hola, Prismatix. Tengo una idea y me gustaría hacerla realidad con ustedes.');
@@ -12,7 +12,7 @@ const redes = lista.filter((c) => c.id !== 'correo');
 const correo = lista.find((c) => c.id === 'correo')!;
 
 // El selector solo ofrece las líneas que ya tienen productos visibles
-const productos = await getCollection('productos', (p) => !p.data.oculto);
+const productos = await getCollection('productos', esVisible);
 const lineas = CATEGORIAS.filter((c) => productos.some((p) => p.data.categoria === c.nombre));
 
 const pasos = [
@@ -25,8 +25,12 @@ const pasos = [
 <section id="tu-idea" class="agenda" aria-labelledby="titulo-agenda">
   <div class="contenedor agenda__rejilla">
     <div class="agenda__intro">
-      <p class="titulo-seccion">Dale forma a tu idea</p>
-      <h2 id="titulo-agenda">Tú la imaginas, <em>nosotros la hacemos real.</em></h2>
+      <p class="titulo-seccion sin-navidad">Dale forma a tu idea</p>
+      <p class="titulo-seccion solo-navidad">Dale forma al regalo perfecto</p>
+      <h2 id="titulo-agenda">
+        <span class="sin-navidad">Tú la imaginas, <em>nosotros la hacemos real.</em></span>
+        <span class="solo-navidad">Tú imaginas el regalo, <em>nosotros lo hacemos real.</em></span>
+      </h2>
       <ol class="pasos">
         {pasos.map((p, i) => (
           <li>
@@ -69,6 +73,10 @@ const pasos = [
       <label>
         <span>Cuéntanos tu idea</span>
         <textarea name="idea" rows="4" required placeholder="Ej. Una figura de mi perro Coco para regalarle a mi mamá en su cumpleaños."></textarea>
+      </label>
+      <label class="formulario__regalo solo-navidad">
+        <input name="regalo" type="checkbox" value="sí" />
+        <span>🎁 Es para regalo</span>
       </label>
       <div class="formulario__fila">
         <label>
@@ -123,6 +131,8 @@ const pasos = [
         '',
         `Me gustaría crear: ${valor('linea')}`,
         `Mi idea: ${valor('idea')}`,
+        // La casilla solo se ve en temporada
+        ...(valor('regalo') && form.querySelector<HTMLElement>('.formulario__regalo')?.offsetParent ? ['Es para regalo 🎁'] : []),
         `Para cuándo: ${fecha}`,
         valor('telefono') ? `Mi teléfono: ${valor('telefono')}` : '',
       ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
@@ -225,6 +235,9 @@ const pasos = [
   textarea { resize: vertical; min-height: 110px; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--berry-magenta); outline-offset: 1px; border-color: transparent; }
   .formulario__fila { display: grid; gap: 16px; }
+  .formulario__regalo { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
+  .formulario__regalo input { width: 22px; height: 22px; min-height: 0; padding: 0; accent-color: var(--berry-texto); }
+  .formulario__regalo span { font-size: 0.95rem; }
   .formulario__acciones { display: grid; gap: 10px; margin-top: 4px; }
   .formulario__acciones .boton { width: 100%; }
   .formulario__correo {

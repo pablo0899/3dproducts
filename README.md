@@ -53,7 +53,7 @@ src/pages/                     ← portada (catálogo) y página de detalle de p
 3. Revisa con `npm run dev` y publica.
 
 El nombre del archivo `.md` es la URL: `llavero-gato.md` → `/productos/llavero-gato/`.
-Las líneas (Mascotas, Figuras personalizadas, Fandom deportivo, Souvenirs xalapeños, Juegos de mesa) y sus íconos se definen en `CATEGORIAS` dentro de `src/config.ts`; el campo `categoria` debe coincidir exactamente.
+Las líneas (Mascotas, Figuras personalizadas, Fandom deportivo, Souvenirs, Juegos de mesa) y sus íconos se definen en `CATEGORIAS` dentro de `src/config.ts`; el campo `categoria` debe coincidir exactamente.
 Si te falta un campo obligatorio, `npm run build` te dirá exactamente cuál.
 
 ## Modelos 3D: de STL a GLB

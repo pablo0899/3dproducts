@@ -1,4 +1,13 @@
-import { SITIO } from './config';
+import { SITIO, TEMPORADA } from './config';
+import type { CollectionEntry } from 'astro:content';
+
+// Un producto se publica si no está oculto. Los de temporada se dejan de generar cuando
+// se compila después de que terminó (mientras tanto, el modo de temporada los esconde en el navegador).
+export function esVisible(p: CollectionEntry<'productos'>) {
+  if (p.data.oculto) return false;
+  const hoy = new Date().toISOString().slice(0, 10);
+  return !(p.data.temporada === TEMPORADA.id && hoy > TEMPORADA.hasta);
+}
 
 export function formatearPrecio(precio?: number) {
   if (precio === undefined) return 'Precio a consultar';

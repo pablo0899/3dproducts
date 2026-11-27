@@ -23,6 +23,10 @@ const productos = defineCollection({
     orden: z.number().default(100),
     // true = no se muestra en el sitio (ni tarjeta ni página); útil para guardar borradores
     oculto: z.boolean().default(false),
+    // 'navidad' = solo aparece durante la temporada (TEMPORADA en config.ts)
+    temporada: z.string().optional(),
+    // true = en temporada lleva la etiqueta "Regalo ideal" y va primero
+    regalo: z.boolean().default(false),
   }),
 });
 

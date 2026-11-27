@@ -1,7 +1,7 @@
 ---
 nombre: Llaveros xalapeños
 resumen: Un pedacito de Xalapa en tu bolsillo (o en el de tus visitas).
-categoria: Souvenirs xalapeños
+categoria: Souvenirs
 precio: 90
 fotos:
   - /productos/llaveros-xalapenos/foto-1.svg

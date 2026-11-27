@@ -222,7 +222,7 @@
 const LOCAL = 'prismatix-ideas-v1';
 const ESTADOS = { pendiente: 'Por probar', impresa: 'Impresa', descartada: 'Descartada' };
 // Categorías de partida: Temporada y las líneas de producto del sitio (src/config.ts → CATEGORIAS)
-const CATEGORIAS_BASE = ['Temporada', 'Mascotas', 'Figuras personalizadas', 'Fandom deportivo', 'Souvenirs xalapeños', 'Juegos de mesa', 'Para creadores'];
+const CATEGORIAS_BASE = ['Temporada', 'Mascotas', 'Figuras personalizadas', 'Fandom deportivo', 'Souvenirs', 'Juegos de mesa', 'Para creadores'];
 const slug = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'cat';
 function conCategorias(d) {
   if (!Array.isArray(d.categorias)) d.categorias = CATEGORIAS_BASE.map((nombre) => ({ id: slug(nombre), nombre }));

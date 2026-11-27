@@ -33,7 +33,11 @@
     radial-gradient(520px 380px at 10% 90%, rgb(224 122 95 / 0.22), transparent 70%),
     linear-gradient(160deg, var(--plum-night) 0%, #2b1a2c 60%, var(--deep-plum) 100%);
 
-  --color-tinte: #fbf0ef;     /* ivory con un toque de Soft Rose, para bandas */
+  /* Temporada navideña: dorado solo decorativo (sobre ciruela, o con texto ciruela encima) */
+  --oro: #e9b949;
+  --oro-suave: #f6dc9a;
+
+  --color-tinte: #fbf0ef;    /* ivory con un toque de Soft Rose, para bandas */
   --sombra: 0 1px 2px rgb(58 36 59 / 0.06), 0 12px 32px -12px rgb(58 36 59 / 0.18);
 
   --radio: 12px;
@@ -58,6 +62,19 @@ body {
 }
 
 [hidden] { display: none !important; }
+
+/* ── Temporada navideña ──
+   Base.astro pone data-temporada="navidad" en <html> según la fecha.
+   .solo-navidad aparece solo en temporada; .sin-navidad se esconde en temporada. */
+:root:not([data-temporada='navidad']) .solo-navidad { display: none !important; }
+:root[data-temporada='navidad'] .sin-navidad { display: none !important; }
+:root[data-temporada='navidad'] {
+  /* El terciopelo cambia el resplandor naranja por uno dorado */
+  --fondo-terciopelo:
+    radial-gradient(700px 420px at 80% 10%, rgb(216 58 107 / 0.35), transparent 65%),
+    radial-gradient(520px 380px at 10% 90%, rgb(233 185 73 / 0.2), transparent 70%),
+    linear-gradient(160deg, var(--plum-night) 0%, #2b1a2c 60%, var(--deep-plum) 100%);
+}
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 

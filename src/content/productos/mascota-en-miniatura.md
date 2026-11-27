@@ -13,6 +13,7 @@ dimensiones: 5, 6 o 7 cm de alto
 colores: [Al natural, Pintada a mano]
 destacado: true
 orden: 1
+regalo: true
 ---
 
 Nos mandas fotos de tu mascota y la convertimos en una figura de colección con su pose, sus orejas y esa cara que pone cuando quiere croquetas.

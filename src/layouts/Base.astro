@@ -2,7 +2,9 @@
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
 import Icono from '../components/Icono.astro';
-import { SITIO } from '../config';
+import Destello from '../components/Destello.astro';
+import ArbolElfos from '../components/ArbolElfos.astro';
+import { SITIO, TEMPORADA } from '../config';
 import { canales, atributosCanal, usuarioInstagram, enlaceCorreo } from '../utils';
 
 interface Props {
@@ -34,6 +36,17 @@ const redes = otros.filter((c) => c.id !== 'correo');
     <meta property="og:image" content={new URL(imagen, Astro.site)} />
     <link rel="icon" href="/marca/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/marca/apple-touch-icon.png" />
+    <!-- Temporada: va en el <head> para que la página no parpadee entre un diseño y otro -->
+    <script is:inline define:vars={{ t: TEMPORADA }}>
+      (function () {
+        var r = document.documentElement;
+        var forzar = new URLSearchParams(location.search).get('temporada');
+        var hoy = new Date().toLocaleDateString('en-CA'); // AAAA-MM-DD en la hora local
+        if (forzar === t.id) hoy = hoy >= t.desde && hoy <= t.hasta ? hoy : t.desde;
+        if (forzar === 'no' || hoy < t.desde || hoy > t.hasta) return;
+        r.dataset.temporada = t.id;
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -42,6 +55,11 @@ const redes = otros.filter((c) => c.id !== 'correo');
     />
   </head>
   <body>
+    <a class="temporada-aviso solo-navidad" href="/#catalogo">
+      <Destello tamano={14} />
+      <span>{TEMPORADA.aviso}</span>
+      <span class="temporada-aviso__ir" aria-hidden="true">→</span>
+    </a>
     <header class="cabecera">
       <div class="contenedor cabecera__fila">
         <Logo />
@@ -102,6 +120,8 @@ const redes = otros.filter((c) => c.id !== 'correo');
       </div>
     )}
 
+    <ArbolElfos />
+
     <p class="aviso" role="status" hidden></p>
   </body>
 </html>
@@ -154,6 +174,26 @@ const redes = otros.filter((c) => c.id !== 'correo');
 
 <style>
   html { scroll-behavior: smooth; }
+
+  /* Aviso de temporada, arriba de la cabecera (se va con el scroll) */
+  .temporada-aviso {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 16px;
+    background: var(--plum-night);
+    color: var(--ivory-dust);
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    text-decoration: none;
+  }
+  .temporada-aviso :global(svg) { flex: none; }
+  .temporada-aviso__ir { color: var(--oro); transition: translate 0.2s ease; }
+  .temporada-aviso:hover .temporada-aviso__ir { translate: 3px 0; }
   .cabecera {
     position: sticky;
     top: 0;

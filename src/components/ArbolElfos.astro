@@ -1,0 +1,516 @@
+---
+// Escena de temporada: dos elfos arreglan el árbol de Navidad en el margen izquierdo de la página
+// (sin tarjeta: van sueltos sobre el fondo). Solo en pantallas anchas y solo en temporada (.solo-navidad).
+//
+// Todo avanza por sesión, no por página: la entrada (el elfo sube la estrella y se prenden las luces)
+// se ve solo la primera vez, y cada clic en un enlace, botón o campo del sitio suma un adorno o un regalo
+// (los clics en fondos o textos sueltos no cuentan).
+// Los clics se alternan: el elfo de la escalera cuelga un adorno en el pino y el del piso lleva un
+// regalo a la pila. La cuenta se guarda al momento en sessionStorage, así que el clic en un enlace que
+// cambia de página también cuenta y el árbol aparece igual de arreglado en la siguiente.
+// Con prefers-reduced-motion no hay animaciones: los adornos y regalos aparecen directo.
+
+const luces = [
+  [99, 190], [112, 196], [125, 198], [138, 196], [151, 190],
+  [84, 262], [99, 270], [114, 274], [130, 275], [146, 272], [162, 265],
+  [70, 333], [88, 341], [106, 346], [124, 348], [142, 346], [160, 341], [178, 334],
+];
+const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
+---
+
+<div class="arbol-elfos solo-navidad" aria-hidden="true">
+  <svg viewBox="0 0 210 410">
+    <defs>
+      <linearGradient id="ae-pino" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#3f8a6a" />
+        <stop offset="0.55" stop-color="#2f6b55" />
+        <stop offset="1" stop-color="#22503f" />
+      </linearGradient>
+      <linearGradient id="ae-estrella" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fff3c9" />
+        <stop offset="0.5" stop-color="#f6dc9a" />
+        <stop offset="1" stop-color="#e9b949" />
+      </linearGradient>
+      <radialGradient id="ae-nieve" cx="0.5" cy="0.3" r="0.7">
+        <stop offset="0" stop-color="#ffffff" />
+        <stop offset="1" stop-color="#efe4ea" />
+      </radialGradient>
+      <filter id="ae-brillo" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="4" />
+      </filter>
+
+      <!-- Partes del elfo (origen en los pies; mide ~70 de alto) -->
+      <g id="ae-cabeza">
+        <path d="M-8 -46 L-16 -52 L-8.5 -41 Z" fill="#e8b48f" />
+        <path d="M8 -46 L16 -52 L8.5 -41 Z" fill="#e8b48f" />
+        <circle cy="-44" r="9.5" fill="#f2c4a0" />
+        <circle cx="-5" cy="-40.5" r="2.2" fill="#e88a8a" opacity="0.55" />
+        <circle cx="5" cy="-40.5" r="2.2" fill="#e88a8a" opacity="0.55" />
+        <circle cx="-3.2" cy="-45" r="1.25" fill="#3a243b" />
+        <circle cx="3.2" cy="-45" r="1.25" fill="#3a243b" />
+        <path d="M-2.6 -40.6 Q0 -38.2 2.6 -40.6" fill="none" stroke="#3a243b" stroke-width="1" stroke-linecap="round" />
+      </g>
+      <g id="ae-piernas">
+        <rect x="-6.5" y="-15" width="4.5" height="12" fill="#fdfbf7" />
+        <rect x="2" y="-15" width="4.5" height="12" fill="#fdfbf7" />
+        <path d="M-6.5 -12h4.5v2.5h-4.5zM-6.5 -7h4.5v2.5h-4.5zM2 -12h4.5v2.5h-4.5zM2 -7h4.5v2.5h-4.5z" fill="#c22f5d" />
+        <path d="M-2 0 L-10 0 Q-15 -1 -16 -6 Q-12 -3.5 -9 -4.5 L-2 -4.5 Z" fill="#3a243b" />
+        <path d="M2 0 L10 0 Q15 -1 16 -6 Q12 -3.5 9 -4.5 L2 -4.5 Z" fill="#3a243b" />
+      </g>
+    </defs>
+
+    <!-- Montículo de nieve (con borde rosado para que se lea también sobre el fondo claro) -->
+    <ellipse cx="108" cy="392" rx="104" ry="15" fill="#3a243b" opacity="0.1" />
+    <path d="M6 392 Q20 374 108 374 Q196 374 208 392 Q108 404 6 392 Z" fill="url(#ae-nieve)" stroke="#f4b6c2" stroke-width="1.2" />
+
+    <!-- Árbol -->
+    <rect x="115" y="350" width="20" height="30" rx="2" fill="#6b3f2a" />
+    <path d="M125 226 L193 352 Q125 368 57 352 Z" fill="url(#ae-pino)" />
+    <path d="M125 166 L179 283 Q125 297 71 283 Z" fill="url(#ae-pino)" />
+    <path d="M125 106 L165 215 Q125 226 85 215 Z" fill="url(#ae-pino)" />
+    <path d="M57 352 Q66 346 76 354 Q66 357 57 352Z M174 354 Q184 346 193 352 Q184 357 174 354Z" fill="#fdfbf7" opacity="0.9" />
+    <path d="M71 283 Q79 277 88 285 Q79 288 71 283Z M162 285 Q171 277 179 283 Q171 288 162 285Z" fill="#fdfbf7" opacity="0.9" />
+
+    <!-- Guirnaldas y luces -->
+    <g class="ae-luces">
+      <path d="M99 190 Q125 204 151 190 M84 262 Q123 282 162 265 M70 333 Q124 356 178 334" fill="none" stroke="#e9b949" stroke-opacity="0.7" stroke-width="0.9" />
+      {luces.map(([x, y], i) => (
+        <circle
+          class="ae-luz"
+          cx={x}
+          cy={y}
+          r="2.4"
+          fill={coloresLuz[i % coloresLuz.length]}
+          style={`--retraso:${((i * 0.37) % 1.6).toFixed(2)}s`}
+        />
+      ))}
+    </g>
+
+    <!-- Adornos del pino (los cuelga el script, uno por clic) -->
+    <g data-adornos></g>
+
+    <!-- Pila de regalos (la llena el script) -->
+    <g data-pila></g>
+
+    <!-- Escalera -->
+    <g stroke="#a8764f" stroke-width="3" stroke-linecap="round">
+      <line x1="18" y1="388" x2="55" y2="150" />
+      <line x1="40" y1="388" x2="76" y2="152" />
+    </g>
+    <g stroke="#8a5a3b" stroke-width="2.4" stroke-linecap="round">
+      <line x1="22" y1="358" x2="44" y2="358" />
+      <line x1="26.5" y1="328" x2="48.5" y2="328" />
+      <line x1="31" y1="298" x2="53" y2="298" />
+      <line x1="35.5" y1="268" x2="57.5" y2="268" />
+      <line x1="40" y1="238" x2="62" y2="238" />
+      <line x1="44.5" y1="208" x2="66.5" y2="208" />
+      <line x1="49" y1="178" x2="71" y2="178" />
+    </g>
+
+    <!-- Elfo 1, en la escalera: sube la estrella y festeja cada regalo -->
+    <g transform="translate(57 208)">
+      <g class="ae-elfo1">
+        <use href="#ae-piernas" />
+        <g transform="translate(-8 -30)">
+          <path d="M0 0 L-6 9" stroke="#3f8a6a" stroke-width="5" stroke-linecap="round" />
+          <circle cx="-6.5" cy="10" r="2.6" fill="#f2c4a0" />
+        </g>
+        <path d="M-9 -34 L9 -34 L13 -14 L8.5 -11 L4.3 -14 L0 -11 L-4.3 -14 L-8.5 -11 L-13 -14 Z" fill="#3f8a6a" />
+        <rect x="-11.5" y="-22" width="23" height="3.6" fill="#3a243b" />
+        <rect x="-2.6" y="-22.6" width="5.2" height="4.8" fill="none" stroke="#e9b949" stroke-width="1.2" />
+        <path d="M-10 -35 L10 -35 L10 -33 L6.5 -29.5 L3.3 -33 L0 -29.5 L-3.3 -33 L-6.5 -29.5 L-10 -33 Z" fill="#e9b949" />
+        <use href="#ae-cabeza" />
+        <path d="M-10.5 -49 Q0 -57 10.5 -49 Q6 -60 -2 -66 Q-10 -72 -18 -70 Q-10 -64 -10.5 -49 Z" fill="#c22f5d" />
+        <path d="M-11 -50.5 Q0 -57.5 11 -50.5 L11 -46.5 Q0 -53 -11 -46.5 Z" fill="#fdfbf7" />
+        <circle cx="-18.5" cy="-70" r="3.4" fill="#fdfbf7" />
+        <g transform="translate(8 -31)">
+          <g class="ae-brazo-estrella" data-brazo-festejo>
+            <path d="M0 0 L9 -9" stroke="#3f8a6a" stroke-width="5" stroke-linecap="round" />
+            <circle cx="10" cy="-10" r="2.6" fill="#f2c4a0" />
+          </g>
+        </g>
+      </g>
+    </g>
+
+    <!-- Estrella: sale de la mano del elfo y se acomoda en la punta -->
+    <g transform="translate(125 100)">
+      <g class="ae-estrella">
+        <circle r="15" fill="#f6dc9a" opacity="0.55" filter="url(#ae-brillo)" class="ae-estrella__halo" />
+        <path
+          transform="translate(-13 -13) scale(1.08)"
+          d="M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12C6.4 11.4 11.4 6.4 12 0z"
+          fill="url(#ae-estrella)"
+        />
+      </g>
+    </g>
+
+    <!-- Elfo 2, el repartidor: camina con cada regalo hasta la pila -->
+    <g transform="translate(184 396)">
+      <g data-caminante>
+        <g class="ae-elfo2" data-cuerpo>
+          <use href="#ae-piernas" />
+          <g transform="translate(-8 -31)">
+            <g data-brazo-izq>
+              <path d="M0 0 L-6 10" stroke="#c22f5d" stroke-width="5" stroke-linecap="round" />
+              <circle cx="-6.5" cy="11" r="2.6" fill="#f2c4a0" />
+            </g>
+          </g>
+          <path d="M-9 -34 L9 -34 L13 -14 L8.5 -11 L4.3 -14 L0 -11 L-4.3 -14 L-8.5 -11 L-13 -14 Z" fill="#c22f5d" />
+          <rect x="-11.5" y="-22" width="23" height="3.6" fill="#3a243b" />
+          <rect x="-2.6" y="-22.6" width="5.2" height="4.8" fill="none" stroke="#e9b949" stroke-width="1.2" />
+          <path d="M-10 -35 L10 -35 L10 -33 L6.5 -29.5 L3.3 -33 L0 -29.5 L-3.3 -33 L-6.5 -29.5 L-10 -33 Z" fill="#fdfbf7" />
+          <use href="#ae-cabeza" />
+          <path d="M-10.5 -49 Q0 -57 10.5 -49 Q8 -62 2 -68 Q-2 -74 8 -78 Q-6 -78 -8 -66 Q-10 -58 -10.5 -49 Z" fill="#3f8a6a" />
+          <path d="M-11 -50.5 Q0 -57.5 11 -50.5 L11 -46.5 Q0 -53 -11 -46.5 Z" fill="#fdfbf7" />
+          <circle cx="8.5" cy="-78" r="3.4" fill="#fdfbf7" />
+          <!-- Regalo que lleva en brazos (lo dibuja el script) -->
+          <g data-cargado></g>
+          <g transform="translate(8 -31)">
+            <g class="ae-brazo-der" data-brazo-der>
+              <path d="M0 0 L6 10" stroke="#c22f5d" stroke-width="5" stroke-linecap="round" />
+              <circle cx="6.5" cy="11" r="2.6" fill="#f2c4a0" />
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </svg>
+  <p class="arbol-elfos__pista">Explora y decora el árbol</p>
+</div>
+<!-- La entrada se ve solo la primera vez de la sesión; va inline para que no parpadee al cargar -->
+<script is:inline>
+  try {
+    if (sessionStorage.getItem('prismatix-arbol-entrada')) document.querySelector('.arbol-elfos').classList.add('ae-sin-entrada');
+    else sessionStorage.setItem('prismatix-arbol-entrada', '1');
+  } catch (e) {}
+</script>
+
+<script>
+  const escena = document.querySelector<HTMLElement>('.arbol-elfos');
+  if (escena) iniciar(escena);
+
+  function iniciar(escena: HTMLElement) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const LLAVE = 'prismatix-arbol-clics';
+    const CASA = 184; // x del elfo repartidor
+    const MANO = [75, 167]; // mano del elfo de la escalera
+    const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = <T extends Element>(sel: string) => escena.querySelector<T>(sel)!;
+    const adornos = $<SVGGElement>('[data-adornos]');
+    const pila = $<SVGGElement>('[data-pila]');
+    const cargado = $<SVGGElement>('[data-cargado]');
+    const caminante = $<SVGGElement>('[data-caminante]');
+    const cuerpo = $<SVGGElement>('[data-cuerpo]');
+    const brazoIzq = $<SVGGElement>('[data-brazo-izq]');
+    const brazoDer = $<SVGGElement>('[data-brazo-der]');
+    const brazoEscalera = $<SVGGElement>('[data-brazo-festejo]');
+
+    // Lugares en el pino: [x, y]. Se llenan en este orden.
+    const lugaresAdorno = [
+      [113, 160], [141, 224], [100, 242], [152, 302], [120, 314], [84, 318], [136, 178], [108, 207],
+      [146, 206], [125, 240], [156, 256], [104, 290], [166, 324], [138, 330], [100, 334],
+    ];
+    // Lugares de la pila: [x, base, ancho, alto]. Los primeros van en el piso; los últimos, encima.
+    const lugaresRegalo = [
+      [80, 384, 22, 18], [101, 384, 15, 13], [152, 385, 18, 15], [60, 386, 15, 12],
+      [126, 387, 16, 12], [40, 389, 13, 11], [80, 366, 15, 12], [152, 370, 12, 10],
+      [101, 371, 10, 9], [80, 354, 10, 9],
+    ];
+    const coloresAdorno = ['#d83a6b', '#e9b949', '#f4b6c2', '#e07a5f', '#fdfbf7'];
+    const coloresRegalo = [
+      ['#c22f5d', '#e9b949'], ['#e9b949', '#552b61'], ['#f4b6c2', '#c22f5d'],
+      ['#552b61', '#f6dc9a'], ['#fdfbf7', '#d83a6b'], ['#e07a5f', '#fdfbf7'],
+    ];
+    const regaloEnLugar: (SVGGElement | undefined)[] = [];
+
+    // Qué toca en el clic número k: se alternan adorno y regalo; con el pino lleno, solo regalos
+    function plan(k: number) {
+      let a = 0;
+      let r = 0;
+      for (let j = 0; j <= k; j++) {
+        const tipo = j % 2 === 0 && a < lugaresAdorno.length ? 'adorno' : 'regalo';
+        if (j === k) return { tipo, i: tipo === 'adorno' ? a : r };
+        if (tipo === 'adorno') a++;
+        else r++;
+      }
+      return { tipo: 'regalo', i: r };
+    }
+
+    function nodo(tipo: string, attrs: Record<string, string | number>) {
+      const n = document.createElementNS(NS, tipo);
+      for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+      return n as SVGElement;
+    }
+
+    // Adornos: esferas casi siempre; cada tercero un destello dorado y cada quinto un moño
+    function dibujarAdorno(i: number) {
+      const [x, y] = lugaresAdorno[i];
+      const c = coloresAdorno[i % coloresAdorno.length];
+      const g = nodo('g', {}) as SVGGElement;
+      if (i % 3 === 2) {
+        g.append(nodo('path', {
+          d: 'M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12C6.4 11.4 11.4 6.4 12 0z',
+          transform: `translate(${x - 6.5} ${y - 6.5}) scale(0.54)`,
+          fill: '#f6dc9a',
+        }));
+      } else if (i % 5 === 4) {
+        g.append(
+          nodo('path', { d: `M${x} ${y} q-7 -6 -8 0 q1 5 8 0 q7 -6 8 0 q-1 5 -8 0z`, fill: '#c22f5d' }),
+          nodo('path', { d: `M${x} ${y} l-3 7 M${x} ${y} l3 7`, stroke: '#c22f5d', 'stroke-width': 1.6, 'stroke-linecap': 'round' }),
+          nodo('circle', { cx: x, cy: y, r: 1.8, fill: '#e9b949' }),
+        );
+      } else {
+        g.append(
+          nodo('line', { x1: x, y1: y - 9, x2: x, y2: y - 5, stroke: '#e9b949', 'stroke-width': 0.8 }),
+          nodo('circle', { cx: x, cy: y, r: 5.6, fill: c }),
+          nodo('circle', { cx: x - 1.8, cy: y - 1.9, r: 1.5, fill: '#fff', opacity: 0.65 }),
+        );
+      }
+      return g;
+    }
+
+    function dibujarRegalo(x: number, base: number, w: number, h: number, [caja, liston]: string[]) {
+      const g = nodo('g', {}) as SVGGElement;
+      const t = base - h;
+      g.append(
+        nodo('ellipse', { cx: x, cy: base, rx: w / 2 + 1, ry: 1.6, fill: '#3a243b', opacity: 0.18 }),
+        nodo('rect', { x: x - w / 2, y: t, width: w, height: h, rx: 1.5, fill: caja }),
+        nodo('rect', { x: x - w * 0.09, y: t, width: w * 0.18, height: h, fill: liston }),
+        nodo('rect', { x: x - w / 2, y: t + h * 0.3, width: w, height: h * 0.17, fill: liston }),
+        nodo('path', {
+          d: `M${x} ${t} q${-w * 0.35} ${-h * 0.45} ${-w * 0.38} ${-h * 0.08} q${w * 0.08} ${h * 0.14} ${w * 0.38} ${h * 0.08}` +
+             ` q${w * 0.35} ${-h * 0.45} ${w * 0.38} ${-h * 0.08} q${-w * 0.08} ${h * 0.14} ${-w * 0.38} ${h * 0.08}z`,
+          fill: liston,
+        }),
+      );
+      return g;
+    }
+
+    function colgar(i: number, animar: boolean) {
+      const adorno = dibujarAdorno(i);
+      adornos.append(adorno);
+      if (!animar) return;
+      const [x, y] = lugaresAdorno[i];
+      const dx = MANO[0] - x;
+      const dy = MANO[1] - y;
+      Object.assign(adorno.style, { transformBox: 'fill-box', transformOrigin: '50% 50%' });
+      adorno.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px) scale(0.4)`, opacity: 0 },
+          { transform: `translate(${dx * 0.45}px, ${dy * 0.45 - 22}px) scale(1.2)`, opacity: 1, offset: 0.5 },
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        ],
+        { duration: 850, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+      );
+    }
+
+    // Cuando la pila se llena, el regalo nuevo reemplaza al más viejo de ese lugar
+    function apilar(i: number, animar: boolean) {
+      const lugar = i % lugaresRegalo.length;
+      const [x, base, w, h] = lugaresRegalo[lugar];
+      const regalo = dibujarRegalo(x, base, w, h, coloresRegalo[i % coloresRegalo.length]);
+      regaloEnLugar[lugar]?.remove();
+      pila.append(regalo);
+      regaloEnLugar[lugar] = regalo;
+      if (animar) {
+        regalo.animate(
+          [{ transform: 'translateY(-22px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
+          { duration: 520, easing: 'cubic-bezier(0.3, 1.6, 0.6, 1)' },
+        );
+      }
+    }
+
+    function aplicar(k: number, animar: boolean) {
+      const { tipo, i } = plan(k);
+      if (tipo === 'adorno') colgar(i, animar);
+      else apilar(i, animar);
+    }
+
+    let clics = 0;
+    try {
+      clics = Math.min(Number(sessionStorage.getItem(LLAVE)) || 0, 300);
+    } catch {
+      /* sin almacenamiento: el árbol empieza vacío en cada página */
+    }
+    for (let k = 0; k < clics; k++) aplicar(k, false);
+
+    const esperar = (a: Animation) => a.finished.catch(() => {});
+    const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    // Elfo de la escalera: estira el brazo y el adorno vuela de su mano al pino
+    async function colgarAnimado(k: number) {
+      const brazo = brazoEscalera.animate(
+        [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-40deg)' }, { transform: 'rotate(10deg)' }, { transform: 'rotate(0deg)' }],
+        { duration: 750, easing: 'ease-in-out' },
+      );
+      aplicar(k, true);
+      await esperar(brazo);
+      await pausa(250);
+    }
+
+    // Elfo del piso: carga el regalo, camina hasta la pila, lo deja y regresa
+    async function entregarAnimado(k: number) {
+      const { i } = plan(k);
+      const [x] = lugaresRegalo[i % lugaresRegalo.length];
+      const dx = x + 16 - CASA; // se para a la derecha del lugar
+      const paso = Math.max(500, Math.abs(dx) * 11);
+
+      cargado.replaceChildren(dibujarRegalo(0, -13, 19, 16, coloresRegalo[i % coloresRegalo.length]));
+      const sostenerIzq = brazoIzq.animate([{ transform: 'rotate(-55deg)' }], { duration: 200, fill: 'forwards' });
+      const sostenerDer = brazoDer.animate([{ transform: 'rotate(55deg)' }], { duration: 200, fill: 'forwards' });
+      const bamboleo = cuerpo.animate(
+        [
+          { transform: 'translateY(0) rotate(0deg)' },
+          { transform: 'translateY(-3px) rotate(-3deg)' },
+          { transform: 'translateY(0) rotate(0deg)' },
+          { transform: 'translateY(-3px) rotate(3deg)' },
+          { transform: 'translateY(0) rotate(0deg)' },
+        ],
+        { duration: 520, iterations: Infinity },
+      );
+      await esperar(caminante.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${dx}px)` }], { duration: paso, easing: 'ease-in-out', fill: 'forwards' }));
+
+      cargado.replaceChildren();
+      aplicar(k, true);
+      sostenerIzq.cancel();
+      sostenerDer.cancel();
+
+      await esperar(caminante.animate([{ transform: `translateX(${dx}px)` }, { transform: 'translateX(0)' }], { duration: paso * 0.8, easing: 'ease-in-out', fill: 'forwards' }));
+      bamboleo.cancel();
+    }
+
+    // Una fila por elfo, así trabajan los dos a la vez. Si se acumulan muchos clics (más de 3
+    // en espera), los sobrantes aparecen directo para que el árbol no se quede atrás.
+    function crearFila(trabajo: (k: number) => Promise<void>) {
+      const fila: number[] = [];
+      let ocupado = false;
+      return async (k: number) => {
+        if (fila.length >= 3) {
+          aplicar(k, false);
+          return;
+        }
+        fila.push(k);
+        if (ocupado) return;
+        ocupado = true;
+        while (fila.length) await trabajo(fila.shift()!);
+        ocupado = false;
+      };
+    }
+    const filaEscalera = crearFila(colgarAnimado);
+    const filaPiso = crearFila(entregarAnimado);
+
+    // Solo cuentan los clics en elementos con los que se interactúa (enlaces, botones, tarjetas,
+    // pestañas, campos del formulario…), no en fondos ni textos sueltos
+    const INTERACTIVOS = 'a[href], button, summary, label, input, select, textarea, [role="button"], [role="tab"], [data-copiar]';
+
+    document.addEventListener('click', (e) => {
+      // Fuera de temporada o en pantalla angosta la escena no se muestra (display: none) y no cuenta
+      if (escena.getClientRects().length === 0) return;
+      const objetivo = e.target instanceof Element ? e.target.closest(INTERACTIVOS) : null;
+      if (!objetivo || (objetivo as HTMLButtonElement).disabled) return;
+      const k = clics++;
+      // Se guarda antes de animar: si el clic fue en un enlace, la siguiente página ya lo trae puesto
+      try {
+        sessionStorage.setItem(LLAVE, String(clics));
+      } catch {
+        /* sin almacenamiento */
+      }
+      if (sinMovimiento) return aplicar(k, false);
+      if (plan(k).tipo === 'adorno') filaEscalera(k);
+      else filaPiso(k);
+    });
+  }
+</script>
+
+<style>
+  /* Suelta en el margen izquierdo, donde sobra espacio junto al contenido (1200 px) */
+  .arbol-elfos {
+    position: fixed;
+    left: 10px;
+    bottom: 12px;
+    z-index: 5;
+    display: none;
+    width: min(210px, calc((100vw - var(--ancho-max)) / 2 - 14px));
+    pointer-events: none;
+  }
+  @media (min-width: 1440px) {
+    .arbol-elfos { display: block; }
+  }
+  svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 6px 14px rgb(58 36 59 / 0.22)); }
+
+  .arbol-elfos__pista {
+    width: fit-content;
+    margin: 6px auto 0;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgb(253 251 247 / 0.92);
+    box-shadow: 0 2px 10px rgb(58 36 59 / 0.15);
+    color: var(--plum-night);
+    font-family: var(--fuente-display);
+    font-style: italic;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Todos los transform de SVG giran desde el origen local de su grupo */
+  .arbol-elfos g { transform-box: view-box; }
+
+  /* 1. El elfo sube el brazo con la estrella */
+  .ae-brazo-estrella { animation: ae-subir-brazo 2.6s cubic-bezier(0.3, 0.7, 0.3, 1) 0.3s both; }
+  @keyframes ae-subir-brazo {
+    0% { transform: rotate(40deg); }
+    35%, 55% { transform: rotate(-28deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  /* 2. La estrella vuela de su mano a la punta y se queda brillando */
+  .ae-estrella {
+    animation:
+      ae-volar 1.6s cubic-bezier(0.4, 0, 0.2, 1) 1s both,
+      ae-latir 3.2s ease-in-out 2.8s infinite;
+  }
+  @keyframes ae-volar {
+    0% { transform: translate(-47px, 70px) scale(0.55) rotate(-90deg); }
+    60% { transform: translate(-12px, -10px) scale(1.15) rotate(10deg); }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  }
+  @keyframes ae-latir {
+    50% { transform: scale(1.1); }
+  }
+  .ae-estrella__halo { animation: ae-halo 3.2s ease-in-out 2.8s infinite; }
+  @keyframes ae-halo {
+    50% { opacity: 0.95; }
+  }
+
+  /* 3. Se prenden las luces y titilan */
+  .ae-luces { animation: ae-aparecer 0.6s ease 2.7s both; }
+  .ae-luz { animation: ae-titilar 1.6s ease-in-out calc(3.3s + var(--retraso)) infinite; }
+  @keyframes ae-aparecer {
+    from { opacity: 0; }
+  }
+  @keyframes ae-titilar {
+    50% { opacity: 0.35; }
+  }
+
+  /* Mientras espera, el repartidor saluda */
+  .ae-brazo-der { animation: ae-saludar 2.4s ease-in-out 4s infinite; }
+  @keyframes ae-saludar {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-150deg); }
+    35% { transform: rotate(-120deg); }
+    50% { transform: rotate(-150deg); }
+    70% { transform: rotate(0deg); }
+  }
+  /* Desde la segunda página de la sesión: sin entrada, el árbol ya está listo y todo sigue vivo */
+  .ae-sin-entrada .ae-brazo-estrella, .ae-sin-entrada .ae-luces { animation: none; }
+  .ae-sin-entrada .ae-estrella { animation: ae-latir 3.2s ease-in-out infinite; }
+  .ae-sin-entrada .ae-estrella__halo { animation-delay: 0s; }
+  .ae-sin-entrada .ae-luz { animation-delay: var(--retraso); }
+  .ae-sin-entrada .ae-brazo-der { animation-delay: 1s; }
+
+  /* El elfo de la escalera se mece un poco */
+  .ae-elfo1 { animation: ae-mecer 4s ease-in-out 3s infinite; }
+  @keyframes ae-mecer {
+    50% { transform: rotate(-2deg); }
+  }
+</style>

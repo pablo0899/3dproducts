@@ -6,10 +6,10 @@ import Visor3D from '../../components/Visor3D.astro';
 import Llamado from '../../components/Llamado.astro';
 import Icono from '../../components/Icono.astro';
 import Compartir from '../../components/Compartir.astro';
-import { formatearPrecio, canales, atributosCanal } from '../../utils';
+import { formatearPrecio, canales, atributosCanal, esVisible } from '../../utils';
 
 export async function getStaticPaths() {
-  const productos = await getCollection('productos', (p) => !p.data.oculto);
+  const productos = await getCollection('productos', esVisible);
   return productos.map((producto) => ({ params: { id: producto.id }, props: { producto } }));
 }
 
@@ -21,6 +21,11 @@ const mensaje = `Hola, Prismatix. Me interesa "${nombre}" (${Astro.url.href}).\n
 // (salvo que sea el único canal, y entonces es el botón principal).
 const [principal, ...otros] = canales(`Me interesa: ${nombre}`, mensaje);
 const redes = otros.filter((c) => c.id !== 'correo');
+// En temporada, el botón principal pide la pieza para regalo
+const mensajeRegalo = `Hola, Prismatix. Quiero "${nombre}" para regalo 🎁 (${Astro.url.href}).
+
+¿Me ayudan a personalizarlo?`;
+const [principalRegalo] = canales(`Para regalo: ${nombre}`, mensajeRegalo);
 ---
 
 <Base titulo={nombre} descripcion={resumen} imagen={fotos[0]} barra={false}>
@@ -61,9 +66,13 @@ const redes = otros.filter((c) => c.id !== 'correo');
       </dl>
 
       <div class="pedir">
-        <a class="boton" {...atributosCanal(principal)}>
+        <a class="boton sin-navidad" {...atributosCanal(principal)}>
           {principal.id !== 'correo' && <Icono nombre={principal.id} tamano={20} />}
           {principal.id === 'whatsapp' ? 'Lo quiero · WhatsApp' : `Lo quiero · Escríbenos por ${principal.nombre}`}
+        </a>
+        <a class="boton solo-navidad" {...atributosCanal(principalRegalo)}>
+          {principalRegalo.id !== 'correo' && <Icono nombre={principalRegalo.id} tamano={20} />}
+          Lo quiero para regalo · {principalRegalo.nombre}
         </a>
         {redes.map((c) => (
           <a class="boton boton--secundario" {...atributosCanal(c)}>

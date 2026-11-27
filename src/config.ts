@@ -10,18 +10,34 @@ export const SITIO = {
   eslogan: 'Ideas que se vuelven reales.',
   subtitulo: 'Creemos que la imaginación también se puede tocar. Transformamos ideas en objetos únicos, personalizados y llenos de significado.',
   cierre: 'Más que objetos, son historias en forma de arte.',
-  descripcion: 'Prismatix, estudio creativo en Xalapa: tu mascota en miniatura, fundas de micrófono con tu logo y piezas únicas a partir de tu idea. Ideas que se vuelven reales.',
+  descripcion: 'Prismatix, estudio creativo en Xalapa: tu mascota en miniatura, fundas de micrófono con tu logo, llaveros de Vice City y piezas únicas a partir de tu idea. Ideas que se vuelven reales.',
   email: 'hola@prismatix.mx',
   // Número de WhatsApp con código de país, sin + ni espacios (ej. 5212281234567).
   // Es el canal principal: va primero en todos los contactos. Vacío = no se muestra.
-  whatsapp: '5212213441015',
+  whatsapp: '5212281012396',
   // Cómo se ve el número en la página.
-  whatsappVisible: '221 344 1015',
+  whatsappVisible: '228 101 2396',
   // URLs de las redes sociales; vacío = no se muestran.
   instagram: 'https://www.instagram.com/prismatix.mx/',
   facebook: 'https://www.facebook.com/profile.php?id=61595064758804',
   moneda: 'MXN',
 };
+
+// Temporada: entre `desde` y `hasta` (incluidas) el sitio se viste de Navidad solo, según la
+// fecha del visitante; al día siguiente de `hasta` vuelve al diseño de siempre sin publicar nada.
+// El próximo año basta con cambiar las fechas. Para verla fuera de fechas: /?temporada=navidad
+// (y /?temporada=no para verla apagada).
+export const TEMPORADA = {
+  id: 'navidad',
+  desde: '2026-11-26',
+  hasta: '2027-01-06',
+  // Barra arriba de la cabecera. Sin prometer fechas de entrega
+  aviso: 'Temporada de regalos · Personalízalo con su nombre o sus colores',
+  titular: 'Regalos que nadie más va a tener.',
+  subtitulo: 'Con su nombre, sus colores y su historia. Elige uno de la colección o cuéntanos tu idea y lo hacemos real.',
+  coleccion: 'Regalos con historia',
+  coleccionEntrada: 'Todos se pueden personalizar con su nombre o sus colores.',
+} as const;
 
 // Líneas de producto. El `nombre` debe coincidir exactamente con el
 // campo `categoria` de los productos.
@@ -29,7 +45,7 @@ export const CATEGORIAS = [
   { nombre: 'Mascotas', icono: 'mascota' },
   { nombre: 'Figuras personalizadas', icono: 'figura' },
   { nombre: 'Fandom deportivo', icono: 'estadio' },
-  { nombre: 'Souvenirs xalapeños', icono: 'souvenir' },
+  { nombre: 'Souvenirs', icono: 'souvenir' },
   { nombre: 'Juegos de mesa', icono: 'dado' },
   { nombre: 'Para creadores', icono: 'microfono' },
 ] as const;

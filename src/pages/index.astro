@@ -7,18 +7,35 @@ import Destello from '../components/Destello.astro';
 import Llamado from '../components/Llamado.astro';
 import TuIdea from '../components/TuIdea.astro';
 import TarjetaIdea from '../components/TarjetaIdea.astro';
-import { SITIO, CATEGORIAS, ESENCIA } from '../config';
+import { SITIO, CATEGORIAS, ESENCIA, TEMPORADA } from '../config';
+import { esVisible } from '../utils';
 
-const productos = (await getCollection('productos', (p) => !p.data.oculto)).sort(
+const productos = (await getCollection('productos', esVisible)).sort(
   (a, b) => Number(b.data.destacado) - Number(a.data.destacado) || a.data.orden - b.data.orden,
 );
 const cuantos = (linea: string) => productos.filter((p) => p.data.categoria === linea).length;
 // Solo se muestran las líneas que ya tienen productos; con una sola, los accesos y el filtro no hacen falta.
 const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
+// Nieve de destellos en la portada (temporada): posiciones fijas para que no cambien en cada compilación
+const copos = Array.from({ length: 18 }, (_, i) => ({
+  x: (i * 37 + 11) % 100,
+  tam: 6 + ((i * 5) % 9),
+  dur: 9 + ((i * 7) % 8),
+  retraso: -((i * 1.7) % 12),
+  oro: i % 3 === 0,
+}));
 ---
 
 <Base>
   <section class="portada seccion-oscura">
+    <div class="nieve solo-navidad" aria-hidden="true">
+      {copos.map((c) => (
+        <span
+          class:list={{ 'nieve--oro': c.oro }}
+          style={`--x:${c.x}%;--tam:${c.tam}px;--dur:${c.dur}s;--retraso:${c.retraso.toFixed(1)}s`}
+        ></span>
+      ))}
+    </div>
     <!-- Isotipo con haces de luz -->
     <div class="prisma" aria-hidden="true">
       <span class="prisma__haz prisma__haz--1"></span>
@@ -30,11 +47,17 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
 
     <div class="contenedor portada__texto">
       <p class="titulo-seccion">{SITIO.descriptor}</p>
-      <h1>{SITIO.eslogan}</h1>
-      <p class="portada__sub">{SITIO.subtitulo}</p>
-      <div class="portada__acciones">
+      <h1 class="sin-navidad">{SITIO.eslogan}</h1>
+      <h1 class="solo-navidad">{TEMPORADA.titular}</h1>
+      <p class="portada__sub sin-navidad">{SITIO.subtitulo}</p>
+      <p class="portada__sub solo-navidad">{TEMPORADA.subtitulo}</p>
+      <div class="portada__acciones sin-navidad">
         <a href="#tu-idea" class="boton">Cuéntanos tu idea</a>
         <a href="#catalogo" class="boton boton--secundario">Ver la colección</a>
+      </div>
+      <div class="portada__acciones solo-navidad">
+        <a href="#catalogo" class="boton">Ver regalos</a>
+        <a href="#tu-idea" class="boton boton--secundario">Cuéntanos tu idea</a>
       </div>
     </div>
 
@@ -75,8 +98,11 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
 
   <section id="catalogo" class="contenedor catalogo" aria-labelledby="titulo-rejilla">
     <div class="catalogo__cabecera">
-      <h2 class="titular" id="titulo-rejilla">La colección</h2>
-      <p class="entrada">Piezas listas para regalar o coleccionar. Todas se pueden personalizar.</p>
+      <h2 class="titular" id="titulo-rejilla">
+        <span class="sin-navidad">La colección</span><span class="solo-navidad">{TEMPORADA.coleccion}</span>
+      </h2>
+      <p class="entrada sin-navidad">Piezas listas para regalar o coleccionar. Todas se pueden personalizar.</p>
+      <p class="entrada solo-navidad">{TEMPORADA.coleccionEntrada}</p>
     </div>
 
     {lineas.length > 1 && (
@@ -120,7 +146,8 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
     let visibles = 0;
     tarjetas.forEach((t) => {
       t.hidden = !!filtro && t.dataset.categoria !== filtro;
-      if (!t.hidden) visibles++;
+      // Las de temporada fuera de temporada ya están escondidas con CSS y no cuentan
+      if (!t.hidden && t.offsetParent !== null) visibles++;
     });
     vacio.hidden = visibles > 0;
   }
@@ -240,6 +267,27 @@ const lineas = CATEGORIAS.filter((c) => cuantos(c.nombre) > 0);
   .prisma { animation-duration: 1.4s; }
   @keyframes aparecer {
     from { opacity: 0; translate: 0 14px; }
+  }
+
+  /* Temporada: el isotipo brilla en dorado */
+  :global(:root[data-temporada='navidad']) .prisma__isotipo { filter: drop-shadow(0 0 40px rgb(233 185 73 / 0.45)); }
+
+  /* Nieve de destellos (temporada). Sin animación con prefers-reduced-motion: quedan fuera de vista */
+  .nieve { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .nieve span {
+    position: absolute;
+    top: -16px;
+    left: var(--x);
+    width: var(--tam);
+    height: var(--tam);
+    background: var(--ivory-dust);
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    opacity: 0.55;
+    animation: nevar var(--dur) linear var(--retraso) infinite;
+  }
+  .nieve span.nieve--oro { background: var(--oro); opacity: 0.8; }
+  @keyframes nevar {
+    to { top: 100%; transform: translateX(24px) rotate(180deg); }
   }
 
   /* ── Esencia ── */
