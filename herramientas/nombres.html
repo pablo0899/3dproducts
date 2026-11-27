@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#3A243B">
+<title>Nombres · Prismatix</title>
+<link rel="icon" href="https://prismatix.mx/marca/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="taller.css">
+<style>
+  /* Figuras con nombre: lista de nombres, figura de cada uno, letra, vista previa y 3MF por placa */
+  @font-face { font-family: 'N-Pacifico'; src: url('fuentes/Pacifico-Regular.ttf'); font-display: swap; }
+  @font-face { font-family: 'N-Lobster'; src: url('fuentes/Lobster-Regular.ttf'); font-display: swap; }
+  @font-face { font-family: 'N-Mountains'; src: url('fuentes/MountainsofChristmas-Bold.ttf'); font-display: swap; }
+  @font-face { font-family: 'N-Sniglet'; src: url('fuentes/Sniglet-ExtraBold.ttf'); font-display: swap; }
+
+  .sub { margin: 0; color: rgb(253 251 247 / 0.78); font-size: 0.9rem; max-width: 62ch; }
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-block: 20px; }
+  .tarjeta { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); min-width: 0; }
+  .tarjeta h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.3rem; }
+  .pista { margin: 0; color: var(--suave); font-size: 0.82rem; }
+  textarea {
+    width: 100%; min-height: 120px; padding: 12px; border: 1px solid rgb(58 36 59 / 0.2); border-radius: 10px;
+    background: var(--blanco); font-size: 16px; line-height: 1.5; resize: vertical;
+  }
+
+  /* Lista de nombres */
+  .filas { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .fila {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+    padding: 8px 10px; border-radius: 10px; background: var(--tinte); cursor: pointer; border: 2px solid transparent;
+  }
+  .fila[aria-current='true'] { border-color: var(--ciruela); }
+  .fila__nombre { font-weight: 600; overflow-wrap: anywhere; }
+  .fila select { min-height: 40px; max-width: 170px; padding: 0 8px; border: 1px solid rgb(58 36 59 / 0.2); border-radius: 8px; background: var(--blanco); font-size: 0.85rem; }
+  .fila__estado { grid-column: 1 / -1; font-size: 0.78rem; color: var(--suave); }
+  .fila__estado--aviso { color: var(--berry-texto); font-weight: 600; }
+
+  /* Figuras */
+  .figuras { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  .figura {
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border: 1px solid var(--borde);
+    border-radius: 12px; background: var(--blanco); font-size: 0.72rem; line-height: 1.2; text-align: center; cursor: pointer;
+  }
+  .figura img { width: 64px; height: 64px; }
+  .figura[aria-pressed='true'] { border-color: var(--ciruela); box-shadow: inset 0 0 0 1px var(--ciruela); background: var(--tinte); }
+
+  /* Letra */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    min-height: 44px; padding: 0 16px; border: 1px solid var(--borde); border-radius: 999px; background: var(--blanco);
+    font-size: 1.15rem; cursor: pointer;
+  }
+  .chip[aria-pressed='true'] { background: var(--ciruela); border-color: var(--ciruela); color: var(--marfil); }
+  .control { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600; }
+  .control input[type='range'] { flex: 1; accent-color: var(--berry-texto); }
+  .control output { min-width: 3.5em; font-variant-numeric: tabular-nums; text-align: right; }
+  .colores { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; }
+  .colores label { display: flex; align-items: center; gap: 8px; }
+  .colores input { width: 44px; height: 32px; padding: 0; border: 1px solid var(--borde); border-radius: 8px; background: none; }
+
+  /* Vista previa y placas */
+  .vista { display: block; width: 100%; aspect-ratio: 1; border-radius: 12px; background: #2b1a2c; touch-action: pan-y; }
+  .placas { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .placa { display: flex; flex-direction: column; gap: 6px; }
+  .placa canvas { width: 100%; aspect-ratio: 1; border-radius: 10px; background: #2b1a2c; }
+  .placa .boton { min-height: 44px; padding: 0 14px; font-size: 0.9rem; }
+  .placa small { color: var(--suave); font-size: 0.8rem; }
+  .estado-carga { margin: 0; color: var(--suave); font-size: 0.85rem; min-height: 1.3em; }
+  .pasos { margin: 0; padding-left: 20px; color: var(--suave); font-size: 0.85rem; display: grid; gap: 4px; }
+
+  @media (min-width: 900px) {
+    .rejilla { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+    .tarjeta--ancha { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="contenedor">
+    <div class="barra">
+      <span class="marca"><img src="https://prismatix.mx/marca/isotipo-96.webp" alt="" width="30" height="30">Prismatix · Taller</span>
+      <div class="barra__acciones">
+        <a class="enlace-claro" href="/salir">Salir</a>
+      </div>
+    </div>
+    <nav class="pestanas" aria-label="Secciones del taller">
+      <a href="inventario.html">Filamentos</a>
+      <a href="ideas.html">Ideas</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="cotizador.html">Cotizar</a>
+      <a href="nombres.html" aria-current="page">Nombres</a>
+    </nav>
+    <h1>Figuras con nombre</h1>
+    <p class="sub">Escribe los nombres, elige la figura de cada uno y descarga el 3MF por placa para ElegooSlicer: filamento 1 la base, filamento 2 el relieve y el nombre.</p>
+  </div>
+</header>
+
+<main class="contenedor">
+  <div class="rejilla">
+    <section class="tarjeta">
+      <h2>Nombres</h2>
+      <textarea id="lista" placeholder="Un nombre por renglón&#10;Sofía&#10;Mateo&#10;Abuela Lupe" aria-label="Nombres, uno por renglón" autocomplete="off" spellcheck="false"></textarea>
+      <ul class="filas" id="filas"></ul>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Vista previa</h2>
+      <canvas class="vista" id="vista" aria-label="Vista 3D de la figura con el nombre; arrastra para girarla"></canvas>
+      <p class="estado-carga" id="carga" role="status"></p>
+    </section>
+
+    <section class="tarjeta tarjeta--ancha">
+      <h2>Figura</h2>
+      <p class="pista">Toca una figura para ponerla al nombre seleccionado. "Todos" se la pone a toda la lista.</p>
+      <div class="chips"><button type="button" class="chip" id="a-todos" style="font-size:.9rem">Usar en todos</button></div>
+      <div class="figuras" id="figuras"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Letra</h2>
+      <div class="chips" id="fuentes"></div>
+      <label class="control">Tamaño <input type="range" id="tamano" min="70" max="115" step="5" value="100"><output id="tamano-v">100%</output></label>
+      <div class="colores">
+        <label><input type="color" id="c-base" value="#ba7d4a"> Base</label>
+        <label><input type="color" id="c-glaseado" value="#fff8ee"> Relieve y nombre</label>
+      </div>
+      <p class="pista" id="colores-de">Colores de la figura seleccionada, solo para la vista previa (en la impresora mandan los filamentos que cargues).</p>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Placas</h2>
+      <p class="pista" id="resumen-placas">Escribe al menos un nombre.</p>
+      <div class="placas" id="placas"></div>
+      <ol class="pasos">
+        <li>Abre el 3MF en ElegooSlicer (si avisa que viene de Bambu Studio, acepta).</li>
+        <li>En Objetos revisa: Base = filamento 1; Glaseado (el relieve) y Nombre = filamento 2.</li>
+        <li>Lamina y revisa la vista de capas: el cambio de color empieza a 1.5 mm.</li>
+      </ol>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/earcut@2.2.4/dist/earcut.min.js"></script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }</script>
+<script type="module">
+import opentype from 'https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.module.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
+import { zipSync } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/fflate.module.js';
+import { mallaNombre, leerFigura, acomodarEnPlacas, archivos3MF, CAMA } from './nombres.js';
+
+const LOCAL = 'prismatix-nombres-v1';
+const FUENTES = [
+  { id: 'pacifico', nombre: 'Pacifico', archivo: 'Pacifico-Regular.ttf', css: 'N-Pacifico' },
+  { id: 'lobster', nombre: 'Lobster', archivo: 'Lobster-Regular.ttf', css: 'N-Lobster' },
+  { id: 'mountains', nombre: 'Navideña', archivo: 'MountainsofChristmas-Bold.ttf', css: 'N-Mountains' },
+  { id: 'sniglet', nombre: 'Redonda', archivo: 'Sniglet-ExtraBold.ttf', css: 'N-Sniglet' },
+];
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+let figuras = [];
+const porId = (id) => figuras.find((f) => f.id === id);
+let estado = { texto: '', figuras: [], fuente: 'pacifico', tamano: 100, sel: 0, porDefecto: 'christmas-tree', coloresFig: {} };
+try { estado = { ...estado, ...JSON.parse(localStorage.getItem(LOCAL) || '{}') }; } catch {}
+const guardar = () => { try { localStorage.setItem(LOCAL, JSON.stringify(estado)); } catch {} };
+
+// ── Carga de fuentes y figuras (cada figura se descarga la primera vez que se usa) ──
+const fuentesCargadas = new Map();
+async function fuente(id) {
+  if (!fuentesCargadas.has(id)) {
+    const f = FUENTES.find((x) => x.id === id);
+    fuentesCargadas.set(id, fetch('fuentes/' + f.archivo).then((r) => r.arrayBuffer()).then((b) => opentype.parse(b)));
+  }
+  return fuentesCargadas.get(id);
+}
+const datosCargados = new Map();
+function datos(id) {
+  if (!datosCargados.has(id)) {
+    const f = porId(id);
+    datosCargados.set(id, fetch('figuras/' + id + '.bin.gz')
+      .then((r) => { if (!r.ok) throw new Error(r.status); return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); })
+      .then((b) => leerFigura(f, b)));
+  }
+  return datosCargados.get(id);
+}
+
+// ── Lista de nombres ──
+const nombres = () => estado.texto.split('\n').map((s) => s.trim()).filter(Boolean);
+function filas() {
+  const ns = nombres();
+  while (estado.figuras.length < ns.length) estado.figuras.push(estado.porDefecto);
+  return ns.map((n, i) => ({ nombre: n, figura: porId(estado.figuras[i]) ? estado.figuras[i] : estado.porDefecto }));
+}
+
+async function pintarFilas() {
+  const fs = filas();
+  if (estado.sel >= fs.length) estado.sel = Math.max(0, fs.length - 1);
+  const f = await fuente(estado.fuente);
+  const opciones = figuras.map((x) => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('');
+  $('#filas').innerHTML = fs.map((r, i) => {
+    const m = mallaNombre(f, porId(r.figura), r.nombre, estado.tamano / 100);
+    const chico = m && m.alto < 6;   // con menos de 6 mm de alto las letras cuesta leerlas
+    const texto = !m ? 'Sin letras para dibujar' : chico
+      ? `Queda de ${m.alto.toFixed(1)} mm de alto (reducido al ${Math.round(m.escala * 100)}% para caber): puede costar leerlo. Prueba una figura con más espacio o un nombre más corto.`
+      : `${m.ancho.toFixed(0)} × ${m.alto.toFixed(0)} mm${m.escala < 0.98 ? ` · reducido al ${Math.round(m.escala * 100)}%` : ''}${m.grabado ? ' · grabado' : ''}`;
+    return `<li class="fila" data-i="${i}" aria-current="${i === estado.sel}">
+      <span class="fila__nombre" style="font-family:'${FUENTES.find((x) => x.id === estado.fuente).css}',cursive">${esc(r.nombre)}</span>
+      <select data-i="${i}" aria-label="Figura para ${esc(r.nombre)}">${opciones.replace(`value="${r.figura}"`, `value="${r.figura}" selected`)}</select>
+      <span class="fila__estado ${chico || !m ? 'fila__estado--aviso' : ''}">${texto}</span></li>`;
+  }).join('');
+}
+
+function pintarFiguras() {
+  const actual = filas()[estado.sel]?.figura ?? estado.porDefecto;
+  $('#figuras').innerHTML = figuras.map((f) => `<button type="button" class="figura" data-f="${f.id}" aria-pressed="${f.id === actual}">
+    <img src="figuras/${f.id}.png" alt="" width="64" height="64" loading="lazy">${esc(f.nombre)}</button>`).join('');
+}
+function pintarFuentes() {
+  $('#fuentes').innerHTML = FUENTES.map((f) => `<button type="button" class="chip" data-fuente="${f.id}" aria-pressed="${f.id === estado.fuente}" style="font-family:'${f.css}',cursive">${f.nombre}</button>`).join('');
+}
+
+// ── Vista previa con WebGL (three.js): la figura en 3D que se puede girar, y las placas vistas de arriba ──
+// Cada figura trae sus colores (la galleta café con glaseado blanco, el suéter rojo con crema) y se
+// pueden cambiar; el nombre se pinta del color del relieve porque se imprime con ese filamento.
+const coloresDe = (id) => estado.coloresFig?.[id] ?? porId(id)?.colores ?? ['#ba7d4a', '#fff8ee'];
+const materiales = new Map();
+function mat(id) {
+  if (!materiales.has(id)) materiales.set(id, { base: new THREE.MeshStandardMaterial({ roughness: 0.85 }), relieve: new THREE.MeshStandardMaterial({ roughness: 0.6 }) });
+  const m = materiales.get(id);
+  const [b, r] = coloresDe(id);
+  m.base.color.set(b);
+  m.relieve.color.set(r);
+  return m;
+}
+function pintarColores() {
+  const id = filas()[estado.sel]?.figura ?? estado.porDefecto;
+  const [b, r] = coloresDe(id);
+  $('#c-base').value = b;
+  $('#c-glaseado').value = r;
+  $('#colores-de').textContent = `Colores de «${porId(id)?.nombre ?? ''}», solo para la vista previa (en la impresora mandan los filamentos que cargues).`;
+}
+function geometria(m) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(m.pos, 3));
+  g.setIndex(new THREE.BufferAttribute(m.tri, 1));
+  const plana = g.toNonIndexed();   // caras planas: se ven bien las orillas del glaseado
+  plana.computeVertexNormals();
+  g.dispose();
+  return plana;
+}
+const geoFiguras = new Map();
+async function geoFigura(id) {
+  if (!geoFiguras.has(id)) geoFiguras.set(id, datos(id).then((d) => ({ base: geometria(d.base), adornos: geometria(d.adornos) })));
+  return geoFiguras.get(id);
+}
+function luces(escena) {
+  escena.add(new THREE.HemisphereLight(0xffffff, 0x4a3a4a, 1.6));
+  const sol = new THREE.DirectionalLight(0xffffff, 2.2);
+  sol.position.set(-60, -90, 160);
+  escena.add(sol);
+}
+// Grupo de una figura con su nombre (las geometrías de la figura se comparten; la del nombre es propia)
+function grupoFigura(id, geo, nombre) {
+  const m = mat(id);
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(geo.base, m.base), new THREE.Mesh(geo.adornos, m.relieve));
+  if (nombre) {
+    const gn = geometria(nombre);
+    if (nombre.grabado) gn.translate(0, 0, 0.02);   // en la vista se dibuja encima con el color de la galleta
+    const mn = new THREE.Mesh(gn, nombre.grabado ? m.base : m.relieve);
+    mn.userData.propia = true;
+    g.add(mn);
+  }
+  return g;
+}
+// Solo la malla del nombre es propia de cada grupo; las de la figura se reusan
+const liberar = (grupo) => grupo.traverse((o) => { if (o.userData.propia) o.geometry.dispose(); });
+
+const lienzo = $('#vista');
+const render = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true });
+render.setPixelRatio(Math.min(devicePixelRatio, 2));
+const escena = new THREE.Scene();
+escena.background = new THREE.Color('#2b1a2c');
+luces(escena);
+const camara = new THREE.PerspectiveCamera(30, 1, 1, 2000);
+camara.up.set(0, 0, 1);
+const controles = new OrbitControls(camara, lienzo);
+controles.enableDamping = false;
+lienzo.style.touchAction = 'pan-y';   // en el celular, deslizar hacia arriba o abajo sigue moviendo la página
+controles.addEventListener('change', () => render.render(escena, camara));
+function ajustarLienzo() {
+  const w = lienzo.clientWidth;
+  if (!w) return;
+  render.setSize(w, w, false);
+  render.render(escena, camara);
+}
+new ResizeObserver(ajustarLienzo).observe(lienzo);
+
+let figuraEnVista = null, idEnVista = null;
+let turnoVista = 0;
+async function pintarVista() {
+  const turno = ++turnoVista;
+  const r = filas()[estado.sel];
+  if (figuraEnVista) { escena.remove(figuraEnVista); liberar(figuraEnVista); figuraEnVista = null; }
+  if (!r) { render.render(escena, camara); $('#carga').textContent = 'Escribe un nombre para verlo aquí.'; return; }
+  const fig = porId(r.figura);
+  $('#carga').textContent = 'Cargando figura…';
+  const [geo, f] = await Promise.all([geoFigura(r.figura), fuente(estado.fuente)]);
+  if (turno !== turnoVista) return;
+  figuraEnVista = grupoFigura(r.figura, geo, mallaNombre(f, fig, r.nombre, estado.tamano / 100));
+  escena.add(figuraEnVista);
+  if (idEnVista !== r.figura) {   // al cambiar de figura, la cámara vuelve a verla de frente
+    idEnVista = r.figura;
+    const d = Math.max(...fig.tamano) * 2.2;
+    camara.position.set(0, -d * 0.45, d);
+    controles.target.set(0, 0, 0);
+    controles.update();
+  }
+  ajustarLienzo();
+  $('#carga').textContent = `${fig.nombre} · ${fig.tamano[0].toFixed(0)} × ${fig.tamano[1].toFixed(0)} mm · arrastra para girarla`;
+}
+
+// ── Placas: un segundo renderizador de arriba (ortográfico) que se copia a cada miniatura ──
+const LADO_PLACA = 512;
+const renderPlaca = new THREE.WebGLRenderer({ antialias: true });
+renderPlaca.setSize(LADO_PLACA, LADO_PLACA, false);
+const escenaPlaca = new THREE.Scene();
+escenaPlaca.background = new THREE.Color('#2b1a2c');
+luces(escenaPlaca);
+const camPlaca = new THREE.OrthographicCamera(0, CAMA, CAMA, 0, -100, 100);
+camPlaca.position.set(0, 0, 50);
+
+function calcularPlacas() {
+  const fs = filas();
+  const piezas = fs.map((r) => ({ w: porId(r.figura).tamano[0], h: porId(r.figura).tamano[1] }));
+  return fs.length ? acomodarEnPlacas(piezas) : [];
+}
+let turnoPlacas = 0;
+async function pintarPlacas() {
+  const turno = ++turnoPlacas;
+  const fs = filas();
+  const placas = calcularPlacas();
+  $('#resumen-placas').textContent = fs.length
+    ? `${fs.length} ${fs.length === 1 ? 'figura' : 'figuras'} en ${placas.length} ${placas.length === 1 ? 'placa' : 'placas'} de ${CAMA} × ${CAMA} mm.`
+    : 'Escribe al menos un nombre.';
+  $('#placas').innerHTML = placas.map((p, i) => `<div class="placa"><canvas width="${LADO_PLACA}" height="${LADO_PLACA}" data-placa="${i}" aria-label="Placa ${i + 1}"></canvas>
+    <small>Placa ${i + 1} · ${p.length} ${p.length === 1 ? 'figura' : 'figuras'}</small>
+    <button type="button" class="boton" data-bajar="${i}">Descargar placa ${i + 1}</button></div>`).join('');
+  const f = await fuente(estado.fuente);
+  for (const [i, p] of placas.entries()) {
+    const grupo = new THREE.Group();
+    for (const pos of p) {
+      const r = fs[pos.i];
+      const geo = await geoFigura(r.figura);
+      if (turno !== turnoPlacas) { liberar(grupo); return; }
+      const g = grupoFigura(r.figura, geo, mallaNombre(f, porId(r.figura), r.nombre, estado.tamano / 100));
+      g.position.set(pos.x, pos.y, 0);
+      grupo.add(g);
+    }
+    escenaPlaca.add(grupo);
+    renderPlaca.render(escenaPlaca, camPlaca);
+    escenaPlaca.remove(grupo);
+    liberar(grupo);
+    const cv = document.querySelector(`canvas[data-placa="${i}"]`);
+    cv?.getContext('2d').drawImage(renderPlaca.domElement, 0, 0, LADO_PLACA, LADO_PLACA);
+  }
+}
+
+async function descargar(i) {
+  const boton = document.querySelector(`[data-bajar="${i}"]`);
+  const antes = boton.textContent;
+  boton.disabled = true;
+  boton.textContent = 'Armando el 3MF…';
+  try {
+    const fs = filas();
+    const p = calcularPlacas()[i];
+    const f = await fuente(estado.fuente);
+    const items = [];
+    for (const pos of p) {
+      const r = fs[pos.i];
+      const fig = porId(r.figura);
+      items.push({ titulo: `${r.nombre} · ${fig.nombre}`, figura: fig, datos: await datos(r.figura), nombre: mallaNombre(f, fig, r.nombre, estado.tamano / 100), x: pos.x, y: pos.y });
+    }
+    await new Promise((ok) => setTimeout(ok, 30));   // deja que se vea el aviso antes del trabajo pesado
+    const zip = zipSync(archivos3MF(items, `Nombres · placa ${i + 1}`), { level: 6 });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([zip], { type: 'model/3mf' }));
+    const fecha = new Date().toISOString().slice(0, 10);
+    a.download = `nombres-${fecha}-placa-${i + 1}.3mf`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    boton.textContent = `Listo · ${(zip.length / 1048576).toFixed(1)} MB`;
+    setTimeout(() => { boton.textContent = antes; }, 2500);
+  } catch (e) {
+    console.error(e);
+    boton.textContent = 'No se pudo armar. Intenta de nuevo.';
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+// ── Eventos ──
+let espera;
+function todo(conPlacas = true) {
+  guardar();
+  pintarFilas();
+  pintarFiguras();
+  pintarColores();
+  pintarVista();
+  clearTimeout(espera);
+  if (conPlacas) espera = setTimeout(pintarPlacas, 350);
+}
+$('#lista').addEventListener('input', (e) => { estado.texto = e.target.value; todo(); });
+$('#filas').addEventListener('click', (e) => {
+  const li = e.target.closest('.fila');
+  if (!li || e.target.tagName === 'SELECT') return;
+  estado.sel = +li.dataset.i;
+  todo(false);
+});
+$('#filas').addEventListener('change', (e) => {
+  if (e.target.tagName !== 'SELECT') return;
+  estado.figuras[+e.target.dataset.i] = e.target.value;
+  estado.sel = +e.target.dataset.i;
+  todo();
+});
+$('#figuras').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-f]');
+  if (!b) return;
+  estado.porDefecto = b.dataset.f;
+  if (nombres().length) estado.figuras[estado.sel] = b.dataset.f;
+  todo();
+});
+$('#a-todos').addEventListener('click', () => {
+  const actual = filas()[estado.sel]?.figura ?? estado.porDefecto;
+  estado.porDefecto = actual;
+  estado.figuras = nombres().map(() => actual);
+  todo();
+});
+$('#fuentes').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-fuente]');
+  if (!b) return;
+  estado.fuente = b.dataset.fuente;
+  pintarFuentes();
+  todo();
+});
+$('#tamano').addEventListener('input', (e) => {
+  estado.tamano = +e.target.value;
+  $('#tamano-v').textContent = estado.tamano + '%';
+  todo();
+});
+for (const id of ['c-base', 'c-glaseado']) $('#' + id).addEventListener('input', () => {
+  const fid = filas()[estado.sel]?.figura ?? estado.porDefecto;
+  estado.coloresFig = { ...estado.coloresFig, [fid]: [$('#c-base').value, $('#c-glaseado').value] };
+  todo();
+});
+$('#placas').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-bajar]');
+  if (b) descargar(+b.dataset.bajar);
+});
+
+// ── Inicio ──
+(async () => {
+  try {
+    const r = await fetch('figuras/figuras.json', { cache: 'no-store' });
+    if (r.status === 401) { location.href = '/entrar'; return; }
+    figuras = (await r.json()).figuras;
+  } catch {
+    $('#carga').textContent = 'No se pudieron cargar las figuras.';
+    return;
+  }
+  if (!porId(estado.porDefecto)) estado.porDefecto = figuras[0].id;
+  $('#lista').value = estado.texto;
+  $('#tamano').value = estado.tamano;
+  $('#tamano-v').textContent = estado.tamano + '%';
+  pintarFuentes();
+  todo();
+})();
+</script>
+</body>
+</html>

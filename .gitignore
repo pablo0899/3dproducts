@@ -3,3 +3,6 @@ dist/
 .astro/
 .env
 .wrangler/
+
+# Figuras con licencia (Dave W): solo se publican en la herramienta, no en el repositorio
+herramientas/figuras/
