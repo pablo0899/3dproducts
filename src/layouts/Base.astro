@@ -308,6 +308,8 @@ const redes = otros.filter((c) => c.id !== 'correo');
     transition: translate 0.25s ease;
   }
   .barra-accion .boton { flex: 1; }
+  /* En temporada, el árbol mini (ArbolElfos) ocupa la izquierda de la barra */
+  :global(:root[data-temporada='navidad']) .barra-accion { padding-left: 62px; }
   .barra-accion--oculta { translate: 0 110%; }
   @media (max-width: 767px) {
     .nav__accion { display: none; }

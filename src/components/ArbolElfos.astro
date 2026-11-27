@@ -9,6 +9,12 @@
 // regalo a la pila. La cuenta se guarda al momento en sessionStorage, así que el clic en un enlace que
 // cambia de página también cuenta y el árbol aparece igual de arreglado en la siguiente.
 // Con prefers-reduced-motion no hay animaciones: los adornos y regalos aparecen directo.
+//
+// Tamaños, para que no tape contenido:
+// - Desde 1440 px: completa en el margen izquierdo.
+// - Teléfonos con la barra "Cuéntanos tu idea": mini (38 px), dentro de la barra, a la izquierda del botón.
+// - Lo demás (página de producto en teléfono, tabletas, laptops): un botón redondo de 44 px en la esquina
+//   con el número de adornos; al tocarlo se abre el árbol mini (66 px). Se recuerda en la sesión.
 
 const luces = [
   [99, 190], [112, 196], [125, 198], [138, 196], [151, 190],
@@ -18,7 +24,16 @@ const luces = [
 const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
 ---
 
-<div class="arbol-elfos solo-navidad" aria-hidden="true">
+<div class="arbol-elfos solo-navidad">
+  <button type="button" class="arbol-elfos__boton" aria-expanded="true" aria-label="Árbol de Navidad: ocultar" data-plegar>
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path d="M12 2.5l1 2.3 2.4.2-1.9 1.6.6 2.4L12 7.7 9.9 9l.6-2.4-1.9-1.6 2.4-.2z" fill="#e9b949" />
+      <path d="M12 8l4.5 6h-2.2l3.7 5H6l3.7-5H7.5z" fill="#3f8a6a" />
+      <rect x="10.8" y="19" width="2.4" height="2.5" fill="#a8764f" />
+    </svg>
+    <span class="arbol-elfos__cuenta" data-cuenta hidden></span>
+  </button>
+  <div class="arbol-elfos__marco" aria-hidden="true">
   <svg viewBox="0 0 210 410">
     <defs>
       <linearGradient id="ae-pino" x1="0" y1="0" x2="1" y2="0">
@@ -175,13 +190,17 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
       </g>
     </g>
   </svg>
-  <p class="arbol-elfos__pista">Explora y decora el árbol</p>
+  </div>
+  <p class="arbol-elfos__pista" aria-hidden="true">Explora y decora el árbol</p>
 </div>
 <!-- La entrada se ve solo la primera vez de la sesión; va inline para que no parpadee al cargar -->
 <script is:inline>
   try {
-    if (sessionStorage.getItem('prismatix-arbol-entrada')) document.querySelector('.arbol-elfos').classList.add('ae-sin-entrada');
+    var arbol = document.querySelector('.arbol-elfos');
+    if (sessionStorage.getItem('prismatix-arbol-entrada')) arbol.classList.add('ae-sin-entrada');
     else sessionStorage.setItem('prismatix-arbol-entrada', '1');
+    // Plegado salvo que la persona lo haya abierto en esta sesión
+    if (sessionStorage.getItem('prismatix-arbol-abierto') !== '1') arbol.classList.add('ae-plegado');
   } catch (e) {}
 </script>
 
@@ -403,9 +422,32 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
     // pestañas, campos del formulario…), no en fondos ni textos sueltos
     const INTERACTIVOS = 'a[href], button, summary, label, input, select, textarea, [role="button"], [role="tab"], [data-copiar]';
 
+    // Versión de esquina: el botón abre y pliega el árbol mini. Plegado muestra cuántas piezas lleva
+    const boton = $<HTMLButtonElement>('[data-plegar]');
+    const cuenta = $<HTMLElement>('[data-cuenta]');
+    const reflejar = () => {
+      const plegado = escena.classList.contains('ae-plegado');
+      boton.setAttribute('aria-expanded', String(!plegado));
+      boton.setAttribute('aria-label', plegado ? `Árbol de Navidad (${clics} adornos y regalos): mostrar` : 'Árbol de Navidad: ocultar');
+      cuenta.textContent = String(clics);
+      cuenta.hidden = clics === 0;
+    };
+    reflejar();
+    boton.addEventListener('click', () => {
+      const plegado = escena.classList.toggle('ae-plegado');
+      try {
+        sessionStorage.setItem('prismatix-arbol-abierto', plegado ? '0' : '1');
+      } catch {
+        /* sin almacenamiento */
+      }
+      reflejar();
+    });
+
     document.addEventListener('click', (e) => {
-      // Fuera de temporada o en pantalla angosta la escena no se muestra (display: none) y no cuenta
+      // Fuera de temporada la escena no se muestra (display: none) y no cuenta
       if (escena.getClientRects().length === 0) return;
+      // Plegar o abrir el árbol no cuenta como clic de exploración
+      if (e.target instanceof Node && escena.contains(e.target)) return;
       const objetivo = e.target instanceof Element ? e.target.closest(INTERACTIVOS) : null;
       if (!objetivo || (objetivo as HTMLButtonElement).disabled) return;
       const k = clics++;
@@ -415,6 +457,11 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
       } catch {
         /* sin almacenamiento */
       }
+      reflejar();
+      // Plegado, el botón da un brinquito para avisar que se sumó algo
+      if (!sinMovimiento && escena.classList.contains('ae-plegado')) {
+        boton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 400, easing: 'ease-out' });
+      }
       if (sinMovimiento) return aplicar(k, false);
       if (plan(k).tipo === 'adorno') filaEscalera(k);
       else filaPiso(k);
@@ -423,20 +470,96 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
 </script>
 
 <style>
-  /* Suelta en el margen izquierdo, donde sobra espacio junto al contenido (1200 px) */
+  /* ── Versión mini (por defecto): recorte del árbol en la esquina inferior izquierda ── */
   .arbol-elfos {
     position: fixed;
-    left: 10px;
+    left: 8px;
     bottom: 12px;
-    z-index: 5;
-    display: none;
-    width: min(210px, calc((100vw - var(--ancho-max)) / 2 - 14px));
+    z-index: 14; /* debajo de la barra de acción (15) y del aviso (20) */
     pointer-events: none;
+    transition: bottom 0.25s ease;
   }
+  /* Solo se ve del árbol hacia abajo (x 6–208, y 78–405 del dibujo) */
+  .arbol-elfos__marco {
+    width: 66px;
+    aspect-ratio: 202 / 327;
+    overflow: hidden;
+  }
+  .arbol-elfos__marco svg { width: 103.96%; margin: -38.61% 0 0 -2.97%; }
+  .arbol-elfos__marco svg { display: block; height: auto; overflow: visible; filter: drop-shadow(0 4px 10px rgb(58 36 59 / 0.25)); }
+  .arbol-elfos__pista { display: none; }
+
+  /* El botón cubre el árbol (tocarlo lo pliega); plegado, es un botón redondo con un arbolito */
+  .arbol-elfos__boton {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .arbol-elfos__boton svg { display: none; }
+  .ae-plegado .arbol-elfos__marco { display: none; }
+  .ae-plegado .arbol-elfos__boton {
+    position: static;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--plum-night);
+    box-shadow: 0 4px 14px rgb(58 36 59 / 0.3), inset 0 0 0 1px rgb(233 185 73 / 0.45);
+  }
+  .ae-plegado .arbol-elfos__boton svg { display: block; }
+  .arbol-elfos__cuenta {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--oro);
+    color: var(--plum-night);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 20px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .ae-plegado .arbol-elfos__boton { position: relative; }
+  .arbol-elfos:not(.ae-plegado) .arbol-elfos__cuenta { display: none; }
+
+  /* Teléfonos con barra de acción: el árbol mini va dentro de la barra, a la izquierda del botón
+     (Base.astro le deja el espacio). Se va con la barra cuando ésta se esconde. */
+  @media (max-width: 767px) {
+    :global(body:has(.barra-accion)) .arbol-elfos {
+      left: 14px;
+      bottom: calc(4px + env(safe-area-inset-bottom));
+      z-index: 16;
+      transition: translate 0.25s ease, opacity 0.25s ease;
+    }
+    :global(body:has(.barra-accion)) .arbol-elfos .arbol-elfos__marco { display: block; width: 38px; }
+    :global(body:has(.barra-accion)) .arbol-elfos .arbol-elfos__boton { display: none; }
+    :global(body:has(.barra-accion--oculta)) .arbol-elfos { translate: 0 110%; opacity: 0; }
+  }
+
+  /* ── Completa desde 1440 px: suelta en el margen izquierdo, junto al contenido (1200 px) ── */
   @media (min-width: 1440px) {
-    .arbol-elfos { display: block; }
+    .arbol-elfos {
+      left: 10px;
+      z-index: 5;
+      width: min(210px, calc((100vw - var(--ancho-max)) / 2 - 14px));
+    }
+    .arbol-elfos__marco { width: auto; aspect-ratio: auto; overflow: visible; }
+    .arbol-elfos__marco svg { width: 100%; margin: 0; filter: drop-shadow(0 6px 14px rgb(58 36 59 / 0.22)); }
+    .arbol-elfos__pista { display: block; }
+    .arbol-elfos__boton { display: none; }
+    .ae-plegado .arbol-elfos__marco { display: block; }
   }
-  svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 6px 14px rgb(58 36 59 / 0.22)); }
 
   .arbol-elfos__pista {
     width: fit-content;
