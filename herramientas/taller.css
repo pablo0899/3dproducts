@@ -142,11 +142,13 @@ dialog::backdrop { background: rgb(43 26 44 / 0.55); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* Pestañas de secciones del taller (Filamentos | Ideas), en la cabecera oscura */
-.pestanas { display: flex; gap: 4px; width: fit-content; margin-top: 16px; padding: 3px; border-radius: 12px; background: rgb(253 251 247 / 0.09); }
+/* Pestañas de secciones del taller (Filamentos | Ideas | Pedidos | Cotizar), en la cabecera oscura.
+   En teléfonos angostos se deslizan de lado si no caben. */
+.pestanas { display: flex; gap: 4px; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-top: 16px; padding: 3px; border-radius: 12px; background: rgb(253 251 247 / 0.09); }
 .pestanas a {
-  display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 9px;
-  color: rgb(253 251 247 / 0.82); font-size: 0.9rem; font-weight: 600; text-decoration: none;
+  flex: none; display: inline-flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 9px;
+  color: rgb(253 251 247 / 0.82); font-size: 0.85rem; font-weight: 600; text-decoration: none;
 }
 .pestanas a:hover { color: var(--marfil); }
 .pestanas a[aria-current='page'] { background: var(--marfil); color: var(--ciruela); }
+@media (min-width: 420px) { .pestanas a { padding: 0 18px; font-size: 0.9rem; } }

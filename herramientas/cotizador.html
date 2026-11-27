@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#3A243B">
+<title>Cotizador · Prismatix</title>
+<link rel="icon" href="https://prismatix.mx/marca/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="taller.css">
+<style>
+  /* Cotizador: capas de costo a la izquierda y el ticket con el precio a la derecha (en el celular, el
+     ticket va abajo y el precio queda en una barra fija). Los precios se guardan en este navegador. */
+  :root { --verde: #1F7A52; --apagado: #B3A6B2; --hundido: #F6EFEC; }
+  .sub { margin: 0; color: rgb(253 251 247 / 0.78); font-size: 0.9rem; max-width: 62ch; }
+  .atajos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-block: 20px 4px; }
+  .atajos > span { color: var(--suave); font-size: 0.8rem; font-weight: 600; margin-right: 4px; }
+
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; padding-top: 12px; }
+  .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .capa { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); }
+  .capa.off .cuerpo { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+  .cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .cabeza h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.25rem; line-height: 1.2; }
+  .cabeza .num-capa { display: block; color: var(--suave); font-size: 0.75rem; font-weight: 600; margin-bottom: 2px; }
+  .cuerpo { display: flex; flex-direction: column; gap: 12px; }
+  .pista { margin: 0; color: var(--suave); font-size: 0.82rem; }
+  .rotulo { color: var(--suave); font-size: 0.8rem; font-weight: 600; }
+
+  /* Interruptor */
+  .sw { display: flex; align-items: center; gap: 8px; color: var(--suave); font-size: 0.85rem; cursor: pointer; user-select: none; }
+  .sw input { appearance: none; flex: none; width: 42px; height: 26px; margin: 0; border-radius: 13px; background: var(--apagado); position: relative; cursor: pointer; transition: background .2s; }
+  .sw input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--blanco); transition: left .2s; }
+  .sw input:checked { background: var(--verde); }
+  .sw input:checked::after { left: 19px; }
+
+  /* Pastillas */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+    border: 1px solid var(--borde); border-radius: 999px; background: var(--blanco);
+    font-size: 0.88rem; font-weight: 500; cursor: pointer;
+  }
+  .chip small { color: var(--suave); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+  .chip[aria-pressed='true'] { background: var(--ciruela); border-color: var(--ciruela); color: var(--marfil); }
+  .chip[aria-pressed='true'] small { color: var(--rosa); }
+  .chip.multi::before { content: ''; flex: none; width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 3px; opacity: 0.6; }
+  .chip.multi[aria-pressed='true']::before { background: var(--rosa); border-color: var(--rosa); opacity: 1; }
+
+  /* Filas con campos */
+  .filas { display: flex; flex-direction: column; gap: 8px; }
+  .fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--hundido); }
+  .fila .nm { min-width: 0; font-weight: 600; }
+  .fila .nm small { display: block; color: var(--suave); font-weight: 400; font-size: 0.8rem; }
+  .campos-fila { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fld { display: flex; flex-direction: column; gap: 3px; }
+  .fld span { color: var(--suave); font-size: 0.75rem; }
+  .fld input, .num {
+    width: 96px; min-height: 42px; padding: 8px 10px; border: 1px solid rgb(58 36 59 / 0.2); border-radius: 10px;
+    background: var(--blanco); font-size: 16px; font-variant-numeric: tabular-nums;
+  }
+  .en-linea { display: flex; flex-wrap: wrap; gap: 12px; }
+  .vacia { color: var(--suave); font-size: 0.85rem; padding: 6px 2px; }
+  @media (min-width: 520px) {
+    .fila { grid-template-columns: minmax(0, 1fr) auto; }
+    .campos-fila { justify-content: flex-end; }
+  }
+
+  /* Ticket */
+  .ticket { border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); overflow: hidden; }
+  .tk-arriba { display: flex; flex-direction: column; gap: 4px; padding: 16px 16px 14px; border-bottom: 1px dashed var(--borde); }
+  .tk-arriba .rotulo { display: flex; justify-content: space-between; }
+  .total { font-family: var(--display); font-size: 2.4rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .por-pieza { color: var(--suave); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .cantidad { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .cantidad button { width: 42px; height: 42px; border: 0; border-radius: 10px; background: rgb(58 36 59 / 0.07); font-size: 1.3rem; cursor: pointer; }
+  .cantidad .num { width: 70px; text-align: center; }
+  .lineas { display: flex; flex-direction: column; gap: 7px; padding: 12px 16px; font-size: 0.88rem; }
+  .ln { display: flex; justify-content: space-between; gap: 10px; }
+  .ln b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ln.x { color: var(--apagado); }
+  .ln.x b { text-decoration: line-through; }
+  .ln.suma { border-top: 1px solid var(--borde); padding-top: 8px; font-weight: 600; }
+  .ln.suma b { font-weight: 600; }
+  .ln.limpio b { color: var(--verde); }
+  .tk-pie { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 16px; border-top: 1px dashed var(--borde); }
+  .tk-pie .boton { width: 100%; }
+  .aviso { min-height: 1.2em; color: var(--verde); font-size: 0.82rem; }
+  .nota { margin: 0; padding: 0 16px 14px; color: var(--suave); font-size: 0.78rem; }
+  .fuentes { margin-top: 20px; font-size: 0.85rem; color: var(--suave); }
+  .fuentes ul { margin: 0; padding: 0 16px 16px 34px; display: flex; flex-direction: column; gap: 4px; }
+
+  /* Barra fija con el precio (celular y tableta) */
+  .barra-precio {
+    position: fixed; inset: auto 0 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--ciruela); color: var(--marfil);
+    box-shadow: 0 -8px 24px rgb(43 26 44 / 0.2);
+  }
+  .barra-precio small { display: block; color: rgb(253 251 247 / 0.75); font-size: 0.75rem; }
+  .barra-precio .t { font-family: var(--display); font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+  @media (min-width: 900px) {
+    .rejilla { grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; }
+    .ticket { position: sticky; top: 16px; }
+    .barra-precio { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="contenedor">
+    <div class="barra">
+      <span class="marca"><img src="https://prismatix.mx/marca/isotipo-96.webp" alt="" width="30" height="30">Prismatix · Taller</span>
+      <div class="barra__acciones">
+        <a class="enlace-claro" href="/salir">Salir</a>
+      </div>
+    </div>
+    <nav class="pestanas" aria-label="Secciones del taller">
+      <a href="inventario.html">Filamentos</a>
+      <a href="ideas.html">Ideas</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="cotizador.html" aria-current="page">Cotizar</a>
+    </nav>
+    <h1>Cotizador</h1>
+    <p class="sub">Piezas en la Centauri Carbon 2 Combo. Activa lo que aplica a este pedido y apaga con el interruptor lo que no quieras cobrar.</p>
+  </div>
+</header>
+
+<main class="contenedor">
+  <div class="atajos">
+    <span>Atajos</span>
+    <button class="chip" data-preset="all">Cobrar todo</button>
+    <button class="chip" data-preset="matonly">Solo material</button>
+    <button class="chip" data-preset="cost">A costo, sin ganancia</button>
+    <button class="chip" data-preset="notime">Sin cobrar mi tiempo</button>
+  </div>
+
+  <div class="rejilla">
+    <div class="col" id="sections"></div>
+
+    <aside class="ticket" aria-live="polite">
+      <div class="tk-arriba">
+        <div class="rotulo"><span>Precio al cliente</span><span id="tk-iva"></span></div>
+        <div class="total" id="tk-total">$0</div>
+        <div class="por-pieza" id="tk-pp"></div>
+        <div class="cantidad">
+          <span class="rotulo">Piezas</span>
+          <button type="button" id="q-minus" aria-label="Menos piezas">−</button>
+          <input class="num" id="qty" type="number" min="1" value="1" inputmode="numeric" aria-label="Piezas">
+          <button type="button" id="q-plus" aria-label="Más piezas">+</button>
+        </div>
+      </div>
+      <div class="lineas" id="tk-lines"></div>
+      <div class="tk-pie">
+        <button class="boton" id="copy">Copiar para WhatsApp</button>
+        <button class="boton boton--secundario" id="reset">Restablecer precios</button>
+        <div class="aviso" id="toast" role="status"></div>
+      </div>
+      <p class="nota">Tus cambios de precios se guardan en este navegador.</p>
+    </aside>
+  </div>
+
+  <details class="fuentes">
+    <summary>De dónde salen los valores de referencia (oct 2026)</summary>
+    <ul>
+      <li>Luz: CFE Tarifa 1 (clima templado como Xalapa), 2026: básico $1.125, intermedio $1.369, excedente $4.004 por kWh, más IVA 16%. Revisa en tu recibo qué tarifa tienes.</li>
+      <li>Consumo: la Centauri Carbon midió ~160 W imprimiendo PLA (igor'sLAB). Se usa como estimado para la CC2.</li>
+      <li>Filamentos Elegoo: Amazon México (tienda ELEGOO Official MX) y 3D Market, con IVA. Cambian seguido; edítalos con lo que pagaste.</li>
+      <li>Impresora: precio de lista US$449 (Elegoo). Pon lo que te costó en pesos.</li>
+      <li>Mercado Pago Link: 3.49% + $4 + IVA por cobro al instante. Mercado Libre Clásica: 8–16% según categoría, más cargo fijo en artículos menores a $299.</li>
+      <li>Salario mínimo 2026: $315.04 diarios (~$39 por hora).</li>
+      <li>Envíos, NFC, pinturas y empaques son estimados. Ajústalos a tus cotizaciones reales.</li>
+    </ul>
+  </details>
+</main>
+
+<div class="barra-precio">
+  <div><small>Precio al cliente</small><div class="t" id="bar-total">$0</div></div>
+  <div style="text-align:right"><small id="bar-pp"></small><small id="bar-gain"></small></div>
+</div>
+
+<script>
+'use strict';
+(function () {
+const KEY = 'prismatix-cotizador-v1';
+const DEFAULTS = () => ({
+  qty: 1,
+  on: { mat: true, print: true, labor: true, extras: true, ship: true, pay: true, profit: true },
+  mats: [
+    { id: 'pla', n: 'PLA', p: 320, g: 45, s: true },
+    { id: 'plap', n: 'PLA+', p: 320, g: 0, s: false },
+    { id: 'rapid', n: 'Rapid PLA+', p: 330, g: 0, s: false },
+    { id: 'matte', n: 'PLA Mate', p: 340, g: 0, s: false },
+    { id: 'silk', n: 'PLA Silk', p: 420, g: 0, s: false },
+    { id: 'rfid', n: 'PLA RFID (CANVAS)', p: 600, g: 0, s: false },
+    { id: 'wood', n: 'PLA Madera', p: 380, g: 0, s: false },
+    { id: 'petg', n: 'Rapid PETG', p: 340, g: 0, s: false },
+    { id: 'tpu', n: 'TPU 95A', p: 520, g: 0, s: false },
+    { id: 'cf', n: 'PLA-CF', p: 570, g: 0, s: false },
+  ],
+  purge: 0, colors: 1, colorFee: 0,
+  hrs: 2, mins: 30, watts: 160, tarifa: 'inter', kwhCustom: 2,
+  printer: 9000, life: 5000, maint: 1.5, fail: 5,
+  rate: 80,
+  tasks: [
+    { id: 'design', n: 'Diseño o modelado 3D', h: 1, s: false, once: true, d: 'Una vez por pedido' },
+    { id: 'slice', n: 'Laminado y preparación', h: 0.25, s: true, once: true, d: 'Una vez por pedido' },
+    { id: 'supports', n: 'Quitar soportes y limpiar', h: 0.15, s: true, once: false, d: 'Por pieza' },
+    { id: 'sand', n: 'Lijado', h: 0.5, s: false, once: false, d: 'Por pieza' },
+    { id: 'paint', n: 'Pintura a mano', h: 1, s: false, once: false, d: 'Por pieza' },
+    { id: 'assembly', n: 'Ensamble / pegado', h: 0.25, s: false, once: false, d: 'Por pieza' },
+  ],
+  extras: [
+    { id: 'nfc', n: 'Tag NFC NTAG215', p: 12, q: 1, s: false },
+    { id: 'paintkit', n: 'Kit de pintura y pincel', p: 60, q: 1, s: false },
+    { id: 'magnet', n: 'Imán de neodimio', p: 4, q: 1, s: false },
+    { id: 'ring', n: 'Argolla de llavero', p: 3, q: 1, s: false },
+    { id: 'bag', n: 'Bolsita / empaque básico', p: 8, q: 1, s: true },
+    { id: 'box', n: 'Caja de regalo', p: 35, q: 1, s: false },
+    { id: 'card', n: 'Tarjeta de agradecimiento', p: 3, q: 1, s: false },
+  ],
+  ship: 'hand', shipPrices: { hand: 0, local: 60, correos: 90, estafeta: 150, dhl: 190 },
+  pay: 'cash',
+  margin: 60, marginCustom: 60, urgency: 0, volume: true, iva: false, min: 80, round: true,
+});
+let S;
+try { S = Object.assign(DEFAULTS(), JSON.parse(localStorage.getItem(KEY) || 'null') || {}); } catch { S = DEFAULTS(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+const TARIFAS = { basico: { n: 'Básico', v: 1.125 }, inter: { n: 'Intermedio', v: 1.369 }, exced: { n: 'Excedente', v: 4.004 }, custom: { n: 'Otra', v: null } };
+const SHIPS = { hand: 'Entrega en mano', local: 'Envío local Xalapa', correos: 'Correos de México', estafeta: 'Estafeta', dhl: 'DHL' };
+const PAYS = {
+  cash: { n: 'Efectivo / transferencia', pct: 0, fix: 0 },
+  mplink: { n: 'Mercado Pago Link', pct: 0.0349, fix: 4 },
+  point: { n: 'Terminal Point', pct: 0.035, fix: 0 },
+  ml: { n: 'Mercado Libre Clásica', pct: 0.13, fix: 25 },
+};
+const URG = [{ v: 0, n: 'Normal' }, { v: 0.25, n: 'Urgente +25%' }, { v: 0.5, n: 'Exprés +50%' }];
+const MARGINS = [30, 50, 60, 80, 100];
+const IVA = 1.16;
+const money = (v) => '$' + (Math.round(v * 100) / 100).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money0 = (v) => '$' + Math.round(v).toLocaleString('es-MX');
+const num = (v, d = 0) => { const x = parseFloat(v); return isFinite(x) && x >= 0 ? x : d; };
+const $ = (id) => document.getElementById(id);
+
+const sw = (key) => `<label class="sw"><input type="checkbox" data-on="${key}" ${S.on[key] ? 'checked' : ''} aria-label="Cobrar esta sección"> Cobrar</label>`;
+const card = (key, layer, title, body) =>
+  `<section class="capa ${S.on[key] ? '' : 'off'}" data-sec="${key}"><div class="cabeza"><div><span class="num-capa">${layer}</span><h2>${title}</h2></div>${sw(key)}</div><div class="cuerpo">${body}</div></section>`;
+const fld = (label, path, val, step) =>
+  `<label class="fld"><span>${label}</span><input type="number" min="0" step="${step || 'any'}" inputmode="decimal" data-path="${path}" value="${val}"></label>`;
+
+function render() {
+  const m = S.mats.map((x, i) => `<button class="chip multi" aria-pressed="${x.s}" data-tog="mats.${i}">${x.n}<small>$${x.p}/kg</small></button>`).join('');
+  const mrows = S.mats.map((x, i) => x.s ? `<div class="fila"><div class="nm">${x.n}<small>${money(x.p / 1000)} por gramo</small></div><div class="campos-fila">${fld('Gramos', 'mats.' + i + '.g', x.g, 1)}${fld('$ por kg', 'mats.' + i + '.p', x.p, 1)}</div></div>` : '').join('');
+  const matBody = `<div class="rotulo">Filamentos Elegoo en esta pieza</div><div class="chips">${m}</div>
+    <div class="filas">${mrows || '<div class="vacia">Elige al menos un filamento.</div>'}</div>
+    <div class="rotulo">Colores en la pieza</div><div class="chips">${[1, 2, 3, 4].map((v) => `<button class="chip" aria-pressed="${S.colors === v}" data-set="colors" data-val="${v}" data-num="1">${v} color${v > 1 ? 'es' : ''}</button>`).join('')}</div>
+    <div class="fila"><div class="nm">Purga por cambios de color<small>Estimado de ~20 g por color extra. Cámbialo por lo que reporte ElegooSlicer como flush o torre de purga.</small></div><div class="campos-fila">${fld('Gramos', 'purge', S.purge, 1)}</div></div>
+    ${S.colors > 1 ? `<div class="fila"><div class="nm">Cargo por color adicional<small>Opcional. Cobra el valor del acabado multicolor, aparte de la purga. Se aplica por pieza.</small></div><div class="campos-fila">${fld('$ por color', 'colorFee', S.colorFee, 1)}</div></div>` : ''}
+    <p class="pista">Copia los gramos de ElegooSlicer al terminar de laminar.</p>`;
+
+  const t = Object.entries(TARIFAS).map(([k, v]) => `<button class="chip" aria-pressed="${S.tarifa === k}" data-set="tarifa" data-val="${k}">${v.n}${v.v ? `<small>$${v.v}</small>` : ''}</button>`).join('');
+  const fails = [0, 5, 10, 15].map((v) => `<button class="chip" aria-pressed="${S.fail === v}" data-set="fail" data-val="${v}" data-num="1">${v}%</button>`).join('');
+  const printBody = `<div class="en-linea">${fld('Horas', 'hrs', S.hrs, 1)}${fld('Minutos', 'mins', S.mins, 1)}${fld('Consumo (W)', 'watts', S.watts, 1)}</div>
+    <div class="rotulo">Tarifa CFE por kWh (Tarifa 1, más IVA)</div><div class="chips">${t}</div>
+    ${S.tarifa === 'custom' ? `<div class="en-linea">${fld('$ por kWh', 'kwhCustom', S.kwhCustom)}</div>` : ''}
+    <p class="pista">Si tu consumo en casa ya pasa de 140 kWh al mes, lo que imprimes cae en Excedente.</p>
+    <div class="rotulo">Desgaste de la impresora</div>
+    <div class="en-linea">${fld('Costo impresora ($)', 'printer', S.printer, 1)}${fld('Vida útil (h)', 'life', S.life, 100)}${fld('Mantenimiento $/h', 'maint', S.maint)}</div>
+    <div class="rotulo">Margen para impresiones fallidas</div><div class="chips">${fails}</div>`;
+
+  const trows = S.tasks.map((x, i) => `<button class="chip multi" aria-pressed="${x.s}" data-tog="tasks.${i}">${x.n}</button>`).join('');
+  const tsel = S.tasks.map((x, i) => x.s ? `<div class="fila"><div class="nm">${x.n}<small>${x.d}</small></div><div class="campos-fila">${fld('Horas', 'tasks.' + i + '.h', x.h, 0.05)}</div></div>` : '').join('');
+  const rates = [[39, 'Salario mínimo'], [80, 'Base'], [150, 'Diseño especializado']].map(([v, n]) => `<button class="chip" aria-pressed="${S.rate === v}" data-set="rate" data-val="${v}" data-num="1">${n}<small>$${v}/h</small></button>`).join('');
+  const laborBody = `<div class="rotulo">Tarifa por hora</div><div class="chips">${rates}</div><div class="en-linea">${fld('$ por hora', 'rate', S.rate, 1)}</div>
+    <div class="rotulo">Qué incluye este pedido</div><div class="chips">${trows}</div><div class="filas">${tsel}</div>`;
+
+  const echips = S.extras.map((x, i) => `<button class="chip multi" aria-pressed="${x.s}" data-tog="extras.${i}">${x.n}<small>$${x.p}</small></button>`).join('');
+  const erows = S.extras.map((x, i) => x.s ? `<div class="fila"><div class="nm">${x.n}<small>Por pieza</small></div><div class="campos-fila">${fld('Cantidad', 'extras.' + i + '.q', x.q, 1)}${fld('$ c/u', 'extras.' + i + '.p', x.p)}</div></div>` : '').join('');
+  const extrasBody = `<div class="chips">${echips}</div><div class="filas">${erows || '<div class="vacia">Sin extras en este pedido.</div>'}</div>`;
+
+  const sh = Object.entries(SHIPS).map(([k, n]) => `<button class="chip" aria-pressed="${S.ship === k}" data-set="ship" data-val="${k}">${n}<small>$${S.shipPrices[k]}</small></button>`).join('');
+  const shipBody = `<div class="chips">${sh}</div>${S.ship !== 'hand' ? `<div class="en-linea">${fld('Costo de la guía ($)', 'shipPrices.' + S.ship, S.shipPrices[S.ship], 1)}</div>` : ''}
+    <p class="pista">Se cobra una vez por pedido, sin ganancia encima. Cotiza la guía real con el peso y la caja.</p>`;
+
+  const py = Object.entries(PAYS).map(([k, v]) => `<button class="chip" aria-pressed="${S.pay === k}" data-set="pay" data-val="${k}">${v.n}${v.pct ? `<small>${(v.pct * 100).toFixed(2)}%${v.fix ? ' + $' + v.fix : ''}</small>` : ''}</button>`).join('');
+  const payBody = `<div class="chips">${py}</div><p class="pista">El precio sube lo justo para que la comisión (más su IVA) no salga de tu bolsa.</p>`;
+
+  const mg = MARGINS.map((v) => `<button class="chip" aria-pressed="${S.margin === v}" data-set="margin" data-val="${v}" data-num="1">${v}%</button>`).join('');
+  const ug = URG.map((u) => `<button class="chip" aria-pressed="${S.urgency === u.v}" data-set="urgency" data-val="${u.v}" data-num="1">${u.n}</button>`).join('');
+  const profitBody = `<div class="rotulo">Ganancia sobre el costo</div><div class="chips">${mg}</div><div class="en-linea">${fld('Otro %', 'margin', S.margin, 1)}</div>
+    <div class="rotulo">Tiempo de entrega</div><div class="chips">${ug}</div>
+    <label class="sw"><input type="checkbox" data-flag="volume" ${S.volume ? 'checked' : ''}> Descuento por volumen (5+ piezas −5%, 10+ −10%, 25+ −15%)</label>`;
+
+  const finBody = `<div class="en-linea">${fld('Precio mínimo por pedido ($)', 'min', S.min, 1)}</div>
+    <label class="sw"><input type="checkbox" data-flag="iva" ${S.iva ? 'checked' : ''}> Agregar IVA 16% (si vas a facturar)</label>
+    <label class="sw"><input type="checkbox" data-flag="round" ${S.round ? 'checked' : ''}> Redondear a precio terminado en 9</label>`;
+
+  $('sections').innerHTML =
+    card('mat', 'Capa 1', 'Material', matBody) +
+    card('print', 'Capa 2', 'Impresión: luz, desgaste y fallos', printBody) +
+    card('labor', 'Capa 3', 'Tu tiempo', laborBody) +
+    card('extras', 'Capa 4', 'Insumos extra', extrasBody) +
+    card('ship', 'Capa 5', 'Envío', shipBody) +
+    card('pay', 'Capa 6', 'Comisión de cobro', payBody) +
+    card('profit', 'Capa 7', 'Ganancia y urgencia', profitBody) +
+    `<section class="capa"><div class="cabeza"><div><span class="num-capa">Acabado</span><h2>Ajustes finales</h2></div></div><div class="cuerpo">${finBody}</div></section>`;
+  $('qty').value = S.qty;
+  calc();
+}
+
+function calc() {
+  const q = Math.max(1, Math.round(num(S.qty, 1)));
+  const on = S.on;
+  const sel = S.mats.filter((x) => x.s);
+  const avgP = sel.length ? sel.reduce((a, x) => a + num(x.p), 0) / sel.length : 0;
+  const failF = 1 + num(S.fail) / 100;
+  const matPc = on.mat ? (sel.reduce((a, x) => a + num(x.g) * num(x.p) / 1000, 0) + num(S.purge) * avgP / 1000) * failF : 0;
+  const h = num(S.hrs) + num(S.mins) / 60;
+  const kwh = S.tarifa === 'custom' ? num(S.kwhCustom) : TARIFAS[S.tarifa].v * IVA;
+  const energyPc = h * num(S.watts) / 1000 * kwh;
+  const amortPc = h * (num(S.printer) / Math.max(1, num(S.life, 1)) + num(S.maint));
+  const printPc = on.print ? (energyPc + amortPc) * failF : 0;
+  let laborOnce = 0, laborPc = 0;
+  S.tasks.forEach((t) => { if (t.s) { if (t.once) laborOnce += num(t.h); else laborPc += num(t.h); } });
+  const labor = on.labor ? num(S.rate) * (laborOnce + laborPc * q) : 0;
+  const extras = on.extras ? q * S.extras.reduce((a, x) => a + (x.s ? num(x.p) * num(x.q) : 0), 0) : 0;
+  const colorPc = on.mat && S.colors > 1 ? num(S.colorFee) * (S.colors - 1) : 0;
+  const mat = (matPc + colorPc) * q, prt = printPc * q;
+  const cost = mat + prt + labor + extras;
+  const profit = on.profit ? cost * num(S.margin) / 100 : 0;
+  let disc = 0;
+  if (on.profit && S.volume) { const d = q >= 25 ? 0.15 : q >= 10 ? 0.10 : q >= 5 ? 0.05 : 0; disc = Math.min((cost + profit) * d, profit); }
+  let sub = cost + profit - disc;
+  const urg = on.profit ? sub * num(S.urgency) : 0;
+  sub += urg;
+  const ship = on.ship ? num(S.shipPrices[S.ship]) : 0;
+  let pre = sub + ship;
+  const ivaAmt = S.iva ? pre * 0.16 : 0; pre += ivaAmt;
+  const P = PAYS[S.pay];
+  let fin = pre, fee = 0;
+  if (on.pay && (P.pct || P.fix)) { fin = (pre + P.fix * IVA) / (1 - P.pct * IVA); fee = fin - pre; }
+  let adj = 0;
+  if (fin < num(S.min)) { adj = num(S.min) - fin; fin = num(S.min); }
+  if (S.round && fin > 0) { const r = Math.ceil((fin + 1) / 10) * 10 - 1; adj += r - fin; fin = r; }
+  const net = fin - fee - ivaAmt - ship - cost;
+
+  const L = [['Material', 'mat', mat], ['Luz, desgaste y fallos', 'print', prt], ['Tu tiempo', 'labor', labor], ['Insumos extra', 'extras', extras]]
+    .map(([n, k, v]) => `<div class="ln ${on[k] ? '' : 'x'}"><span>${n}${on[k] ? '' : ' · exento'}</span><b>${money(on[k] ? v : 0)}</b></div>`).join('');
+  $('tk-lines').innerHTML = L +
+    `<div class="ln suma"><span>Costo total</span><b>${money(cost)}</b></div>` +
+    `<div class="ln ${on.profit ? '' : 'x'}"><span>Ganancia${on.profit ? ' (' + num(S.margin) + '%)' : ' · exenta'}</span><b>${money(profit)}</b></div>` +
+    (disc ? `<div class="ln"><span>Descuento por volumen</span><b>−${money(disc)}</b></div>` : '') +
+    (urg ? `<div class="ln"><span>Recargo por urgencia</span><b>${money(urg)}</b></div>` : '') +
+    `<div class="ln ${on.ship ? '' : 'x'}"><span>Envío${on.ship ? '' : ' · exento'}</span><b>${money(ship)}</b></div>` +
+    (ivaAmt ? `<div class="ln"><span>IVA 16%</span><b>${money(ivaAmt)}</b></div>` : '') +
+    `<div class="ln ${on.pay ? '' : 'x'}"><span>Comisión de cobro${on.pay ? '' : ' · absorbida'}</span><b>${money(fee)}</b></div>` +
+    (adj > 0.004 ? `<div class="ln"><span>Mínimo y redondeo</span><b>${money(adj)}</b></div>` : '') +
+    `<div class="ln suma limpio"><span>Te queda limpio</span><b>${money(net)}</b></div>`;
+  $('tk-total').textContent = money0(fin);
+  $('bar-total').textContent = money0(fin);
+  const pp = q > 1 ? `${money(fin / q)} por pieza · ${q} piezas` : '1 pieza';
+  $('tk-pp').textContent = pp;
+  $('bar-pp').textContent = pp;
+  $('bar-gain').textContent = 'Te queda ' + money0(net);
+  $('tk-iva').textContent = S.iva ? 'IVA incluido' : 'Sin IVA';
+  S._last = { fin, q, cost, net };
+  save();
+}
+
+function setPath(path, val) { const k = path.split('.'); let o = S; for (let i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = val; }
+const getPath = (path) => path.split('.').reduce((o, k) => o[k], S);
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tog) { const o = getPath(b.dataset.tog); o.s = !o.s; render(); return; }
+  if (b.dataset.set) { S[b.dataset.set] = b.dataset.num ? parseFloat(b.dataset.val) : b.dataset.val; if (b.dataset.set === 'colors') S.purge = (S.colors - 1) * 20; render(); return; }
+  if (b.dataset.preset) {
+    const p = b.dataset.preset, all = Object.keys(S.on);
+    all.forEach((k) => (S.on[k] = true));
+    if (p === 'matonly') all.forEach((k) => (S.on[k] = k === 'mat'));
+    if (p === 'cost') S.on.profit = false;
+    if (p === 'notime') S.on.labor = false;
+    render(); return;
+  }
+  if (b.id === 'q-minus') { S.qty = Math.max(1, num(S.qty, 1) - 1); render(); }
+  if (b.id === 'q-plus') { S.qty = num(S.qty, 1) + 1; render(); }
+  if (b.id === 'reset') { const keep = { on: S.on, qty: S.qty }; S = Object.assign(DEFAULTS(), keep); render(); toast('Precios de referencia restablecidos'); }
+  if (b.id === 'copy') {
+    // Este texto lo lee el cliente: sigue la regla del sitio (no se menciona impresión 3D ni filamentos)
+    const l = S._last;
+    const txt = `Cotización Prismatix\n${l.q} pieza${l.q > 1 ? 's' : ''} personalizada${l.q > 1 ? 's' : ''}${S.colors > 1 ? ', ' + S.colors + ' colores' : ''}\n` +
+      (l.q > 1 ? `Precio por pieza: ${money(l.fin / l.q)}\n` : '') + `Total: ${money0(l.fin)}${S.iva ? ' IVA incluido' : ''}\n` +
+      (S.on.ship && S.ship !== 'hand' ? `Incluye envío por ${SHIPS[S.ship]}\n` : '') +
+      (S.urgency > 0 && S.on.profit ? 'Entrega prioritaria\n' : '');
+    navigator.clipboard.writeText(txt).then(() => toast('Cotización copiada'), () => toast('No se pudo copiar. Selecciona el total a mano.'));
+  }
+});
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.dataset.on) { S.on[t.dataset.on] = t.checked; t.closest('section').classList.toggle('off', !t.checked); calc(); }
+  if (t.dataset.flag) { S[t.dataset.flag] = t.checked; calc(); }
+  if (t.dataset.path && ['margin', 'rate', 'fail'].includes(t.dataset.path)) render();
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.path) { setPath(t.dataset.path, num(t.value)); calc(); }
+  if (t.id === 'qty') { S.qty = Math.max(1, Math.round(num(t.value, 1))); calc(); }
+});
+function toast(m) { const el = $('toast'); el.textContent = m; setTimeout(() => (el.textContent = ''), 2500); }
+render();
+})();
+</script>
+</body>
+</html>
