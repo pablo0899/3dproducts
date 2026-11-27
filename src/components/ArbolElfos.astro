@@ -346,13 +346,20 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
       else apilar(i, animar);
     }
 
+    // Dibuja el árbol tal como va en la sesión (sin animar)
     let clics = 0;
-    try {
-      clics = Math.min(Number(sessionStorage.getItem(LLAVE)) || 0, 300);
-    } catch {
-      /* sin almacenamiento: el árbol empieza vacío en cada página */
+    function sincronizar() {
+      try {
+        clics = Math.min(Number(sessionStorage.getItem(LLAVE)) || 0, 300);
+      } catch {
+        /* sin almacenamiento: el árbol empieza vacío en cada página */
+      }
+      adornos.replaceChildren();
+      pila.replaceChildren();
+      regaloEnLugar.length = 0;
+      for (let k = 0; k < clics; k++) aplicar(k, false);
     }
-    for (let k = 0; k < clics; k++) aplicar(k, false);
+    sincronizar();
 
     const esperar = (a: Animation) => a.finished.catch(() => {});
     const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -418,6 +425,20 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
     }
     const filaEscalera = crearFila(colgarAnimado);
     const filaPiso = crearFila(entregarAnimado);
+
+    // Al volver con "Atrás" (o el gesto del trackpad), Safari y Chrome no recargan la página: la sacan
+    // del caché tal como quedó (bfcache). Esa copia no trae lo que se sumó en otras páginas y Safari
+    // reinicia las animaciones CSS, así que la entrada se repetía. Aquí se pone al día y se salta la entrada.
+    window.addEventListener('pageshow', (e) => {
+      if (!e.persisted) return;
+      escena.classList.add('ae-sin-entrada');
+      escena.getAnimations({ subtree: true }).forEach((a) => {
+        if (!(a instanceof CSSAnimation)) a.cancel();
+      });
+      cargado.replaceChildren();
+      sincronizar();
+      reflejar();
+    });
 
     // Solo cuentan los clics en elementos con los que se interactúa (enlaces, botones, tarjetas,
     // pestañas, campos del formulario…), no en fondos ni textos sueltos
