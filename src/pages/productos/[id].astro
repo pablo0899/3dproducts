@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 }
 
 const { producto } = Astro.props;
-const { nombre, resumen, fotos, modelo, precio, categoria, material, dimensiones, colores, disponible } = producto.data;
+const { nombre, resumen, fotos, modelo, precio, categoria, material, dimensiones, colores, disponible, edicionLimitada } = producto.data;
 const { Content } = await render(producto);
 const mensaje = `Hola, Prismatix. Me interesa "${nombre}" (${Astro.url.href}).\n\n¿Me pueden dar más información?`;
 // WhatsApp primero, luego Instagram y Facebook. Aquí no se ofrece el correo
@@ -54,6 +54,7 @@ const [principalRegalo] = canales(`Para regalo: ${nombre}`, mensajeRegalo);
     </div>
 
     <div class="producto__info">
+      {edicionLimitada && <span class="edicion-limitada">Edición limitada</span>}
       <h1>{nombre}</h1>
       <p class="precio">{formatearPrecio(precio)}</p>
       <p class="resumen">{resumen}</p>
@@ -62,6 +63,7 @@ const [principalRegalo] = canales(`Para regalo: ${nombre}`, mensajeRegalo);
         {material && (<><dt>Material</dt><dd>{material}</dd></>)}
         {dimensiones && (<><dt>Medidas</dt><dd>{dimensiones}</dd></>)}
         {colores.length > 0 && (<><dt>Colores</dt><dd>{colores.join(', ')}</dd></>)}
+        {edicionLimitada && (<><dt>Edición</dt><dd>Limitada · piezas contadas</dd></>)}
         <dt>Estado</dt><dd>{disponible ? 'Disponible' : 'Agotado — bajo pedido'}</dd>
       </dl>
 

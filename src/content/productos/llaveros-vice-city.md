@@ -15,9 +15,12 @@ fotos:
 material: Plástico de alta resistencia con detalles en relieve
 orden: 3
 regalo: true
+edicionLimitada: true
 ---
 
 Ocho diseños inspirados en Vice City y Leonida: el manatí, el flamingo, el lowrider, el cocodrilo, el sol y tres versiones del logo. Llévalo tal cual o dale tu toque.
+
+**Edición limitada:** la colección GTA VI se hace en piezas contadas.
 
 - **Sencillo:** $80 · **Con texto atrás:** $85
 - **Tu texto:** un nombre, apellido o palabra grabada hacia adentro en la parte trasera. Te compartimos las tipografías para que elijas

@@ -27,6 +27,8 @@ const productos = defineCollection({
     temporada: z.string().optional(),
     // true = en temporada lleva la etiqueta "Regalo ideal" y va primero
     regalo: z.boolean().default(false),
+    // true = lleva la etiqueta "Edición limitada" (en la tarjeta y en la página del producto)
+    edicionLimitada: z.boolean().default(false),
   }),
 });
 

@@ -46,7 +46,7 @@ La fuente es la lámina "Mapa de marca Prismatix" (imagen `identidad.jpg` del us
   - Burnt Orange `#E07A5F`
   - Soft Rose `#F4B6C2`
   - Ivory Dust `#FDFBF7`: fondo general y texto sobre oscuro
-  - Electric Pink `#FF2E93`: es el "wild card" y **solo** se usa para colecciones especiales, lanzamientos y colaboraciones. Hoy no se usa.
+  - Electric Pink `#FF2E93`: es el "wild card" y **solo** se usa para colecciones especiales, lanzamientos y colaboraciones. Hoy solo está en la etiqueta "Edición limitada" (`.edicion-limitada` en `global.css`): ciruela con texto ivory, y el rosa en el destello ✦ y la orilla, porque rosa sobre claro no llega a 4.5:1 en letra chica.
 - **Estructura visual:** editorial. El fondo general es ivory con tarjetas blancas. La portada y el pie son bloques oscuros "terciopelo" (`.seccion-oscura`, `--fondo-terciopelo`: ciruela con resplandores berry y naranja). Ya no hay neón ni rejilla. Solo tema claro.
 - **Tipografía** (Google Fonts en `Base.astro`):
   - Playfair Display (serif): titulares y frases en cursiva
@@ -135,6 +135,7 @@ herramientas/                  Uso interno. No es parte del sitio; se publica ap
 | `oculto` | bool | por defecto `false`; `true` = no aparece en el sitio (ni tarjeta ni página) |
 | `temporada` | string | opcional; `navidad` = solo aparece durante la temporada |
 | `regalo` | bool | por defecto `false`; en temporada lleva "Regalo ideal" y va primero |
+| `edicionLimitada` | bool | por defecto `false`; etiqueta "Edición limitada" en la tarjeta (apilada con "Regalo ideal" arriba a la izquierda) y arriba del título, y la fila "Edición · Limitada · piezas contadas" en la ficha. La colección GTA VI la lleva (pedido del usuario, 2026-11-26) |
 
 El cuerpo en Markdown es la descripción larga que se muestra en la página del producto.
 

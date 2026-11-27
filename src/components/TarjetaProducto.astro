@@ -8,7 +8,7 @@ interface Props {
 }
 
 const { producto } = Astro.props;
-const { nombre, resumen, fotos, precio, categoria, modelo, disponible, temporada, regalo } = producto.data;
+const { nombre, resumen, fotos, precio, categoria, modelo, disponible, temporada, regalo, edicionLimitada } = producto.data;
 ---
 
 <a
@@ -34,8 +34,13 @@ const { nombre, resumen, fotos, precio, categoria, modelo, disponible, temporada
       </span>
     )}
     {modelo && <span class="tarjeta__badge">360°</span>}
-    {!disponible && <span class="tarjeta__agotado">Agotado</span>}
-    {regalo && disponible && <span class="tarjeta__regalo solo-navidad">Regalo ideal</span>}
+    {!disponible && <span class:list={['tarjeta__agotado', { 'tarjeta__agotado--derecha': edicionLimitada }]}>Agotado</span>}
+    {(edicionLimitada || (regalo && disponible)) && (
+      <span class="tarjeta__etiquetas">
+        {edicionLimitada && <span class="edicion-limitada">Edición limitada</span>}
+        {regalo && disponible && <span class="tarjeta__regalo solo-navidad">Regalo ideal</span>}
+      </span>
+    )}
   </div>
   <div class="tarjeta__cuerpo">
     <span class="etiqueta">{categoria}</span>
@@ -143,6 +148,7 @@ const { nombre, resumen, fotos, precio, categoria, modelo, disponible, temporada
   }
   .tarjeta__badge { right: 10px; background: rgb(253 251 247 / 0.92); color: var(--plum-night); }
   .tarjeta__agotado { left: 10px; background: rgb(58 36 59 / 0.85); color: var(--soft-rose); }
+  .tarjeta__agotado--derecha { left: auto; right: 10px; }
   /* Temporada: los regalos van primero y llevan un listón dorado */
   :global(:root[data-temporada='navidad']) .tarjeta--regalo { order: -1; }
   .tarjeta__regalo {
@@ -159,6 +165,9 @@ const { nombre, resumen, fotos, precio, categoria, modelo, disponible, temporada
     box-shadow: 0 2px 8px rgb(58 36 59 / 0.25);
   }
   .tarjeta__regalo::before { content: '🎁 '; }
+  /* Edición limitada y Regalo ideal se apilan en la esquina: en teléfono la tarjeta es angosta */
+  .tarjeta__etiquetas { position: absolute; top: 10px; left: 10px; display: grid; gap: 6px; justify-items: start; }
+  .tarjeta__etiquetas .tarjeta__regalo { position: static; }
   .tarjeta__cuerpo { display: grid; gap: 4px; justify-items: start; }
   h3 { margin: 2px 0 0; font-size: 1.12rem; line-height: 1.2; }
   .tarjeta:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }

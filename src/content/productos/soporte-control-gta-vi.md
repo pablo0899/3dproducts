@@ -9,6 +9,7 @@ fotos:
 material: Plástico de alta resistencia con logo en relieve
 orden: 4
 regalo: true
+edicionLimitada: true
 ---
 
 Tu control también merece su lugar. Este soporte lo mantiene de pie y a la vista, con el logo de GTA VI en relieve y los colores de Leonida: rosa atardecer, azul palmera y letras blancas sobre base negra.
@@ -18,4 +19,4 @@ Tu control también merece su lugar. Este soporte lo mantiene de pie y a la vist
 - **Firme y a la mano:** en tu escritorio, junto a la tele o al lado de la consola
 - ¿Lo quieres con otros colores? Cuéntanos y lo ajustamos a tu setup
 
-Para quien ya vive en Vice City, o para regalárselo a quien no suelta el control.
+**Edición limitada:** la colección GTA VI se hace en piezas contadas. Para quien ya vive en Vice City, o para regalárselo a quien no suelta el control.
