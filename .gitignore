@@ -6,3 +6,6 @@ dist/
 
 # Figuras con licencia (Dave W): solo se publican en la herramienta, no en el repositorio
 herramientas/figuras/
+
+# Diagnóstico de las impresoras (notas locales, con códigos de acceso)
+Diagnostico-impresora.md
