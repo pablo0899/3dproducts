@@ -11,10 +11,11 @@
 // Con prefers-reduced-motion no hay animaciones: los adornos y regalos aparecen directo.
 //
 // Tamaños, para que no tape contenido:
-// - Desde 1440 px: completa en el margen izquierdo.
+// - Escritorio y tableta (desde 768 px): completa en la esquina inferior izquierda; usa el margen junto
+//   al contenido (1200 px) y nunca mide menos de 96 px de ancho.
 // - Teléfonos con la barra "Cuéntanos tu idea": mini (38 px), dentro de la barra, a la izquierda del botón.
-// - Lo demás (página de producto en teléfono, tabletas, laptops): un botón redondo de 44 px en la esquina
-//   con el número de adornos; al tocarlo se abre el árbol mini (66 px). Se recuerda en la sesión.
+// - Página de producto en teléfono (no hay barra): un botón redondo de 44 px en la esquina con el número
+//   de adornos; al tocarlo se abre el árbol mini (66 px). Se recuerda en la sesión.
 
 const luces = [
   [99, 190], [112, 196], [125, 198], [138, 196], [151, 190],
@@ -547,18 +548,21 @@ const coloresLuz = ['#f6dc9a', '#ff8fb1', '#fdfbf7', '#e9b949', '#f4b6c2'];
     :global(body:has(.barra-accion--oculta)) .arbol-elfos { translate: 0 110%; opacity: 0; }
   }
 
-  /* ── Completa desde 1440 px: suelta en el margen izquierdo, junto al contenido (1200 px) ── */
-  @media (min-width: 1440px) {
+  /* ── Completa en escritorio y tableta: suelta en la esquina, en el margen junto al contenido ── */
+  @media (min-width: 768px) {
     .arbol-elfos {
       left: 10px;
       z-index: 5;
-      width: min(210px, calc((100vw - var(--ancho-max)) / 2 - 14px));
+      width: clamp(96px, calc((100vw - var(--ancho-max)) / 2 - 14px), 210px);
     }
     .arbol-elfos__marco { width: auto; aspect-ratio: auto; overflow: visible; }
     .arbol-elfos__marco svg { width: 100%; margin: 0; filter: drop-shadow(0 6px 14px rgb(58 36 59 / 0.22)); }
-    .arbol-elfos__pista { display: block; }
     .arbol-elfos__boton { display: none; }
     .ae-plegado .arbol-elfos__marco { display: block; }
+  }
+  /* La pista solo cabe cuando la escena tiene su tamaño completo */
+  @media (min-width: 1500px) {
+    .arbol-elfos__pista { display: block; }
   }
 
   .arbol-elfos__pista {
