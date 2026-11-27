@@ -50,6 +50,36 @@
   .avance span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--berry), #E07A5F); }
   .extra { margin-top: 32px; display: grid; gap: 12px; }
 
+  /* ── Historial de pagos ── */
+  .vistas { justify-self: start; }
+  .cobros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .cobros li { padding: 12px; border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); }
+  .cobros strong { display: block; font-family: var(--display); font-size: 1.25rem; font-weight: 400; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .cobros .cobros__total strong { font-size: 2rem; }
+  .cobros span { color: var(--suave); font-size: 0.8rem; }
+  .cobros .cobros__total { grid-column: 1 / -1; background: var(--ciruela); color: var(--marfil); }
+  .cobros .cobros__total span { color: rgb(253 251 247 / 0.75); }
+  .bloque-pagos { margin-top: 20px; padding: 16px; border-radius: var(--radio); background: var(--blanco); box-shadow: var(--sombra); }
+  .bloque-pagos h2 { margin: 0 0 10px; font-family: var(--display); font-weight: 400; font-size: 1.25rem; }
+  .meses { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .mes { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 0.9rem; }
+  .mes b { font-variant-numeric: tabular-nums; }
+  .mes small { color: var(--suave); }
+  .mes .avance { grid-column: 1 / -1; }
+  .metodos { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; font-size: 0.85rem; color: var(--suave); }
+  .metodos b { color: var(--ciruela); font-variant-numeric: tabular-nums; }
+  .pagos-lista { display: grid; margin: 0; padding: 0; list-style: none; }
+  .pago {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; width: 100%; padding: 12px 4px;
+    border: 0; border-top: 1px solid var(--borde); background: none; text-align: left; cursor: pointer;
+  }
+  .pagos-lista li:first-child .pago { border-top: 0; }
+  .pago:hover { background: var(--tinte); }
+  .pago__quien { font-weight: 600; overflow-wrap: anywhere; }
+  .pago__monto { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+  .pago__detalle { color: var(--suave); font-size: 0.8rem; }
+  .pago__acumulado { color: var(--suave); font-size: 0.8rem; font-variant-numeric: tabular-nums; text-align: right; }
+
   /* ── Hoja del pedido ── */
   .seccion-hoja { display: grid; gap: 10px; }
   /* Los campos de fecha traen un ancho mínimo propio que los saca de la hoja en teléfonos */
@@ -97,6 +127,9 @@
     .renglon .campo--metodo { grid-column: auto; }
   }
   @media (min-width: 768px) {
+    .cobros { grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); }
+    .cobros strong { font-size: 1.6rem; }
+    .cobros .cobros__total { grid-column: auto; }
     .pedidos { grid-template-columns: repeat(2, 1fr); }
     .resumen { grid-template-columns: repeat(3, 1fr) 1.6fr; }
     .resumen .resumen__alerta { grid-column: auto; }
@@ -128,6 +161,10 @@
 
 <main class="contenedor">
   <div class="herramientas">
+    <div class="segmentos vistas" role="group" aria-label="Ver">
+      <button type="button" data-vista="pedidos" aria-pressed="true">Pedidos</button>
+      <button type="button" data-vista="pagos" aria-pressed="false">Pagos</button>
+    </div>
     <label class="busqueda">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="buscar" type="search" placeholder="Buscar cliente, producto o folio" autocomplete="off" aria-label="Buscar pedidos">
@@ -137,6 +174,7 @@
   <div id="contenido"></div>
   <div class="extra">
     <button type="button" class="boton-texto" id="exportar">Descargar pedidos para Excel (.csv)</button>
+    <button type="button" class="boton-texto" id="exportar-pagos">Descargar pagos para Excel (.csv)</button>
   </div>
 </main>
 
@@ -250,6 +288,7 @@ let base = null;
 let pendientes = [];
 let modo = 'nube';
 let filtro = 'activos';
+let vista = 'pedidos';   // 'pedidos' o 'pagos' (historial de pagos con el acumulado)
 let temporizador;
 
 const copia = (o) => JSON.parse(JSON.stringify(o));
@@ -452,6 +491,11 @@ function pintar() {
     .map(([k, [nombre, f]]) => `<button type="button" class="filtro" data-filtro="${k}" aria-pressed="${filtro === k}">${nombre} <small>${ps.filter(f).length}</small></button>`)
     .join('');
 
+  document.querySelectorAll('[data-vista]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vista === vista)));
+  $('#filtros').hidden = vista === 'pagos';
+  $('#buscar').placeholder = vista === 'pagos' ? 'Buscar cliente, folio o forma de pago' : 'Buscar cliente, producto o folio';
+  if (vista === 'pagos') { pintarPagosHistorial(); return; }
+
   const q = $('#buscar').value.trim().toLowerCase().replace(/^#/, '');
   const qNum = q.replace(/\D/g, '');
   const coincide = (p) => !q
@@ -495,6 +539,98 @@ function pintar() {
       ${t > 0 ? `<span class="avance" aria-hidden="true"><span style="width:${avance}%"></span></span>` : ''}`}
     </button></li>`;
   }).join('')}</ul>`;
+}
+
+// ── Historial de pagos: todos los pagos de todos los pedidos, con el acumulado ──
+// Cuentan también los de pedidos cancelados (es dinero que entró); se marcan para distinguirlos.
+function todosLosPagos() {
+  const lista = [];
+  for (const p of doc.pedidos) {
+    (p.pagos || []).forEach((x, n) => {
+      const monto = num(x.monto);
+      if (!monto) return;
+      const liquida = n === p.pagos.length - 1 && resta(p) <= 0 && p.pagos.length > 1;
+      lista.push({
+        pedido: p, monto, fecha: x.fecha || p.fecha || '', metodo: x.metodo || 'otro',
+        tipo: n === 0 ? (p.pagos.length === 1 && resta(p) <= 0 ? 'Pago completo' : 'Anticipo') : liquida ? 'Liquidación' : 'Abono',
+      });
+    });
+  }
+  // Del más viejo al más nuevo para el acumulado; empates por folio
+  lista.sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.pedido.folio || 0) - (b.pedido.folio || 0)));
+  let suma = 0;
+  for (const x of lista) x.acumulado = (suma += x.monto);
+  return lista;
+}
+const nombreMes = (aaaamm) => {
+  const [a, m] = aaaamm.split('-').map(Number);
+  const t = new Date(a, m - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
+function pintarPagosHistorial() {
+  const todos = todosLosPagos();
+  const total = todos.length ? todos.at(-1).acumulado : 0;
+  const mesActual = hoyISO().slice(0, 7);
+  const esteMes = todos.filter((x) => x.fecha.startsWith(mesActual)).reduce((s, x) => s + x.monto, 0);
+  const meses = new Map();
+  for (const x of todos) {
+    const m = x.fecha.slice(0, 7) || 'sin-fecha';
+    const r = meses.get(m) || { total: 0, n: 0 };
+    r.total += x.monto;
+    r.n += 1;
+    meses.set(m, r);
+  }
+  const porMetodo = new Map();
+  for (const x of todos) porMetodo.set(x.metodo, (porMetodo.get(x.metodo) || 0) + x.monto);
+  const maxMes = Math.max(1, ...[...meses.values()].map((r) => r.total));
+
+  const q = $('#buscar').value.trim().toLowerCase().replace(/^#/, '');
+  const visibles = todos.filter((x) => !q || String(x.pedido.folio) === q
+    || [x.pedido.cliente, METODOS[x.metodo] || x.metodo, x.tipo].join(' ').toLowerCase().includes(q));
+
+  const contenido = $('#contenido');
+  if (!todos.length) {
+    contenido.innerHTML = '<p class="vacio">Todavía no hay pagos registrados. Se agregan desde cada pedido, en "Pagos".</p>';
+    return;
+  }
+  contenido.innerHTML = `
+    <ul class="cobros" aria-label="Resumen de lo cobrado">
+      <li class="cobros__total"><strong>${dinero(total)}</strong><span>cobrado en total</span></li>
+      <li><strong>${dinero(esteMes)}</strong><span>en ${esc(nombreMes(mesActual).toLowerCase())}</span></li>
+      <li><strong>${todos.length}</strong><span>${todos.length === 1 ? 'pago registrado' : 'pagos registrados'}</span></li>
+      <li><strong>${dinero(total / todos.length)}</strong><span>promedio por pago</span></li>
+    </ul>
+
+    <section class="bloque-pagos">
+      <h2>Por mes</h2>
+      <ul class="meses">${[...meses.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([m, r]) => `
+        <li class="mes"><span>${m === 'sin-fecha' ? 'Sin fecha' : esc(nombreMes(m))} <small>· ${r.n} ${r.n === 1 ? 'pago' : 'pagos'}</small></span><b>${dinero(r.total)}</b>
+          <span class="avance" aria-hidden="true"><span style="width:${Math.round((r.total / maxMes) * 100)}%"></span></span></li>`).join('')}
+      </ul>
+      <p class="metodos">${[...porMetodo.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span>${esc(METODOS[k] || k)} <b>${dinero(v)}</b></span>`).join('')}</p>
+    </section>
+
+    <section class="bloque-pagos">
+      <h2>Todos los pagos</h2>
+      ${visibles.length ? `<ul class="pagos-lista">${[...visibles].reverse().map((x) => `<li><button type="button" class="pago" data-abrir="${esc(x.pedido.id)}">
+        <span class="pago__quien"><span class="pedido__folio">#${x.pedido.folio}</span> ${esc(x.pedido.cliente || 'Sin nombre')}</span>
+        <span class="pago__monto">${dinero(x.monto)}</span>
+        <span class="pago__detalle">${x.fecha ? esc(fechaCorta(x.fecha)) : 'Sin fecha'} · ${esc(x.tipo)} · ${esc(METODOS[x.metodo] || x.metodo)}${x.pedido.estado === 'cancelado' ? ' · pedido cancelado' : ''}</span>
+        <span class="pago__acumulado">Acumulado ${dinero(x.acumulado)}</span>
+      </button></li>`).join('')}</ul>` : '<p class="vacio">Ningún pago coincide con la búsqueda.</p>'}
+    </section>`;
+}
+
+function exportarPagos() {
+  const filas = [['FECHA', 'FOLIO', 'CLIENTE', 'TIPO', 'FORMA DE PAGO', 'MONTO', 'ACUMULADO', 'ESTADO DEL PEDIDO']];
+  todosLosPagos().forEach((x) => filas.push([x.fecha, x.pedido.folio, x.pedido.cliente, x.tipo, METODOS[x.metodo] || x.metodo, x.monto, x.acumulado, ESTADOS[x.pedido.estado] || x.pedido.estado]));
+  const csv = filas.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `pagos-${hoyISO()}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 // ── Hoja del pedido ──
@@ -780,16 +916,18 @@ function exportar() {
 // ── Eventos de la página ──
 $('#agregar').addEventListener('click', () => abrirHoja(null));
 $('#exportar').addEventListener('click', exportar);
+$('#exportar-pagos').addEventListener('click', exportarPagos);
 $('#buscar').addEventListener('input', pintar);
 document.addEventListener('click', (e) => {
   const el = e.target.closest('button');
   if (!el || hoja.contains(el)) return;
-  if (el.dataset.filtro) { filtro = el.dataset.filtro; $('#buscar').value = ''; pintar(); }
+  if (el.dataset.vista) { vista = el.dataset.vista; $('#buscar').value = ''; pintar(); }
+  else if (el.dataset.filtro) { vista = 'pedidos'; filtro = el.dataset.filtro; $('#buscar').value = ''; pintar(); }
   else if (el.dataset.abrir) abrirHoja(doc.pedidos.find((p) => p.id === el.dataset.abrir));
 });
 
 // Para pruebas automáticas
-window.pedidos = { get doc() { return doc; }, get pendientes() { return pendientes; }, get modo() { return modo; }, total, pagado, resta, celularWa, usuarioIg };
+window.pedidos = { todosLosPagos, get doc() { return doc; }, get pendientes() { return pendientes; }, get modo() { return modo; }, total, pagado, resta, celularWa, usuarioIg };
 
 cargar();
 </script>
